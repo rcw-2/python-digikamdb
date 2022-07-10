@@ -8,6 +8,7 @@ from sqlalchemy import delete, func, insert, select, text, update
 # the ORM will not work. Instead, we use derivatives of this class to
 # access properties.
 
+
 class BasicProperties:
     """
     Basic class for properties
@@ -37,7 +38,7 @@ class BasicProperties:
     
     def __init__(
         self,
-        parent: 'DigikamObject'
+        parent: 'DigikamObject'                             # noqa: F821
     ):
         self.parent = parent
         self.table  = parent.properties_table
@@ -46,38 +47,40 @@ class BasicProperties:
     def __contains__(self, prop: str) -> bool:
         return self.session.connection().execute(
             select(func.count('*'))
-                .select_from(self.table)
-                .filter(text("%s = '%s'" %
-                                (self._parent_id_col, self.parent.id)))
-                .filter(text("%s = '%s'" %
-                                (self._key_col, prop)))
+            .select_from(self.table)
+            .filter(text("%s = '%s'" %
+                         (self._parent_id_col, self.parent.id)))
+            .filter(text("%s = '%s'" %
+                         (self._key_col, prop)))
         ).one()[0] > 0
     
-    def __getitem__(self, prop: str) -> 'TagProperty':
+    def __getitem__(self, prop: str) -> 'TagProperty':      # noqa: F821
         return self.session.connection().execute(
             select(self.table)
-                .filter(text("%s = '%s'" %
-                                (self._parent_id_col, self.parent.id)))
-                .filter(text("%s = '%s'" %
-                                (self._key_col, prop)))
+            .filter(text("%s = '%s'" %
+                         (self._parent_id_col, self.parent.id)))
+            .filter(text("%s = '%s'" %
+                         (self._key_col, prop)))
         ).one().value
     
     def __setitem__(self, prop: str, value: Optional[str]):
         conn = self.session.connection()
         if prop in self:
             kwargs = {
-                self._parent.value_col:  value }
+                self._parent.value_col:  value
+            }
             conn.execute(
                 update(self.table)
-                    .filter("%s = '%s'" %
-                            (self._parent_id_col, self.parent.id))
-                    .filter("%s = '%s'" % (self._key_col, prop))
-                    .values(**kwargs))
+                .filter("%s = '%s'" %
+                        (self._parent_id_col, self.parent.id))
+                .filter("%s = '%s'" % (self._key_col, prop))
+                .values(**kwargs))
         else:
             kwargs = {
                 self._parent_id_col:     self.parent.id,
                 self._parent.key_col:    prop,
-                self._parent.value_col:  value }
+                self._parent.value_col:  value
+            }
             conn.execute(
                 insert(self.table).values(**kwargs))
         conn.commit()
@@ -85,7 +88,7 @@ class BasicProperties:
     def __iter__(self) -> Iterable:
         for row in self.session.connection().execute(
             select(self.table)
-                .filter("%s = '%s'" % (self._parent_id_col, self.parent.id))
+            .filter("%s = '%s'" % (self._parent_id_col, self.parent.id))
         ):
             yield row[self._key_col]
     
@@ -95,8 +98,8 @@ class BasicProperties:
         """
         for row in self.session.connection().execute(
             select(self.table)
-                .filter(text("%s = '%s'" %
-                                (self._parent_id_col, self.parent.id)))
+            .filter(text("%s = '%s'" %
+                         (self._parent_id_col, self.parent.id)))
         ):
             yield row[self._key_col], row[self._value_col]
     
@@ -105,8 +108,8 @@ class BasicProperties:
         conn = self.session.connection()
         conn.execute(
             delete(self.table)
-                .filter(text("%s = %s" %
-                                (self._parent_id_col, self.parent.id)))
-                .filter(text("%s = '%s'" %
-                                (self._key_col, prop))))
+            .filter(text("%s = %s" %
+                         (self._parent_id_col, self.parent.id)))
+            .filter(text("%s = '%s'" %
+                         (self._key_col, prop))))
         conn.commit()

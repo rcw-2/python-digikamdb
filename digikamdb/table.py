@@ -19,7 +19,7 @@ class DigikamTable:
     
     class_function = None
     
-    def __init__(self, parent: 'Digikam'):
+    def __init__(self, parent: 'Digikam'):                  # noqa: F821
         self.parent = parent
         self.engine = self.parent.engine
         self.session = self.parent.session
@@ -32,7 +32,7 @@ class DigikamTable:
     def __iter__(self) -> Iterable:
         return self.session.scalars(select(self.Class))
     
-    def __getitem__(self, key: int) -> 'DigikamObject':
+    def __getitem__(self, key: int) -> 'DigikamObject':     # noqa: F821
         return self.session.scalars(
             select(self.Class).filter_by(id = key)
         ).one()
@@ -49,22 +49,22 @@ class DigikamTable:
             if kwargs:
                 return self.session.scalars(
                     select(self.Class)
-                        .where(text(where_clause))
-                        .filter_by(**kwargs))
+                    .where(text(where_clause))
+                    .filter_by(**kwargs))
             else:
                 return self.session.scalars(
                     select(self.Class)
-                        .where(text(where_clause)))
+                    .where(text(where_clause)))
         else:
             if kwargs:
                 return self.session.scalars(
                     select(self.Class)
-                        .filter_by(**kwargs))
+                    .filter_by(**kwargs))
             else:
                 return self.session.scalars(
                     select(self.Class))
     
-    def insert(self, **kwargs) -> 'DigikamObject':
+    def insert(self, **kwargs) -> 'DigikamObject':          # noqa: F821
         """
         Inserts a new record.
         

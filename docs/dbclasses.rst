@@ -18,6 +18,8 @@ Classes
 
 .. autoclass::  AlbumRoot
 
+.. autoclass::  DigikamObject
+
 .. autoclass::  Image
 
 .. ifconfig::   include_private_content

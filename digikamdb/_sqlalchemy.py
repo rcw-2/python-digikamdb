@@ -18,12 +18,15 @@ from .images import (
     _videometadata_class,
     _image_class)
 
+
 class Dummy:
     pass
 
+
 # create fake Digikam object
 dk = Dummy()
-dk.base = _digikamobject_class(declarative_base())
+DigikamObject = _digikamobject_class(declarative_base())
+dk.base = DigikamObject
 dk.is_mysql = True
 dk.engine = None
 dk.session = None

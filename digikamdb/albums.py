@@ -3,17 +3,14 @@ Digikam Albums
 """
 
 import os
-from typing import Any, Iterable, List, Optional, Union
+from typing import List
 
-from sqlalchemy import Column, select
 from sqlalchemy.orm import relationship
 
 from .table import DigikamTable
 
   
-def _album_class(
-    dk: 'Digikam',
-) -> type:
+def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
     """
     Defines the Album class
     """
@@ -50,14 +47,14 @@ def _album_class(
         # Relationship to AlbumRoot
         
         @property
-        def root(self) -> 'AlbumRoot':
+        def root(self) -> 'AlbumRoot':                      # noqa: F821
             """Returns the album's root"""
             return self._root
         
         # Relationships to Images
         
         @property
-        def iconImage(self) -> 'Image':
+        def iconImage(self) -> 'Image':                     # noqa: F821
             """Returns the album's icon"""
             return self._icon
         

@@ -11,6 +11,7 @@ from digikamdb import Digikam
 
 logging.basicConfig(filename = 'test.log', level = logging.DEBUG)
 
+
 # Hide DigikamTestBase so unittest doesn't run it
 class Wrapper:
 
@@ -36,7 +37,6 @@ class Wrapper:
         def test_albums(self):
             for al in self.dk.albums:
                 with self.subTest(albumid = al.id):
-                    #self.assertEqual(al.albumRoot, 1)
                     self.assertEqual(al.albumRoot, al.root.id)
                     self.assertEqual(
                         os.path.commonpath([self.mydir, al.abspath]),
@@ -54,7 +54,6 @@ class Wrapper:
         def test_images(self):
             for img in self.dk.images:
                 with self.subTest(imageid = img.id):
-                    #self.assertEqual(img.albumObj.albumRoot, 1)
                     self.assertEqual(img.album, img.albumObj.id)
                     self.assertEqual(
                         os.path.commonpath([self.mydir, img.abspath]),
@@ -103,7 +102,8 @@ class Wrapper:
             for tag in internal.children:
                 with self.subTest(internal_tag = tag.name):
                     self.assertIn('internalTag', tag.properties)
-        
+
+
 class DigikamSQLiteTest(Wrapper.DigikamTestBase):
     
     @classmethod
@@ -116,7 +116,7 @@ class DigikamSQLiteTest(Wrapper.DigikamTestBase):
         unpack_archive(archive, cls.mydir)
         cls.root_override = {
             'ids':      {1: 'TEST'},
-            'paths':    {1: cls.mydir }
+            'paths':    {1: cls.mydir}
         }
         cls.test_data = {
             'albumroots': [{
@@ -134,8 +134,6 @@ class DigikamSQLiteTest(Wrapper.DigikamTestBase):
         rmtree(cls.mydir)
     
     def setUp(self):
-        #self.mydir = os.path.abspath(
-        #    os.path.join(os.path.dirname(__file__), '3pics'))
         dbfile = os.path.join(self.mydir, 'digikam4.db')
         db = create_engine('sqlite:///' + dbfile)
         self.dk = Digikam(db, root_override = self.root_override)
@@ -146,9 +144,9 @@ class DigikamSQLiteTest(Wrapper.DigikamTestBase):
     def test_sqlite(self):
         self.assertFalse(self.dk.is_mysql)
         with self.assertRaises(NoResultFound):
-            root = self.dk.tags._root
-    
-    
+            _ = self.dk.tags._root
+
+
 class DigikamMySQLTest(Wrapper.DigikamTestBase):
     
     @classmethod

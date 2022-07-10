@@ -3,16 +3,15 @@ Digikam Images
 """
 
 import os
-from typing import Any, Iterable, List, Mapping, Optional, Union
+from typing import List, Mapping, Optional
 
-from sqlalchemy import Column, select
 from sqlalchemy.orm import relationship, validates
 
 from .table import DigikamTable
 from .exceptions import DigikamError
 
 
-def _albumroot_class(dk: 'Digikam') -> type:
+def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821
     """
     Defines the AlbumRoot class
     """
@@ -154,7 +153,7 @@ class AlbumRoots(DigikamTable):
     
     def __init__(
         self,
-        parent: 'Digikam',
+        parent: 'Digikam',                                  # noqa: F821
         override: Optional[Mapping] = None
     ):
         super().__init__(parent)

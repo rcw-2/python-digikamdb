@@ -3,32 +3,34 @@ Digikam Images
 """
 
 import os
-from typing import Any, Iterable, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
-from sqlalchemy import Column, MetaData, Table, select
+from sqlalchemy import Column, Table, delete
 from sqlalchemy.orm import relationship, validates
 
 from .table import DigikamTable
 from .properties import BasicProperties
+
 
 class ImageProperties(BasicProperties):
     """
     Image Properties
     """
     
-    # Parent id column
+    #: Parent id column
     _parent_id_col = 'imageid'
     
-    # Key column
-    _key_col = 'property'    
+    #: Key column
+    _key_col = 'property'
     
-    #! Value column
+    #: Value column
     _value_col = 'value'
+
 
 class Copyright:
     """Encapsulates ImageCopyright."""
     
-    def __init__(self, parent: 'Image'):
+    def __init__(self, parent: 'Image'):                    # noqa: F821
         self.parent = parent
     
     def __contains__(self, key: str) -> bool:
@@ -37,7 +39,7 @@ class Copyright:
         else:
             return False
     
-    def __getitem__(self, key: str) -> Union[str,Tuple]:
+    def __getitem__(self, key: str) -> Union[str, Tuple]:
         row = self.parent._copyright.filter(property = key).one_or_none()
         if not row:
             return None
@@ -47,7 +49,7 @@ class Copyright:
             return row.value, row.extraValue
     
     def __setitem__(self, key: str, value: Any):
-        if isistance(value, (list, tuple)):
+        if isinstance(value, (list, tuple)):
             extravalue = value[1]
             value = value[0]
         else:
@@ -57,8 +59,8 @@ class Copyright:
             row.value = value
             row.extraValue = extravalue
         else:
-            row = parent.ImageCopyright(
-                imageid = parent.id,
+            row = self.parent.ImageCopyright(
+                imageid = self.parent.id,
                 property = key,
                 value = value,
                 extraValue = extravalue)
@@ -66,7 +68,7 @@ class Copyright:
         self.parent.session.commit()
 
 
-def _imagecomment_class(dk: 'Digikam') -> type:
+def _imagecomment_class(dk: 'Digikam') -> type:             # noqa: F821
     """
     Defines the ImageComment class
     """
@@ -79,7 +81,8 @@ def _imagecomment_class(dk: 'Digikam') -> type:
     
     return ImageComment
 
-def _imagecopyright_class(dk: 'Digikam') -> type:
+
+def _imagecopyright_class(dk: 'Digikam') -> type:           # noqa: F821
     """
     Defines the ImageCopyright class
     """
@@ -92,7 +95,8 @@ def _imagecopyright_class(dk: 'Digikam') -> type:
     
     return ImageCopyright
 
-def _imagehistory_class(dk: 'Digikam') -> type:
+
+def _imagehistory_class(dk: 'Digikam') -> type:             # noqa: F821
     """
     Defines the ImageHistory class
     """
@@ -111,7 +115,8 @@ def _imagehistory_class(dk: 'Digikam') -> type:
     
     return ImageHistory
 
-def _imageinformation_class(dk: 'Digikam') -> type:
+
+def _imageinformation_class(dk: 'Digikam') -> type:         # noqa: F821
     """
     Defines the ImageInformation class
     """
@@ -133,10 +138,10 @@ def _imageinformation_class(dk: 'Digikam') -> type:
         if not dk.is_mysql:
             from sqlalchemy.dialects.sqlite import DATETIME
             creationDate = Column(DATETIME(
-                storage_format = '%(year)04d-%(month)02d-%(day)02dT%(hour)02d:%(minute)02d:%(second)02d',
+                storage_format = '%(year)04d-%(month)02d-%(day)02dT%(hour)02d:%(minute)02d:%(second)02d',   # noqa: E501
                 regexp = r'(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)'))
             digitizationDate = Column(DATETIME(
-                storage_format = '%(year)04d-%(month)02d-%(day)02dT%(hour)02d:%(minute)02d:%(second)02d',
+                storage_format = '%(year)04d-%(month)02d-%(day)02dT%(hour)02d:%(minute)02d:%(second)02d',   # noqa: E501
                 regexp = r'(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)'))
         
         @validates('rating')
@@ -147,7 +152,8 @@ def _imageinformation_class(dk: 'Digikam') -> type:
     
     return ImageInformation
 
-def _imagemetadata_class(dk: 'Digikam') -> type:
+
+def _imagemetadata_class(dk: 'Digikam') -> type:            # noqa: F821
     """
     Defines the ImageMetadata class
     """
@@ -160,7 +166,8 @@ def _imagemetadata_class(dk: 'Digikam') -> type:
     
     return ImageMetadata
 
-def _imageposition_class(dk: 'Digikam') -> type:
+
+def _imageposition_class(dk: 'Digikam') -> type:            # noqa: F821
     """
     Defines the ImagePosition class
     """
@@ -173,7 +180,8 @@ def _imageposition_class(dk: 'Digikam') -> type:
     
     return ImagePosition
 
-def _videometadata_class(dk: 'Digikam') -> type:
+
+def _videometadata_class(dk: 'Digikam') -> type:            # noqa: F821
     """
     Defines the VideoMetadata class
     """
@@ -186,7 +194,8 @@ def _videometadata_class(dk: 'Digikam') -> type:
     
     return VideoMetadata
 
-def _image_class(dk: 'Digikam') -> type:
+
+def _image_class(dk: 'Digikam') -> type:                    # noqa: F821
     """
     Returns the Image class.
     """
@@ -225,7 +234,7 @@ def _image_class(dk: 'Digikam') -> type:
         if not dk.is_mysql:
             from sqlalchemy.dialects.sqlite import DATETIME
             modificationDate = Column(DATETIME(
-                storage_format = '%(year)04d-%(month)02d-%(day)02dT%(hour)02d:%(minute)02d:%(second)02d',
+                storage_format = '%(year)04d-%(month)02d-%(day)02dT%(hour)02d:%(minute)02d:%(second)02d',   # noqa: E501
                 regexp = r'(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)'))
         
         _album = relationship(
@@ -264,14 +273,12 @@ def _image_class(dk: 'Digikam') -> type:
             primaryjoin = 'foreign(VideoMetadata.imageid) == Image.id',
             uselist = False)
         
-        
-        
-        ### Relationship properties
+        # -- Relationship properties -----------------------------------------
         
         # Relationship to Albums
         
         @property
-        def albumObj(self) -> 'Album':
+        def albumObj(self) -> 'Album':                      # noqa: F821
             """
             Returns the album (directory) to which the image belongs.
             
@@ -289,7 +296,7 @@ def _image_class(dk: 'Digikam') -> type:
             .. todo:: Handle languages
             
             Args:
-                type\_:     The comment type (1 for caption, 3 for title)
+                type\\_:     The comment type (1 for caption, 3 for title)
                 as_object:  Return comment as object or as value
             """
             for c in self._comments:
@@ -307,7 +314,7 @@ def _image_class(dk: 'Digikam') -> type:
             .. todo:: Handle languages
             
             Args:
-                type\_:     The comment type (1 for caption, 3 for title)
+                type\\_:     The comment type (1 for caption, 3 for title)
                 val:        New value for comment. If set to None, the
                             row in ImageComments will be deleted.
             """
@@ -320,17 +327,15 @@ def _image_class(dk: 'Digikam') -> type:
                         language    = 'x-default',
                         comment     = val)
                     self.session.add(newcomment)
-                    #self.session.commit()
             else:
                 if val is None:
                     self.session.execute(
                         delete(self.ImageComment)
-                            .filter_by(imageid = self.id)
-                            .filter_by(type = type_))
+                        .filter_by(imageid = self.id)
+                        .filter_by(type = type_))
                     self.session.commit()
                 else:
                     oldval.comment = val
-                    #self.session.commit()
                     
         @property
         def caption(self) -> Optional[str]:
@@ -345,7 +350,7 @@ def _image_class(dk: 'Digikam') -> type:
         
         @caption.setter
         def caption(self, val: Optional[str]):
-            self._set_comment(1, val)                
+            self._set_comment(1, val)
         
         @property
         def title(self) -> Optional[str]:
@@ -372,7 +377,7 @@ def _image_class(dk: 'Digikam') -> type:
         # Relationship to ImageHistory
         
         @property
-        def history(self) -> 'ImageHistory':
+        def history(self) -> 'ImageHistory':                # noqa: F821
             """
             Returns the image's history
             """
@@ -381,7 +386,7 @@ def _image_class(dk: 'Digikam') -> type:
         # Relationship to ImageInformation
 
         @property
-        def information(self) -> 'ImageInformation':
+        def information(self) -> 'ImageInformation':        # noqa: F821
             """
             Returns some of the image's information.
             """
@@ -390,7 +395,7 @@ def _image_class(dk: 'Digikam') -> type:
         # Relationship to ImageMetadata
         
         @property
-        def imagemeta(self) -> 'ImageMetadata':
+        def imagemeta(self) -> 'ImageMetadata':             # noqa: F821
             """
             Returns the image's photographic metadata
             """
@@ -426,7 +431,7 @@ def _image_class(dk: 'Digikam') -> type:
                 if self._position:
                     self.session.execute(
                         delete(self.ImagePosition)
-                            .filter_by(imageid = self.id))
+                        .filter_by(imageid = self.id))
                     self.session.commit()
                 return
             
@@ -503,7 +508,7 @@ def _image_class(dk: 'Digikam') -> type:
         # Relationship to VideoMetadata
         
         @property
-        def videometa(self) -> 'VideoMetadata':
+        def videometa(self) -> 'VideoMetadata':             # noqa: F821
             """Returns the metadata for video files"""
             return self._videometadata
         
@@ -547,7 +552,7 @@ class Images(DigikamTable):
     
     def __init__(
         self,
-        parent: 'Digikam',
+        parent: 'Digikam',                                  # noqa: F821
     ):
         super().__init__(parent)
         self.Class.ImageComment = _imagecomment_class(self.parent),
@@ -570,7 +575,6 @@ class Images(DigikamTable):
             name:   filename of the image
         """
         
-        # 
         base = os.path.basename(name)
         path = os.path.abspath(name)
         

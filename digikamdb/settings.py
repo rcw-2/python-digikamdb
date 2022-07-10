@@ -2,9 +2,10 @@
 Digikam Settings
 """
 
-from typing import Any, Iterable, Optional
+from typing import Iterable
 
 from sqlalchemy import MetaData, Table, select
+
 
 class Settings:
     """
@@ -24,11 +25,9 @@ class Settings:
         parent:     Digikam object
     """
     
-    def __init__(self, parent: 'Digikam'):
+    def __init__(self, parent: 'Digikam'):                  # noqa: F821
         self.parent = parent
         self.table = Table('Settings', MetaData(), autoload_with = self.parent.engine)
-        #self.session = parentsession
-        #Setting.session = session
     
     def __getitem__(self, key: str) -> str:
         with self.parent.session.connection() as conn:

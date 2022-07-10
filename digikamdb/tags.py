@@ -2,9 +2,9 @@
 Digikam Tags
 """
 
-from typing import Any, Iterable, List, Optional, Union
+from typing import Iterable, List, Optional, Union
 
-from sqlalchemy import MetaData, Table, case, event, func, insert, inspect, select, update
+from sqlalchemy import Table, case, event, inspect, select, text
 from sqlalchemy.orm import object_session
 
 from .table import DigikamTable
@@ -12,7 +12,7 @@ from .properties import BasicProperties
 from .exceptions import DigikamError
 
 
-def _tag_class(dk: 'Digikam') -> type:
+def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821
     """
     Defines the Tag class
     """
@@ -58,7 +58,6 @@ def _tag_class(dk: 'Digikam') -> type:
         
         @property
         def ancestors(self) -> List:
-            anc = []
             if self.is_mysql:
                 # MySQL
                 return [tag.id for tag in self.session.scalars(
@@ -72,7 +71,6 @@ def _tag_class(dk: 'Digikam') -> type:
                 select(self.tagtree_table)
                     .filter(text("id = %d" % self.id)))]
             
-        
         # Other properties and methods
         
         # Since Digikam doesn't use a foreign key, this is a regular property.
@@ -137,7 +135,7 @@ def _tag_class(dk: 'Digikam') -> type:
             
             p = self.parent
             while p:
-                if not self in p:
+                if self not in p:
                     raise DigikamError('Internal Error')
                 p = p.parent
             
@@ -152,7 +150,8 @@ def _tag_class(dk: 'Digikam') -> type:
                     if ch.rgt < ch2.lft or ch.lft > ch2.rgt:
                         continue
                     raise DigikamError(
-                        'Tag table inconsistent: overlapping siblings %d (%d,%d), %d (%d,%d)' % (
+                        'Tag table inconsistent: ' +
+                        'overlapping siblings %d (%d,%d), %d (%d,%d)' % (
                             ch.id, ch.lft, ch.rgt, ch2.id, ch2.lft, ch2.rgt))
                 ch.check_tree()
     
@@ -187,7 +186,7 @@ class Tags(DigikamTable):
     
     def __init__(
         self,
-        parent: 'Digikam',
+        parent: 'Digikam',                                  # noqa: F821
     ):
         super().__init__(parent)
         self.Class.properties_table = Table(
@@ -200,8 +199,12 @@ class Tags(DigikamTable):
                 parent.base.metadata,
                 autoload_with = self.parent.engine)
     
-    
-    def _before_insert(self, mapper: 'Mapper', connection: 'Connection', instance: 'Tag'):
+    def _before_insert(
+        self,
+        mapper: 'Mapper',                                   # noqa: F821
+        connection: 'Connection',                           # noqa: F821
+        instance: 'Tag'                                     # noqa: F821
+    ):
         """
         Adjusts the lft and rgt columns on insert.
         """
@@ -234,11 +237,19 @@ class Tags(DigikamTable):
         instance.rgt = right_most_sibling + 1
 
     # before_update() would be needed to support moving of nodes
-    def _before_update(self, mapper: 'Mapper', connection: 'Connection', instance: 'Tag'):
+    def _before_update(
+        self,
+        mapper: 'Mapper',                                   # noqa: F821
+        connection: 'Connection',                           # noqa: F821
+        instance: 'Tag'                                     # noqa: F821
+    ):
         if not self._do_before_update:
             return
         
-        if object_session(instance).is_modified(instance, include_collections = False):
+        if object_session(instance).is_modified(
+            instance,
+            include_collections = False
+        ):
             attrs = inspect(instance).attrs
             if (
                 attrs.pid.history.has_changes() or
@@ -248,7 +259,12 @@ class Tags(DigikamTable):
                 raise NotImplementedError('Moving tags is not implemlemented')
     
     # after_delete() would be needed to support removal of nodes.
-    def _after_delete(self, mapper: 'Mapper', connection: 'Connection', instance: 'Tag'):
+    def _after_delete(
+        self,
+        mapper: 'Mapper',                                   # noqa: F821
+        connection: 'Connection',                           # noqa: F821
+        instance: 'Tag'                                     # noqa: F821
+    ):
         """
         Adjusts the lft and rgt columns on delete.
         """
@@ -306,7 +322,7 @@ class Tags(DigikamTable):
         return super().__getitem__(key)
     
     @property
-    def _root(self) -> 'Tag':
+    def _root(self) -> 'Tag':                               # noqa: F821
         """
         Returns the root tag when on MySQL.
         
@@ -314,7 +330,7 @@ class Tags(DigikamTable):
         """
         return self.select(pid = -1).one()
     
-    def add(self, name: str, parent: Union[int,'Tag']) -> 'Tag':
+    def add(self, name: str, parent: Union[int, 'Tag']) -> 'Tag':   # noqa: F821
         """
         Adds a new tag.
         
@@ -334,7 +350,7 @@ class Tags(DigikamTable):
         
         return self.insert(name = name, pid = pid)
     
-    def remove(self, tag: Union[int,'Tag']):
+    def remove(self, tag: Union[int, 'Tag']):               # noqa: F821
         """
         Removes a tag.
         
@@ -346,7 +362,7 @@ class Tags(DigikamTable):
             pass
         elif isinstance(tag, int):
             tag = self.session.scalars(
-                select(self.Class).filter_by(id = key)
+                select(self.Class).filter_by(id = tag)
             ).one()
         else:
             raise TypeError('Tag must be int or Tag')
@@ -363,6 +379,7 @@ class Tags(DigikamTable):
         
         self._root.check_tree()
 
+
 class TagProperties(BasicProperties):
     """
     Tag Properties
@@ -372,7 +389,7 @@ class TagProperties(BasicProperties):
     _parent_id_col = 'tagid'
     
     # Key column
-    _key_col = 'property'    
+    _key_col = 'property'
     
     # Value column
     _value_col = 'value'

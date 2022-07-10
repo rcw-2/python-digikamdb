@@ -3,19 +3,20 @@ Defines the Digikam class for database access.
 """
 
 import configparser
-from typing import Any, Mapping, Optional, Union
+import os
+from typing import Mapping, Optional, Union
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.declarative import DeferredReflection, declarative_base
 
-from .exceptions import DigikamError
 from .settings import Settings
 from .tags import Tags
 from .albumroots import AlbumRoots
 from .albums import Albums
 from .images import Images
+
 
 class Digikam:
     """
@@ -74,14 +75,6 @@ class Digikam:
             raise TypeError('Database not specified')
         
         self._session = Session(self.engine)
-        #if not self.is_mysql:
-        #    # set the datetime format for SQLite
-        #    import re
-        #    from sqlalchemy.dialects.sqlite import DATETIME
-        #    DATETIME._storage_format = (
-        #        "%(year)04d-%(month)02d-%(day)02dT%(hour)02d:%(minute)02d:%(second)02d")
-        #    DATETIME._re = re.compile(
-        #        r"(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+).\d+?")
 
         self.base = _digikamobject_class(declarative_base())
         
@@ -116,8 +109,8 @@ class Digikam:
                 config['Database Settings']['Database Hostname'],
                 config['Database Settings']['Database Name'],
                 int(config['Database Settings']['Database Port'])),
-                future = True,
-                echo = sql_echo)
+            future = True,
+            echo = sql_echo)
     
     def destroy(self):
         """Clears the object."""
@@ -187,6 +180,7 @@ class Digikam:
     def tag_class(self):
         return self.tags.Class
 
+
 def _digikamobject_class(base: type) -> type:
     """
     Defines the DigikamObject class
@@ -197,7 +191,12 @@ def _digikamobject_class(base: type) -> type:
         Class that has the parents :class:`DeferredReflection` and *base*.
     """
     class DigikamObject(DeferredReflection, base):
-        """Abstract base class for Digikam objects"""
+        """
+        Abstract base class for objects stored in database.
+        
+        Derived from ``DeferredReflection`` and :func:`declarative_base`.
+        """
+        
         __abstract__ = True
     
     return DigikamObject
