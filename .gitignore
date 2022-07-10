@@ -1,0 +1,29 @@
+# Compiled python modules.
+*.pyc
+__pycache__
+
+# Geany files
+*.geany
+
+# Backups and temporary files
+*~
+*.kate-swp
+DEADJOE
+
+# Logs
+*.log
+
+# Generated package and documentation:
+digikamdb/_version.py
+/build/
+/docs/_build/
+/docs/_api/
+
+# Setuptools distribution folder.
+/dist/
+
+# Python egg metadata, regenerated from source files by setuptools.
+/*.egg-info
+
+# MySQL database access for tests
+/mysql_data.py
