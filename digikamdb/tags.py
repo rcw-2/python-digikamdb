@@ -75,7 +75,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821
         
         # Since Digikam doesn't use a foreign key, this is a regular property.
         @property
-        def parent(self) -> Optional['Tag']:
+        def parent(self) -> Optional['Tag']:                # noqa: F821
             """
             Returns the tag's parent object.
             
@@ -95,7 +95,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821
             ).one()
         
         @property
-        def children(self) -> Iterable['Tag']:
+        def children(self) -> Iterable['Tag']:              # noqa: F821
             """
             Returns the tag's children.
             """

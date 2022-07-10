@@ -42,7 +42,7 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821
         # Relationship to Albums
         
         @property
-        def albums(self) -> List['Album']:
+        def albums(self) -> List['Album']:                  # noqa: F821
             """Returns the albums belonging to this root."""
             return self._albums
         

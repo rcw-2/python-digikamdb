@@ -59,7 +59,7 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
             return self._icon
         
         @property
-        def images(self) -> List['Image']:
+        def images(self) -> List['Image']:                  # noqa: F821
             """Returns the album's images"""
             return self._images
         
