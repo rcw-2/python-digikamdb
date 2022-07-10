@@ -1,7 +1,7 @@
 # Automatic test on push/pull request
 # Derived from: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: Automatic Test
+name: Test
 
 on:
   push:
@@ -23,13 +23,14 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
+        mysql-version: ["10.4", "10.5", "10.6"]
 
     steps:
-    - name: Set up MariaDB database
+    - name: Set up MariaDB ${{ matrix.mysql-version }}
       uses: shogo82148/actions-setup-mysql@v1
       with:
         distribution:   mariadb
-        mysql-version:  '10.5'
+        mysql-version:  ${{ matrix.mysql-version }}
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
@@ -40,13 +41,6 @@ jobs:
         # There seems to be no easy way to install dependencies
         # from pyproject.toml, so we just install the package...
         pip install -e .[mysql]
-    - name: Lint with flake8
-      run: |
-        pip -q install flake8
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-line-length=127 --statistics
     - name: Prepare database
       run: |
         mysql -u root -h 127.0.0.1 <<EOF
