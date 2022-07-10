@@ -11,7 +11,7 @@ from .table import DigikamTable
 from .exceptions import DigikamError
 
 
-def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821
+def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
     """
     Defines the AlbumRoot class
     """
@@ -83,8 +83,8 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821
                 uuid = vid[15:]
                 dev = os.path.realpath(os.path.join('/dev/disk/by-uuid', uuid))
                 with open('/proc/mounts', 'r') as mt:
-                    for l in mt.readlines():
-                        mntinfo = l.strip().split()
+                    for line in mt.readlines():
+                        mntinfo = line.strip().split()
                         if mntinfo[0] == 'UUID=' + uuid or mntinfo[0] == dev:
                             path = mntinfo[1]
                             break

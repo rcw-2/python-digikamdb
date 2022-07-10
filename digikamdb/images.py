@@ -195,7 +195,7 @@ def _videometadata_class(dk: 'Digikam') -> type:            # noqa: F821
     return VideoMetadata
 
 
-def _image_class(dk: 'Digikam') -> type:                    # noqa: F821
+def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
     """
     Returns the Image class.
     """
@@ -567,7 +567,7 @@ class Images(DigikamTable):
             parent.base.metadata,
             autoload_with = self.engine)
     
-    def find(self, name: os.PathLike) -> Optional['Image']: # noqa: F821
+    def find(self, name: os.PathLike) -> Optional['Image']:  # noqa: F821
         """
         Finds an Image by name.
         

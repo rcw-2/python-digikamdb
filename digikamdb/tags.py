@@ -12,7 +12,7 @@ from .properties import BasicProperties
 from .exceptions import DigikamError
 
 
-def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821
+def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
     """
     Defines the Tag class
     """

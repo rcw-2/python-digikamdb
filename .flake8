@@ -3,6 +3,9 @@
 # Allow for slightly larger lines
 max-line-length = 90
 
+# Complex functions get 'noqa'
+max-complexity = 15
+
 # Exclude files from check
 exclude =
     # Standard stuff
