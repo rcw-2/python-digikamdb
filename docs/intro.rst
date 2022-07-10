@@ -25,14 +25,14 @@ Installation
 
 For installation via PIP, simply type:
 
-.. code-block:: sh
+.. code-block:: bash
     
     pip install Digikam-DB
 
 If you are using a MySQL database, you may want to install the additional
 dependencies:
 
-.. code-block:: sh
+.. code-block:: bash
     
     pip install Digikam-DB[mysql]
 
