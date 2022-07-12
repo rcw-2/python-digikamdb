@@ -32,7 +32,7 @@ dependencies:
     
     pip install Digikam-DB[mysql]
 
-To get the source code, go to https://github.com/rcw-2/Digikam-DB.
+To get the source code, go to https://github.com/rcw-2/python-digikamdb.
 
 
 

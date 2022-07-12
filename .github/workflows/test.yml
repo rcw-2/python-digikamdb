@@ -9,11 +9,13 @@ on:
       - main
     paths-ignore:
       - "docs/**"
+      - README.rst
   pull_request:
     branches:
       - main
     paths-ignore:
       - "docs/**"
+      - README.rst
 
 jobs:
   build:
