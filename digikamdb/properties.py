@@ -25,6 +25,9 @@ class BasicProperties:
     
     The class is iterable, yielding all property names, and has a method
     :meth:`~BasicProperties.items` similar to that of :class:`python.dict`.
+    
+    Args:
+        parent:     Object the properties belong to.
     """
     
     # Parent id column
@@ -94,7 +97,7 @@ class BasicProperties:
     
     def items(self) -> Iterable:
         """
-        Returns the properties as an iterable yielding (key, value) tuples
+        Returns the properties as an iterable yielding (key, value) tuples.
         """
         for row in self.session.connection().execute(
             select(self.table)
@@ -104,7 +107,12 @@ class BasicProperties:
             yield row[self._key_col], row[self._value_col]
     
     def remove(self, prop: str):
-        """Removes the given property"""
+        """
+        Removes the given property.
+        
+        Args:
+            prop:   Property to remove.
+        """
         conn = self.session.connection()
         conn.execute(
             delete(self.table)

@@ -33,13 +33,13 @@ class Digikam:
     database configuration in :file:`$HOME/.config/digikamrc`. To use this
     feature, specify ``use_digikam_config = True``.
     
-    Access to actual data is mostly done through the properties
+    Access to actual data is mostly done through the following properties:
     
-    * images (:class:`~digikamdb.images.Images`)
-    * tags (:class:`~digikamdb.tags.Tags`)
-    * albums (:class:`~digikamdb.albums.Albums`)
-    * albumroots (:class:`~digikamdb.albumroots.AlbumRoots`)
-    * settings (:class:`~digikamdb.settings.Settings`)
+    * images (class :class:`~digikamdb.images.Images`)
+    * tags (class :class:`~digikamdb.tags.Tags`)
+    * albums (class :class:`~digikamdb.albums.Albums`)
+    * albumroots (class :class:`~digikamdb.albumroots.AlbumRoots`)
+    * settings (class :class:`~digikamdb.settings.Settings`)
     
     Parameters:
         database:   Digikam database. Can be a ``str`` or a SQLAlchemy
@@ -166,22 +166,22 @@ class Digikam:
     
     @property
     def albumroot_class(self) -> type:
-        """Returns the :class:`~digikamdb._sqla.AlbumRoot` class"""
+        """Returns the :class:`~docs._sqla.AlbumRoot` class"""
         return self.albumRoots.Class
     
     @property
     def album_class(self) -> type:
-        """Returns the :class:`~digikamdb._sqla.Album` class"""
+        """Returns the :class:`~docs._sqla.Album` class"""
         return self.albums.Class
     
     @property
     def image_class(self) -> type:
-        """Returns the :class:`~digikamdb._sqla.Image` class"""
+        """Returns the :class:`~docs._sqla.Image` class"""
         return self.images.Class
     
     @property
     def tag_class(self) -> type:
-        """Returns the :class:`~digikamdb._sqla.Tag` class"""
+        """Returns the :class:`~docs._sqla.Tag` class"""
         return self.tags.Class
 
 
@@ -198,7 +198,8 @@ def _digikamobject_class(base: type) -> type:
         """
         Abstract base class for objects stored in database.
         
-        Derived from ``DeferredReflection`` and :func:`declarative_base`.
+        Derived from :class:`~sqlalchemy.ext.declarative.DeferredReflection`
+        and :func:`~sqlalchemy.ext.declarative.declarative_base`.
         """
         
         __abstract__ = True

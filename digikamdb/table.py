@@ -37,13 +37,22 @@ class DigikamTable:
             select(self.Class).filter_by(id = key)
         ).one()
     
-    def select(self, where_clause: Optional[str] = None, **kwargs) -> List:
+    def select(
+        self,
+        where_clause: Optional[str] = None,
+        **kwargs
+    ) -> '~sqlalchemy.engine.ScalarResult':
         """
         Returns a select result for the table.
         
-        Conditions can be set with **where_clause**, a string containing a
-        SQL WHERE clause. Other keyword arguments are used as arguments for
-        :meth:`~sqlalchemy.select.where`.
+        Args:
+            where_clause:   Contains a SQL WHERE clause, processed by
+                            :func:`~sqlalchemy.sql.expression.text` and
+                            :meth:`~sqlalchemy.orm.Query.where`.
+            **kwargs:       Other keyword arguments are used as arguments for
+                            :meth:`~sqlalchemy.orm.Query.filter_by`.
+        Returns:
+            Iterable query result.
         """
         if where_clause:
             if kwargs:
@@ -68,7 +77,8 @@ class DigikamTable:
         """
         Inserts a new record.
         
-        The keyword arguments are used as properties for the new record.
+        Args:
+            **kwargs: The keyword arguments are used as properties for the new record.
         Returns:
             The generated object.
         """

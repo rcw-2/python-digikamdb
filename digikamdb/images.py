@@ -18,6 +18,9 @@ from .properties import BasicProperties
 class ImageProperties(BasicProperties):
     """
     Image Properties
+    
+    Args:
+        parent(Image): The corresponding ``Image`` object.
     """
     
     #: Parent id column
@@ -31,7 +34,17 @@ class ImageProperties(BasicProperties):
 
 
 class Copyright:
-    """Encapsulates ImageCopyright."""
+    """
+    Encapsulates ImageCopyright.
+    
+    Individual copyright entries can be accessed similar to a :class:`dict`.
+    Values can be :class:`str` or :class:`tuple`, depending on whether
+    the column ``extraValue`` is ``NULL`` or not. If no row with a given
+    key exists, ``None`` is returned.
+    
+    Args:
+        parent:     The corresponding ``Image`` object.
+    """
     
     def __init__(self, parent: 'Image'):                    # noqa: F821
         self.parent = parent
@@ -51,7 +64,7 @@ class Copyright:
         else:
             return row.value, row.extraValue
     
-    def __setitem__(self, key: str, value: Any):
+    def __setitem__(self, key: str, value: Optional[Union[str, List, Tuple]]):
         if isinstance(value, (list, tuple)):
             extravalue = value[1]
             value = value[0]
@@ -73,12 +86,15 @@ class Copyright:
 
 def _imagecomment_class(dk: 'Digikam') -> type:             # noqa: F821
     """
-    Defines the ImageComment class
+    Defines the ImageComment class.
     """
     
     class ImageComment(dk.base):
         """
         Digikam Image Comment
+        
+        Data in this table should be accessed through the ``Image`` properties
+        :attr:`~Image.caption` and :attr:`~Image.title`.
         """
         __tablename__ = 'ImageComments'
     
@@ -87,7 +103,7 @@ def _imagecomment_class(dk: 'Digikam') -> type:             # noqa: F821
 
 def _imagecopyright_class(dk: 'Digikam') -> type:           # noqa: F821
     """
-    Defines the ImageCopyright class
+    Defines the ImageCopyright class.
     """
     
     class ImageCopyright(dk.base):
@@ -101,7 +117,7 @@ def _imagecopyright_class(dk: 'Digikam') -> type:           # noqa: F821
 
 def _imagehistory_class(dk: 'Digikam') -> type:             # noqa: F821
     """
-    Defines the ImageHistory class
+    Defines the ImageHistory class.
     """
     
     class ImageHistory(dk.base):
@@ -148,7 +164,7 @@ def _imageinformation_class(dk: 'Digikam') -> type:         # noqa: F821
                 regexp = r'(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)'))
         
         @validates('rating')
-        def validate_rating(self, key: int, value: int) -> int:
+        def _validate_rating(self, key: int, value: int) -> int:
             if value < -1 or value > 5:
                 raise ValueError('Image rating must be from -1 to 5')
             return value
@@ -158,12 +174,32 @@ def _imageinformation_class(dk: 'Digikam') -> type:         # noqa: F821
 
 def _imagemetadata_class(dk: 'Digikam') -> type:            # noqa: F821
     """
-    Defines the ImageMetadata class
+    Defines the ImageMetadata class.
     """
     
     class ImageMetadata(dk.base):
         """
-        Digikam Image Metadata
+        Represents a row of the ``ImageMetadata`` table.
+        
+        This object contains Exif information of the corresponding
+        :class:`Image` object. The following column-related properties can be directly accessed:
+        
+        * **make** (*str*)
+        * **model** (*str*)
+        * **lens** (*str*)
+        * **aperture** (*float*)
+        * **focalLength** (*float*)
+        * **focalLength35** (*float*)
+        * **exposureTime** (*float*)
+        * **exposureProgram** (*int*)
+        * **exposureMode** (*int*)
+        * **sensitivity** (*int*)
+        * **flash** (*int*)
+        * **whiteBalance** (*int*)
+        * **whiteBalanceColorTemperature** (*int*)
+        * **meteringMode** (*int*)
+        * **subjectDistance** (*float*)
+        * **subjectDistanceCategory** (*int*)
         """
         __tablename__ = 'ImageMetadata'
     
@@ -177,7 +213,9 @@ def _imageposition_class(dk: 'Digikam') -> type:            # noqa: F821
     
     class ImagePosition(dk.base):
         """
-        Digikam Image Position
+        Contains the Image's position.
+        
+        Should be accessed through :attr:`Image.position`.
         """
         __tablename__ = 'ImagePositions'
     
@@ -192,6 +230,19 @@ def _videometadata_class(dk: 'Digikam') -> type:            # noqa: F821
     class VideoMetadata(dk.base):
         """
         Digikam Video Metadata
+        
+        This object contains Video metadata of the corresponding
+        :class:`Image` object. The following column-related properties can be
+        directly accessed:
+        
+        * **aspectRatio** (*str*)
+        * **audioBitRate** (*str*)
+        * **audioChannelType** (*str*)
+        * **audioCompressor** (*str*)
+        * **duration** (*str*)
+        * **frameRate** (*str*)
+        * **exposureProgram** (*int*)
+        * **videoCodec** (*str*)
         """
         __tablename__ = 'VideoMetadata'
     
@@ -218,18 +269,22 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         * **uniqueHash** (*str*)
         * **manualOrder** (*int*)
         
+        The image's album can be accessed by :attr:`albumObj`.
+        
         Digikam splits metadata (Exif and own) in several tables. `Image`
         has the corresponding properties:
         
         * :attr:`caption` and :attr:`title`
-        * :attr:`information`
+        * :attr:`copyright`
         * :attr:`imagemeta` (for pictures)
+        * :attr:`information`
         * :attr:`position`
         * :attr:`properties`
         * :attr:`tags`
         * :attr:`videometa` (for movies)
         
-        .. todo::   Interface to ImageCopyright table
+        See also:
+            * Class :class:`~digikamdb.images.Images`
         """
         
         __tablename__ = 'Images'
@@ -373,6 +428,10 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         
         @property
         def copyright(self) -> Copyright:
+            """
+            Returns the copyright data.
+            
+            """
             if not hasattr(self, '_copyrightObj'):
                 self._copyrightObj = Copyright(self)
             return self._copyrightObj
@@ -549,6 +608,9 @@ class Images(DigikamTable):
     
     Parameters:
         parent:     Digikam object for access to database and other classes.
+
+    See also:
+        * Class :class:`~docs._sqla.Image`
     """
     
     _class_function = _image_class
@@ -570,12 +632,16 @@ class Images(DigikamTable):
             parent.base.metadata,
             autoload_with = self.engine)
     
-    def find(self, name: os.PathLike) -> Optional['Image']:  # noqa: F821
+    def find(
+        self,
+        name: Union[str, bytes, os.PathLike]
+    ) -> Optional['Image']:                                 # noqa: F821
         """
         Finds an Image by name.
         
         Args:
-            name:   filename of the image
+            name:   Path to image file. Can be given as any type that the
+                    :mod:`os.path` functions understand.
         """
         
         base = os.path.basename(name)

@@ -28,6 +28,8 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
         * **caption** (*str*)
         * **collection** (*str*)
         
+        See also:
+            * Class :class:`~digikamdb.albums.Albums`
         """
 
         __tablename__ = 'Albums'
@@ -94,6 +96,9 @@ class Albums(DigikamTable):
     
     Parameters:
         parent:     Digikam object for access to database and other classes.
+    
+    See also:
+        * Class :class:`~docs._sqla.Album`
     """
     
     _class_function = _album_class

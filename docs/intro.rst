@@ -41,6 +41,14 @@ The source code is available on :source:`Github<#>`.
 Basic Usage
 -------------
 
+In this small example, we
+
+* connect to the database via a :class:`~digikamdb.conn.Digikam` object,
+* create a tag **my tag** if it does not exist yet,
+* add this tag to image :file:`/path/to/my/image.jpg`,
+* change some properties of :file:`/path/to/my/image.jpg` and
+* print file name and complete path of the image with id **42**.
+
 .. code-block:: python
     
     from digikamdb import Digikam
@@ -52,10 +60,10 @@ Basic Usage
         tag = dk.tags.add('my tag', dk.tags.root)
     
     img = dk.images.find('/path/to/my/image.jpg')
+    img.tags.append(tag)
     img.caption = 'My Caption'
     img.title = 'My Title'
     img.information.rating = 3
-    img.tags.append(tag)
     
     img2 = dk.images[42]    # Access image by id
     print(img2.name, img2.abspath())

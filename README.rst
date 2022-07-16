@@ -16,6 +16,7 @@ SQLite and MySQL databases.
     This package is still under development. Use at your own risk and make
     a backup of your Digikam database before writing to it.
 
+
 Installation
 -------------
 
@@ -33,6 +34,18 @@ dependencies:
     pip install Digikam-DB[mysql]
 
 To get the source code, go to https://github.com/rcw-2/python-digikamdb.
+
+
+Running the Tests
+------------------
+
+The MySQL tests need a MySQL database to run. The database must be specified
+in a module ``mysql_data`` somewhere in the Python path (e.g. in the same
+directory as this file, it will be ignored by Git) in a variable ``mysql_db``.
+The database must exist and be filled for running the tests.
+
+The module can also supply a variable named ``test_data``. See
+``tests/__init__.py`` for example data``.
 
 
 

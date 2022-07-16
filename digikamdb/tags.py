@@ -41,6 +41,9 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             tags at the top level have a parent id of ``0``, for which no
             row exists. On MySQL, there is a tag ``_Digikam_Root_Tag_`` with
             ``id == 0`` and parent id -1, for which there is no row.
+
+        See also:
+            * Class :class:`~digikamdb.tags.Tags`
         """
         
         __tablename__ = 'Tags'
@@ -186,7 +189,10 @@ class Tags(DigikamTable):
     
     Parameters:
         parent:     Digikam object for access to database and other classes.
-    """
+    
+    See also:
+        * Class :class:`~docs._sqla.Tag`
+"""
     
     _class_function = _tag_class
     
@@ -378,9 +384,12 @@ class Tags(DigikamTable):
         self.parent.delete(tag)
         self.parent.commit()
     
-    def check(self) -> None:
+    def check(self):
         """
         Checks the integrity of the *Tags* table.
+        
+        On MySQL, checks it the nested sets structure of the ``Tags`` table is
+        correct. If not, an exception is raised.
         
         Raises an exception on SQLite.
         """
@@ -391,6 +400,9 @@ class Tags(DigikamTable):
 class TagProperties(BasicProperties):
     """
     Tag Properties
+
+    Args:
+        parent(Tag): The corresponding ``Tag`` object.
     """
     
     # Parent id column

@@ -1,5 +1,5 @@
 """
-Digikam Images
+Provides access to Digikam album roots
 """
 
 import os
@@ -13,7 +13,7 @@ from .exceptions import DigikamError
 
 def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
     """
-    Defines the AlbumRoot class
+    Defines the :class:`~digikamdb._sqla.AlbumRoot` class
     """
     
     class AlbumRoot(dk.base):
@@ -30,7 +30,10 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
           is located
         * **specificPath** (*str*) - Relative directory, starts with a :file:`/`
         
-        The location can be accessed with :meth:`AlbumRoot.abspath`.
+        The location can be accessed with :attr:`abspath`.
+        
+        See also:
+            * Class :class:`~digikamdb.albumroots.AlbumRoots`
         """
 
         __tablename__ = 'AlbumRoots'
@@ -141,12 +144,11 @@ class AlbumRoots(DigikamTable):
             print(root.relativePath)
     
     Parameters:
-        parent:     Digikam object for access to database and other classes.
-    Digikam albums
-    
-    Parameters:
-        parent:     :class:`Digikam` object
+        parent:     :class:`~digikamdb.conn.Digikam` object
         override:   Dict containing override information
+    
+    See also:
+        * Class :class:`~docs._sqla.AlbumRoot`
     """
     
     _class_function = _albumroot_class

@@ -36,7 +36,7 @@ Classes
     
     .. autoclass::  ImageComment
     
-    .. autoclass::  ImageCopyright
+.. autoclass::  ImageCopyright
     
 .. autoclass::  ImageHistory
 
