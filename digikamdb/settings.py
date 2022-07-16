@@ -1,5 +1,5 @@
 """
-Digikam Settings
+Provides access to Digikam settings.
 """
 
 from typing import Iterable
@@ -11,7 +11,7 @@ class Settings:
     """
     Digikam settings class
     
-    The database settings can be accessed like a dict:
+    The Digikam settings can be accessed like a dict:
     
     .. code-block:: python
         

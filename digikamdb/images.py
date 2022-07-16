@@ -1,5 +1,8 @@
 """
-Digikam Images
+Provides access to Digikam images.
+
+Digikam images can be accessed via the ``Digikam`` property
+:attr:`~Digikam.images`, which is an object of class :class:`Images`.
 """
 
 import os
@@ -548,7 +551,7 @@ class Images(DigikamTable):
         parent:     Digikam object for access to database and other classes.
     """
     
-    class_function = _image_class
+    _class_function = _image_class
     
     def __init__(
         self,

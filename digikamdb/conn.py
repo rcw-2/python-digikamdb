@@ -1,5 +1,5 @@
 """
-Defines the Digikam class for database access.
+Defines the ``Digikam`` class for database access.
 """
 
 import configparser
@@ -165,19 +165,23 @@ class Digikam:
         return (self.engine.dialect.name == 'mysql')
     
     @property
-    def albumroot_class(self):
+    def albumroot_class(self) -> type:
+        """Returns the :class:`~digikamdb._sqla.AlbumRoot` class"""
         return self.albumRoots.Class
     
     @property
-    def album_class(self):
+    def album_class(self) -> type:
+        """Returns the :class:`~digikamdb._sqla.Album` class"""
         return self.albums.Class
     
     @property
-    def image_class(self):
+    def image_class(self) -> type:
+        """Returns the :class:`~digikamdb._sqla.Image` class"""
         return self.images.Class
     
     @property
-    def tag_class(self):
+    def tag_class(self) -> type:
+        """Returns the :class:`~digikamdb._sqla.Tag` class"""
         return self.tags.Class
 
 

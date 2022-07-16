@@ -17,14 +17,14 @@ class DigikamTable:
     
     __abstract__ = True
     
-    class_function = None
+    _class_function = None
     
     def __init__(self, parent: 'Digikam'):                  # noqa: F821
         self.parent = parent
         self.engine = self.parent.engine
         self.session = self.parent.session
         self.is_mysql = self.parent.is_mysql
-        self.Class = self.__class__.class_function(self.parent)
+        self.Class = self.__class__._class_function(self.parent)
         self.Class.engine = self.engine
         self.Class.session = self.session
         self.Class.is_mysql = self.is_mysql

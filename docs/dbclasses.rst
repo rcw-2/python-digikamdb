@@ -1,7 +1,17 @@
-Database Classes
-=================
+SQLAlchemy mapped Classes
+===========================
 
-.. module::     digikamdb._sqlalchemy
+.. module::     digikamdb._sqla
+
+In order for Digikam-DB to be able to access different databases at the same
+time, the mapped classes are generated at runtime. To make them available,
+the classes ares stored in the ``Digikam`` properties
+:attr:`~digikamdb.conn.Digikam.album_class`,
+:attr:`~digikamdb.conn.Digikam.albumroot_class`,
+:attr:`~digikamdb.conn.Digikam.image_class` and
+:attr:`~digikamdb.conn.Digikam.tag_class`.
+
+The classes created at runtime are:
 
 * :class:`Album`
 * :class:`AlbumRoot`

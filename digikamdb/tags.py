@@ -1,5 +1,5 @@
 """
-Digikam Tags
+Enables access to Digikam tags. 
 """
 
 from typing import Iterable, List, Optional, Union
@@ -24,6 +24,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
         The following column-related properties can be directly accessed:
         
         * **id** (*int*)
+        * **pid** (*int*) - The parent tag's id.
         * **name** (*str*) - The tag's name.
         * **icon** (*int*)
         * **iconkde** (*str*)
@@ -35,6 +36,11 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
           ``tag1``.
         * The :meth:`hierarchicalname` method.
         
+        .. note::
+            The tree structure differs between SQLite and MySQL. On SQLite,
+            tags at the top level have a parent id of ``0``, for which no
+            row exists. On MySQL, there is a tag ``_Digikam_Root_Tag_`` with
+            ``id == 0`` and parent id -1, for which there is no row.
         """
         
         __tablename__ = 'Tags'
@@ -116,7 +122,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
         
         def hierarchicalname(self) -> str:
             """
-            Returns the name including parents.
+            Returns the name including parents, separated by ``/``.
             """
             if self.pid < 0:
                 return self.name
@@ -166,14 +172,14 @@ class Tags(DigikamTable):
     usually accessed through the :class:`~digikamdb.connection.Digikam`
     property :attr:`~digikamdb.connection.Digikam.tags`.
     
-    Usage:
+    Basic usage:
     
     .. code-block:: python
         
         dk = Digikam(...)
-        mytag = dk.tags['My Tag']       # access by name
-        mytag2 = dk.tags[42]            # access by id
-        newtag = dk.text.add('New Tag') # creates new tag with name 'New Tag'
+        mytag = dk.tags['My Tag']           # access by name
+        mytag2 = dk.tags[42]                # access by id
+        newtag = dk.tags.add('New Tag', 0)  # creates new tag with name 'New Tag'
     
     Access via ``[]`` returns ``None`` if the name or id cannot be found.
     If there are multiple matches, an exception is raised.
@@ -182,7 +188,7 @@ class Tags(DigikamTable):
         parent:     Digikam object for access to database and other classes.
     """
     
-    class_function = _tag_class
+    _class_function = _tag_class
     
     def __init__(
         self,
@@ -333,6 +339,8 @@ class Tags(DigikamTable):
     def add(self, name: str, parent: Union[int, 'Tag']) -> 'Tag':   # noqa: F821
         """
         Adds a new tag.
+        
+        To create a Tag at the root of the tag tree, set ``parent`` to 0.
         
         Parameters:
             name:   the new tag's name

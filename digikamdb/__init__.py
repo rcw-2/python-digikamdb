@@ -6,7 +6,7 @@ Access to Digikam data is usually done with the :class:`~digikamdb.connection.Di
 class.
 """
 
-from .connection import Digikam         # noqa: F401
+from .conn import Digikam               # noqa: F401
 from .exceptions import DigikamError    # noqa: F401
 
 from ._version import version

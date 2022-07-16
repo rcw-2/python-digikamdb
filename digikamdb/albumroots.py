@@ -149,7 +149,7 @@ class AlbumRoots(DigikamTable):
         override:   Dict containing override information
     """
     
-    class_function = _albumroot_class
+    _class_function = _albumroot_class
     
     def __init__(
         self,

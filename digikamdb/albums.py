@@ -96,5 +96,5 @@ class Albums(DigikamTable):
         parent:     Digikam object for access to database and other classes.
     """
     
-    class_function = _album_class
+    _class_function = _album_class
     
