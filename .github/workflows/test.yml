@@ -63,6 +63,7 @@ jobs:
       with:
         distribution:   ${{ matrix.mysql-flavor }}
         mysql-version:  ${{ matrix.mysql-version }}
+        root-password:  ${{ secrets.MYSQL_ROOT_PW }}
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
@@ -75,16 +76,16 @@ jobs:
         pip install -e .[mysql]
     - name: Prepare database
       run: |
-        mysql -u root -h 127.0.0.1 <<EOF
+        mysql -u root -h 127.0.0.1 -P "${{ secrets.MYSQL_ROOT_PW }}" <<EOF
         CREATE DATABASE digikam;
-        CREATE USER digikam@localhost;
+        CREATE USER digikam@localhost IDENTIFIED BY '${{ secrets.MYSQL_USER_PW }}';
         GRANT ALL PRIVILEGES ON digikam.* TO digikam@localhost;
         EOF
         zcat tests/data/testdb.sql.gz | mysql -u digikam -h 127.0.0.1 digikam
     - name: Test with Python unittest
       run: |
         cat >mysql_data.py <<EOF
-        mysql_db = 'mysql+pymysql://digikam@localhost/digikam'
+        mysql_db = 'mysql+pymysql://digikam@localhost:{{ secrets.MYSQL_USER_PW }}/digikam'
         root_override = None
         test_data = None
         EOF
