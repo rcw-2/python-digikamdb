@@ -1,5 +1,5 @@
 """
-Enables access to Digikam tags. 
+Enables access to Digikam tags.
 """
 
 from typing import Iterable, List, Optional, Union

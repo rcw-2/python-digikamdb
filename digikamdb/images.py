@@ -6,7 +6,7 @@ Digikam images can be accessed via the ``Digikam`` property
 """
 
 import os
-from typing import Any, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from sqlalchemy import Column, Table, delete
 from sqlalchemy.orm import relationship, validates
@@ -182,7 +182,8 @@ def _imagemetadata_class(dk: 'Digikam') -> type:            # noqa: F821
         Represents a row of the ``ImageMetadata`` table.
         
         This object contains Exif information of the corresponding
-        :class:`Image` object. The following column-related properties can be directly accessed:
+        :class:`Image` object. The following column-related properties
+        can be directly accessed:
         
         * **make** (*str*)
         * **model** (*str*)

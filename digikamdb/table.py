@@ -2,7 +2,7 @@
 Basic Digikam Table Class
 """
 
-from typing import Iterable, List, Optional
+from typing import Iterable, Optional
 
 from sqlalchemy import select, text
 
@@ -41,7 +41,7 @@ class DigikamTable:
         self,
         where_clause: Optional[str] = None,
         **kwargs
-    ) -> '~sqlalchemy.engine.ScalarResult':
+    ) -> '~sqlalchemy.engine.ScalarResult':                 # noqa: F821
         """
         Returns a select result for the table.
         
