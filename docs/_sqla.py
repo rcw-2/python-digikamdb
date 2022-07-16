@@ -4,11 +4,11 @@ This module just exists to generate the documentation for table classes
 
 from sqlalchemy.ext.declarative import declarative_base
 
-from .conn import _digikamobject_class
-from .albumroots import _albumroot_class
-from .albums import _album_class
-from .tags import _tag_class
-from .images import (
+from digikamdb.conn import _digikamobject_class
+from digikamdb.albumroots import _albumroot_class
+from digikamdb.albums import _album_class
+from digikamdb.tags import _tag_class
+from digikamdb.images import (
     _imagecomment_class,
     _imagecopyright_class,
     _imagehistory_class,
