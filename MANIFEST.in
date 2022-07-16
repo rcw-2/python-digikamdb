@@ -1,2 +1,5 @@
+exclude .flake8
+exclude .github
 exclude .gitignore
 exclude .kateproject
+exclude .readthedocs.yaml
