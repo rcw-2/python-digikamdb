@@ -1,4 +1,4 @@
-|Documentation Status| |Check Status| |Test Status|
+|Documentation Status| |Test Status|
 
 Digikam-DB
 ===========
@@ -38,9 +38,6 @@ To get the source code, go to https://github.com/rcw-2/python-digikamdb.
 
 .. |Documentation Status| image:: https://readthedocs.org/projects/digikam-db/badge/?version=latest
     :target: http://digikam-db.readthedocs.io/?badge=latest
-
-.. |Check Status| image:: https://github.com/rcw-2/python-digikamdb/actions/workflows/check.yml/badge.svg
-    :target: https://github.com/rcw-2/python-digikamdb/actions/workflows/check.yml
 
 .. |Test Status| image:: https://github.com/rcw-2/python-digikamdb/actions/workflows/test.yml/badge.svg
     :target: https://github.com/rcw-2/python-digikamdb/actions/workflows/test.yml
