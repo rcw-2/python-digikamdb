@@ -23,6 +23,8 @@ aspects of the Digikam database.
 Installation
 -------------
 
+.. note::   Not yet available via PIP
+
 For installation via PIP, simply type:
 
 .. code-block:: console
