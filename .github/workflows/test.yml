@@ -85,7 +85,7 @@ jobs:
     - name: Test with Python unittest
       run: |
         cat >mysql_data.py <<EOF
-        mysql_db = 'mysql+pymysql://digikam@localhost:{{ secrets.MYSQL_USER_PW }}/digikam'
+        mysql_db = 'mysql+pymysql://digikam@localhost:${{ secrets.MYSQL_USER_PW }}/digikam'
         root_override = None
         test_data = None
         EOF
