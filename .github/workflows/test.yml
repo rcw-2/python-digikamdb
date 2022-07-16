@@ -81,7 +81,7 @@ jobs:
         CREATE USER digikam@localhost IDENTIFIED BY '${{ secrets.MYSQL_USER_PW }}';
         GRANT ALL PRIVILEGES ON digikam.* TO digikam@localhost;
         EOF
-        zcat tests/data/testdb.sql.gz | mysql -u digikam -h 127.0.0.1 -p"{{ secrets.MYSQL_USER_PW }}" digikam
+        zcat tests/data/testdb.sql.gz | mysql -u digikam -h 127.0.0.1 -p"${{ secrets.MYSQL_USER_PW }}" digikam
     - name: Test with Python unittest
       run: |
         cat >mysql_data.py <<EOF
