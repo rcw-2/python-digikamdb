@@ -76,7 +76,7 @@ jobs:
         pip install -e .[mysql]
     - name: Prepare database
       run: |
-        mysql -u root -h 127.0.0.1 -p "${{ secrets.MYSQL_ROOT_PW }}" <<EOF
+        mysql -u root -h 127.0.0.1 -p"${{ secrets.MYSQL_ROOT_PW }}" <<EOF
         CREATE DATABASE digikam;
         CREATE USER digikam@localhost IDENTIFIED BY '${{ secrets.MYSQL_USER_PW }}';
         GRANT ALL PRIVILEGES ON digikam.* TO digikam@localhost;
