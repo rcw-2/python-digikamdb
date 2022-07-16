@@ -52,16 +52,11 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
-        mysql-version: ["8.0", "10.4", "10.5", "10.6"]
-        include:
-          - mysql-flavor:   mysql
-            mysql-version:  "8.0"
-          - mysql-flavor:   mariadb
-            mysql-version:  "10.4"
-          - mysql-flavor:   mariadb
-            mysql-version:  "10.5"
-          - mysql-flavor:   mariadb
-            mysql-version:  "10.6"
+        mysql-version:
+          - "mysql-8.0"
+          - "mariadb-10.4"
+          - "mariadb-10.5"
+          - "mariadb-10.6"
     steps:
     - name: Set up MariaDB ${{ matrix.mysql-version }}
       uses: shogo82148/actions-setup-mysql@v1
