@@ -9,6 +9,7 @@ class DigikamError(Exception):
     """
     pass
 
+
 class DigikamConfigError(DigikamError):
     """
     Error in Digikam Digikam configuration

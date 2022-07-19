@@ -16,7 +16,8 @@ from .tags import Tags
 from .albumroots import AlbumRoots
 from .albums import Albums
 from .images import Images
-from .exceptions import DigikamConfigError
+from .exceptions import DigikamError, DigikamConfigError
+
 
 class Digikam:
     """
@@ -141,7 +142,6 @@ class Digikam:
                 raise DigikamError('Configuration not found: ' + e)
         
         raise DigikamConfigError('Unknown database type ' + dbtype)
-
     
     def destroy(self):
         """Clears the object."""
