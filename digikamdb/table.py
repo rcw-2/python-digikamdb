@@ -49,7 +49,7 @@ class DigikamTable:
             where_clause:   Contains a SQL WHERE clause, processed by
                             :func:`~sqlalchemy.sql.expression.text` and
                             :meth:`~sqlalchemy.orm.Query.where`.
-            **kwargs:       Other keyword arguments are used as arguments for
+            kwargs:         Other keyword arguments are used as arguments for
                             :meth:`~sqlalchemy.orm.Query.filter_by`.
         Returns:
             Iterable query result.
@@ -78,7 +78,7 @@ class DigikamTable:
         Inserts a new record.
         
         Args:
-            **kwargs: The keyword arguments are used as properties for the new record.
+            kwargs: The keyword arguments are used as properties for the new record.
         Returns:
             The generated object.
         """

@@ -358,8 +358,8 @@ def _imageinformation_class(dk: 'Digikam') -> type:         # noqa: F821
         
         * **imageid** (*int*)
         * **rating** (*int*) - The image's rating, must be from -1 to 5.
-        * **creationDate** (*datetime*)
-        * **digitizationDate** (*datetime*)
+        * **creationDate** (:class:`~datetime.datetime`)
+        * **digitizationDate** (:class:`~datetime.datetime`)
         * **orientation** (*int*)
         """
         __tablename__ = 'ImageInformation'
@@ -561,7 +561,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         # Relationship to ImageComments
         
         @property
-        def caption(self) -> Optional[str]:
+        def caption(self) -> Caption:
             """
             Returns or sets the image's default caption.
             
@@ -581,7 +581,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
             self.caption.set(val)
         
         @property
-        def title(self) -> Optional[str]:
+        def title(self) -> Title:
             """
             Returns or sets the image's title.
             
@@ -784,7 +784,7 @@ class Images(DigikamTable):
         parent:     Digikam object for access to database and other classes.
 
     See also:
-        * Class :class:`~docs._sqla.Image`
+        * Class :class:`~_sqla.Image`
     """
     
     _class_function = _image_class

@@ -10,12 +10,25 @@ Contents
     :maxdepth: 2
     
     intro
-    API Reference <_api/digikamdb>
-    dbclasses
+    tutorial
+    api
+    api_images
+    api_albums
+    api_tags
+
     
 Indices and tables
 -------------------
 
 * :ref:`genindex`
 * :ref:`search`
+
+.. ifconfig::   include_private_content
+    
+    TODO
+    ------
+    
+    .. todo:: Fix header level
+    
+    .. todolist::
 

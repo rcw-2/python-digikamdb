@@ -2,7 +2,7 @@
 This package provides an object-oriented interface to the Digikam metadata
 by accessing the Digikam database.
 
-Access to Digikam data is usually done with the :class:`~digikamdb.connection.Digikam`
+Access to Digikam data is usually done with the :class:`~digikamdb.conn.Digikam`
 class.
 """
 

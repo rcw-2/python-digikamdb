@@ -148,7 +148,7 @@ class AlbumRoots(DigikamTable):
         override:   Dict containing override information
     
     See also:
-        * Class :class:`~docs._sqla.AlbumRoot`
+        * Class :class:`~_sqla.AlbumRoot`
     """
     
     _class_function = _albumroot_class

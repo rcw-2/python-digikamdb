@@ -98,7 +98,7 @@ class Albums(DigikamTable):
         parent:     Digikam object for access to database and other classes.
     
     See also:
-        * Class :class:`~docs._sqla.Album`
+        * Class :class:`~_sqla.Album`
     """
     
     _class_function = _album_class

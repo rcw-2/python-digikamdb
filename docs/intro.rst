@@ -94,6 +94,3 @@ Limitations
   * TagProperties
   * VideoMetadata
 
-* Only `x-default` in language fields is supported.
-
-

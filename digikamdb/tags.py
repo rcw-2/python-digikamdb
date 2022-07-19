@@ -191,7 +191,7 @@ class Tags(DigikamTable):
         parent:     Digikam object for access to database and other classes.
     
     See also:
-        * Class :class:`~docs._sqla.Tag`
+        * Class :class:`~_sqla.Tag`
 """
     
     _class_function = _tag_class

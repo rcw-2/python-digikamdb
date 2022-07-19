@@ -22,10 +22,12 @@ from digikamdb.images import (
 class Dummy:
     pass
 
-
-# create fake Digikam object
-dk = Dummy()
+# Make this an 
 DigikamObject = _digikamobject_class(declarative_base())
+DigikamObject.__qualname__ = '_sqla.DigikamObject'
+
+# create fake Digikam instance
+dk = Dummy()
 dk.base = DigikamObject
 dk.is_mysql = True
 dk.engine = None

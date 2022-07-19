@@ -55,8 +55,8 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.ifconfig',
     'sphinx.ext.extlinks',
-    'apidoc_run',
-    'apidoc_clean',
+#    'apidoc_run',
+#    'apidoc_clean',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
