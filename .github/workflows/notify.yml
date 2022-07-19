@@ -20,4 +20,4 @@ jobs:
       - uses: fateyan/action-discord-notifier@v1
         with:
           message-title: ${{ github.repository }} updated
-          webhook: ${{ secrets.DISCORD_WEBHOOL }}
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
