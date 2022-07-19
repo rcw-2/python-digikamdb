@@ -8,13 +8,21 @@ on:
     branches:
       - main
     paths-ignore:
+      - ".github/**"
+      - ".gitignore"
+      - ".readthedocs.yaml"
       - "docs/**"
+      - MANIFEST.in
       - README.rst
   pull_request:
     branches:
       - main
     paths-ignore:
+      - ".github/**"
+      - ".gitignore"
+      - ".readthedocs.yaml"
       - "docs/**"
+      - MANIFEST.in
       - README.rst
 
 jobs:

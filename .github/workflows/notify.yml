@@ -19,5 +19,6 @@ jobs:
         uses: actions/checkout@v2
       - uses: fateyan/action-discord-notifier@v1
         with:
-          message-title: ${{ github.repository }} updated
+          message-title: Github Notification
+          message: ${{ github.repository }} updated
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
