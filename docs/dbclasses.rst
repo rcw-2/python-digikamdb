@@ -1,7 +1,7 @@
 SQLAlchemy mapped Classes
 ===========================
 
-.. module::     docs._sqla
+.. currentmodule::     docs._sqla
 
 In order for Digikam-DB to be able to access different databases at the same
 time, the mapped classes are generated at runtime. To make them available,
@@ -36,7 +36,7 @@ Classes
     
     .. autoclass::  ImageComment
     
-.. autoclass::  ImageCopyright
+    .. autoclass::  ImageCopyright
     
 .. autoclass::  ImageHistory
 

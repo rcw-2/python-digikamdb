@@ -84,7 +84,7 @@ class DigikamTable:
         """
         new = self.Class(**kwargs)
         self.session.add(new)
-        self.session.commit()
+#        self.session.commit()
         return new
     
 

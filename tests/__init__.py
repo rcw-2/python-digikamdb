@@ -80,6 +80,111 @@ class Wrapper:
             with self.subTest(file = 'not in DB'):
                 self.assertIsNone(self.dk.images.find('/does/not/exist'))
         
+        # Title helper methods
+        def _set_titles(self, img, titles):
+            old_titles = {}
+            for lang, newtitle in titles.items():
+                if lang == '_default':
+                    old_titles[lang] = img.title.get()
+                    img.title = newtitle
+                else:
+                    old_titles[lang] = img.title.get(lang)
+                    img.title.set(newtitle, language = lang)
+            return old_titles
+        
+        def _set_captions(self, img, captions):
+            old_captions = {}
+            for lang, newdata in captions.items():
+                if lang == '_default':
+                    old_captions[lang] = img.caption.get()
+                    img.caption = newdata
+                else:
+                    old_captions[lang] = {}
+                    for author, newcaption in newdata.items():
+                        old_captions[lang][author] = img.caption.get(lang, author)
+                        img.caption.set(newcaption, language = lang, author = author)
+            return old_captions
+        
+        def _check_titles(self, img, titles):
+            for lang, newtitle in titles.items():
+                if lang == '_default':
+                    self.assertEqual(img.title.get(), newtitle)
+                else:
+                    self.assertEqual(img.title.get(lang), newtitle)
+        
+        def _check_captions(self, img, captions):
+            for lang, newdata in captions.items():
+                if lang == '_default':
+                    self.assertEqual(img.caption.get(), newdata)
+                else:
+                    for author, newcaption in newdata.items():
+                        self.assertEqual(img.caption.get(lang, author), newcaption)
+        
+        def test_images_comments_1(self):
+            # Set new values
+            old_comments = {}
+            for data in self.test_data['images']:
+                if 'comments' in data:
+                    with self.subTest(imageid = data['id']):
+                        img = self.dk.images[data['id']]
+                        self.assertEqual(img.id, data['id'])
+                        old_comments[img.id] = {}
+                        
+                        if 'title' in data['comments']:
+                            old_comments[img.id]['title'] = self._set_titles(
+                                img,
+                                data['comments']['title']
+                            )
+                        
+                        if 'caption' in data['comments']:
+                            old_comments[img.id]['caption'] = self._set_captions(
+                                img,
+                                data['comments']['caption']
+                            )
+            self.dk.session.commit()
+            self.__class__.old_image_comments = old_comments
+        
+        def test_images_comments_2(self):
+            # Check new values
+            for data in self.test_data['images']:
+                if 'comments' in data:
+                    with self.subTest(imageid = data['id']):
+                        img = self.dk.images[data['id']]
+                        self._check_titles(
+                                img,
+                                data['comments']['title']
+                            )
+                        if 'caption' in data['comments']:
+                            self._check_captions(
+                                img,
+                                data['comments']['caption']
+                            )
+        
+        def test_images_comments_3(self):
+            # Restore old values
+            old_comments = self.__class__.old_image_comments
+            for id_, comments in old_comments.items():
+                with self.subTest(imageid = id_):
+                    img = self.dk.images[id_]
+                    self.assertEqual(img.id, id_)
+                    if 'title' in comments:
+                        self._set_titles(img, comments['title'])
+                    if 'caption' in comments:
+                        self._set_captions(img, comments['caption'])
+            self.dk.session.commit()
+        
+        def test_images_comments_4(self):
+            # Check old values
+            old_comments = self.__class__.old_image_comments
+            for id_, comments in old_comments.items():
+                with self.subTest(imageid = id_):
+                    img = self.dk.images[id_]
+                    self.assertEqual(img.id, id_)
+                    if 'title' in comments:
+                        self._check_titles(img, comments['title'])
+                    if 'caption' in comments:
+                        self._check_captions(img, comments['caption'])
+        
         def test_tags(self):
             for tag in self.dk.tags:
                 with self.subTest(tagid = tag.id):
@@ -125,7 +230,22 @@ class DigikamSQLiteTest(Wrapper.DigikamTestBase):
                 'mountpoint': 'TEST',
                 'path': 'MYDIR'}],
             'albums': [{'id': 1, 'path': 'MYDIR'}],
-            'images': [{'id': 1, 'name': '20210806_165143.jpg'}],
+            'images': [{
+                'id': 1,
+                'name': '20210806_165143.jpg',
+                'comments': {
+                    'title': {
+                        '_default':     'New title for image 1',
+                        'de-DE':        'Die Destillerie',
+                    },
+                    'caption': {
+                        '_default':     'New caption for image 1',
+                        'de-DE': {
+                            'RCW':      'Ein Kommentar von RCW',
+                        },
+                    },
+                },
+            }],
             'tags': [{'id': 22, 'pid': 0, 'name': 'France'}]
         }
     

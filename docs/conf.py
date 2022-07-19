@@ -213,7 +213,6 @@ autodoc_default_options = {
                             '_reflect_table, _sa_decl_prepare, ' +
                             '_sa_deferred_table_resolver, _sa_raise_deferred_config, ' + 
                             '_sa_class_manager, _sa_registry',
-    'inherited-members':    True,
     'member-order':         'groupwise',
     'private-members':      False,
     'show-inheritance':     True,
@@ -262,8 +261,9 @@ if (os.path.isfile('/etc/.0acb81c396') or
     
     # Document private entities
     autodoc_default_options.update({
-        'undoc-members':    True,
-        'private-members':  True,
+        'inherited-members':    True,
+        'undoc-members':        True,
+        'private-members':      True,
     })
     
     # Private ToDo extension

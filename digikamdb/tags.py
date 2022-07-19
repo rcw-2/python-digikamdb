@@ -382,7 +382,7 @@ class Tags(DigikamTable):
             raise TypeError('Tag must be int or Tag')
         
         self.parent.delete(tag)
-        self.parent.commit()
+#        self.parent.commit()
     
     def check(self):
         """

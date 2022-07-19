@@ -6,6 +6,7 @@ Digikam images can be accessed via the ``Digikam`` property
 """
 
 import os
+from datetime import datetime
 from typing import List, Optional, Tuple, Union
 
 from sqlalchemy import Column, Table, delete
@@ -33,30 +34,235 @@ class ImageProperties(BasicProperties):
     _value_col = 'value'
 
 
+class Comment:
+    """
+    Encapsulates ImageComments (caption and title).
+    
+    Args:
+        parent:     Corresponding Image object
+        type:       Comment type (1 for caption, 3 for title)
+    """
+    def __init__(self, parent: 'Image', type_: int):       # noqa: F821
+        self._parent = parent
+        self._type = type_
+    
+    def __repr__(self) -> str:
+        return self.get().__repr__()
+    
+    def get(
+        self,
+        language: str = 'x-default',
+        author: Optional[str] = None
+    ) -> Optional[str]:
+        """
+        Returns the comment value.
+        
+        Args:
+            language:   The comment's, defaults to 'x-default'
+            author:     The comment's author
+        Returns:
+            The specified comment or ``None`` if
+            no matching comment was found
+        """
+        
+        row = self._parent._comments.filter_by(
+            type = self._type,
+            language = language,
+            author = author,
+        ).one_or_none()
+        
+        if not row:
+            return None
+
+        return row.comment
+
+    def get_date(
+        self,
+        language: str = 'x-default',
+        author: Optional[str] = None
+    ) -> Optional[datetime]:
+        """
+        Returns the comment date.
+        
+        Args:
+            language:   The comment's, defaults to 'x-default'
+            author:     The comment's author
+        Returns:
+            The specified comment's date or ``None`` if
+            no matching comment was found
+        """
+        
+        row = self._parent._comments.filter_by(
+            type = self._type,
+            language = language,
+            author = author,
+        ).one_or_none()
+        
+        if not row:
+            return None
+        
+        return row.date
+    
+    def set(
+        self,
+        value: str,
+        language: str = 'x-default',
+        author: Optional[str] = None,
+        date: Optional[datetime] = None
+    ):
+        """
+        Sets the comment.
+        
+        Database-wise, this means updating the corresponding row in ``ImageComments``
+        or inserting a new one.
+        
+        Args:
+            value:      New value for comment
+            language:   The comment's, defaults to 'x-default'
+            author:     The comment's author, defaults to ``None``
+            date:       New date value for comment, defaults to ``None``
+        """
+        row = self._parent._comments.filter_by(
+            type = self._type,
+            language = language,
+            author = author,
+        ).one_or_none()
+        
+        if row:
+            row.comment = value
+        else:
+            row = self._parent.ImageComment(
+                imageid = self._parent.id,
+                type = self._type,
+                language = language,
+                author = author,
+                comment = value
+            )
+            self._parent.session.add(row)
+        
+        if date is not None:
+            row.date = date
+    
+    def delete(
+        self,
+        language: str = 'x-default',
+        author: Optional[str] = None,
+    ):
+        """
+        Deletes the comment.
+        
+        Args:
+            language:   The comment's, defaults to 'x-default'
+            author:     The comment's author, defaults to ``None``
+        """
+        row = self._parent._comments.filter_by(
+            type = self._type,
+            language = language,
+            author = author,
+        ).one_or_none()
+        
+        if row:
+            self._parent.session.delete(row)
+        
+
+class Title(Comment):
+    """
+    Enables access to multilingual image titles.
+    
+    
+    
+    Args:
+        parent:     Image object the title belongs to
+    """
+    
+    def __init__(self, parent: 'Image'):                    # noqa: F821
+        super().__init__(parent, 3)
+    
+    def get(
+        self,
+        language: str = 'x-default'
+    ) -> str:
+        """
+        Returns the title value.
+        
+        Args:
+            language:   The comment's, defaults to 'x-default'
+        Returns:
+            The specified comment or ``None`` if
+            no matching comment was found
+        """
+        return super().get(language, None)
+
+    def get_date(
+        self,
+        language: str = 'x-default'
+    ) -> 'datetime.datetime':
+        """
+        Returns NotImplemented since titles do't appear to have dates.
+        """
+        return NotImplemented
+    
+    def set(
+        self,
+        value: str,
+        language: str = 'x-default'
+    ):
+        """
+        Sets the title
+
+        Args:
+            value:      New value for comment
+            language:   The comment's, defaults to 'x-default'
+        """
+        super().set(value, language, None, None)
+
+    def delete(
+        self,
+        language: str = 'x-default',
+        author: Optional[str] = None,
+    ):
+        """
+        Deletes the comment.
+        
+        Args:
+            language:   The comment's, defaults to 'x-default'
+        """
+        super().delete(language, None)
+
+
+class Caption(Comment):
+    def __init__(self, parent: 'Image'):                    # noqa: F821
+        super().__init__(parent, 1)
+
+
 class Copyright:
     """
     Encapsulates ImageCopyright.
     
     Individual copyright entries can be accessed similar to a :class:`dict`.
-    Values can be :class:`str` or :class:`tuple`, depending on whether
-    the column ``extraValue`` is ``NULL`` or not. If no row with a given
-    key exists, ``None`` is returned.
+    Values can be:
+    
+    * :class:`str` - The value column.
+    * :class:`tuple` - A tuple with the columns (value, extraValue).
+    
+    If extraValue is set, a tuple is returned, else a str. If no row with a
+    given key exists, ``None`` is returned.
     
     Args:
         parent:     The corresponding ``Image`` object.
     """
     
     def __init__(self, parent: 'Image'):                    # noqa: F821
-        self.parent = parent
+        self._parent = parent
     
     def __contains__(self, key: str) -> bool:
-        if self.parent._copyright.filter(property = key).fetchone():
+        if self._parent._copyright.filter(property = key).fetchone():
             return True
         else:
             return False
     
     def __getitem__(self, key: str) -> Union[str, Tuple]:
-        row = self.parent._copyright.filter(property = key).one_or_none()
+        row = self._parent._copyright.filter(property = key).one_or_none()
         if not row:
             return None
         if row.extraValue is None:
@@ -75,13 +281,12 @@ class Copyright:
             row.value = value
             row.extraValue = extravalue
         else:
-            row = self.parent.ImageCopyright(
+            row = self._parent.ImageCopyright(
                 imageid = self.parent.id,
                 property = key,
                 value = value,
                 extraValue = extravalue)
-            self.parent.session.add(row)
-        self.parent.session.commit()
+            self._parent.session.add(row)
 
 
 def _imagecomment_class(dk: 'Digikam') -> type:             # noqa: F821
@@ -97,6 +302,11 @@ def _imagecomment_class(dk: 'Digikam') -> type:             # noqa: F821
         :attr:`~Image.caption` and :attr:`~Image.title`.
         """
         __tablename__ = 'ImageComments'
+        if not dk.is_mysql:
+            from sqlalchemy.dialects.sqlite import DATETIME
+            date = Column(DATETIME(
+                storage_format = '%(year)04d-%(month)02d-%(day)02dT%(hour)02d:%(minute)02d:%(second)02d',   # noqa: E501
+                regexp = r'(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)'))
     
     return ImageComment
 
@@ -302,10 +512,12 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
             back_populates = '_images')
         _comments = relationship(
             'ImageComment',
-            primaryjoin = 'foreign(ImageComment.imageid) == Image.id')
+            primaryjoin = 'foreign(ImageComment.imageid) == Image.id',
+            lazy = 'dynamic')
         _copyright = relationship(
             'ImageCopyright',
-            primaryjoin = 'foreign(ImageCopyright.imageid) == Image.id')
+            primaryjoin = 'foreign(ImageCopyright.imageid) == Image.id',
+            lazy = 'dynamic')
         _history = relationship(
             'ImageHistory',
             primaryjoin = 'foreign(ImageHistory.imageid) == Image.id',
@@ -348,82 +560,43 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         
         # Relationship to ImageComments
         
-        def _get_comment(self, type_: int, as_object: bool = False) -> Optional[str]:
-            """
-            Retrieves a comment
-            
-            .. todo:: Handle languages
-            
-            Args:
-                type\\_:     The comment type (1 for caption, 3 for title)
-                as_object:  Return comment as object or as value
-            """
-            for c in self._comments:
-                if c.type == type_:
-                    if as_object:
-                        return c
-                    else:
-                        return c.comment
-            return None
-        
-        def _set_comment(self, type_: int, val: Optional[str]):
-            """
-            Sets a comment
-            
-            .. todo:: Handle languages
-            
-            Args:
-                type\\_:     The comment type (1 for caption, 3 for title)
-                val:        New value for comment. If set to None, the
-                            row in ImageComments will be deleted.
-            """
-            oldval = self._get_comment(type_, as_object = True)
-            if oldval is None:
-                if val:
-                    newcomment = self.ImageComment(
-                        imageid     = self.id,
-                        type        = type_,
-                        language    = 'x-default',
-                        comment     = val)
-                    self.session.add(newcomment)
-            else:
-                if val is None:
-                    self.session.execute(
-                        delete(self.ImageComment)
-                        .filter_by(imageid = self.id)
-                        .filter_by(type = type_))
-                    self.session.commit()
-                else:
-                    oldval.comment = val
-                    
         @property
         def caption(self) -> Optional[str]:
             """
-            Returns or sets the image's caption.
+            Returns or sets the image's default caption.
             
-            Setting this to ``None`` will delete the corresponding row in
-            ImageComments.
+            The setter will set the caption for ``language = 'x-default'``
+            and ``author = None``. For other languages and authors, use the
+            :class:`~digikamdb.images.Caption` methods
+            :meth:`~digikamdb.images.Caption.get` and
+            :meth:`~digikamdb.images.Caption.set`.
             """
             
-            return self._get_comment(1)
+            if not hasattr(self, '_captionObj'):
+                self._captionObj = Caption(self)
+            return self._captionObj
         
         @caption.setter
         def caption(self, val: Optional[str]):
-            self._set_comment(1, val)
+            self.caption.set(val)
         
         @property
         def title(self) -> Optional[str]:
             """
             Returns or sets the image's title.
             
-            Setting this to ``None`` will delete the corresponding row in
-            ImageComments.
+            The setter will set the caption for ``language = 'x-default'``.
+            For other languages, use the :class:`~digikamdb.images.Title`
+            methods :meth:`~digikamdb.images.Title.get` and
+            :meth:`~digikamdb.images.Title.set`.
             """
-            return self._get_comment(3)
+            if not hasattr(self, '_titleObj'):
+                self._titleObj = Title(self)
+            return self._titleObj
         
         @title.setter
         def title(self, val: Optional[str]):
-            self._set_comment(3, val)
+            self.title.set(val)
         
         # Relationship to ImageCopyright
         
@@ -495,7 +668,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
                     self.session.execute(
                         delete(self.ImagePosition)
                         .filter_by(imageid = self.id))
-                    self.session.commit()
+#                    self.session.commit()
                 return
             
             lat = pos[0]
@@ -547,7 +720,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
                     longitudeNumber = lng,
                     altitude = alt)
                 self.session.add(newpos)
-            self.session.commit()
+#            self.session.commit()
         
         # Relationship to ImageProperties
         
@@ -621,12 +794,12 @@ class Images(DigikamTable):
         parent: 'Digikam',                                  # noqa: F821
     ):
         super().__init__(parent)
-        self.Class.ImageComment = _imagecomment_class(self.parent),
-        self.Class.ImageCopyright = _imagecopyright_class(self.parent),
-        self.Class.ImageHistory = _imagehistory_class(self.parent),
-        self.Class.ImageInformation = _imageinformation_class(self.parent),
-        self.Class.ImageMetadata = _imagemetadata_class(self.parent),
-        self.Class.ImagePosition = _imageposition_class(self.parent),
+        self.Class.ImageComment = _imagecomment_class(self.parent)
+        self.Class.ImageCopyright = _imagecopyright_class(self.parent)
+        self.Class.ImageHistory = _imagehistory_class(self.parent)
+        self.Class.ImageInformation = _imageinformation_class(self.parent)
+        self.Class.ImageMetadata = _imagemetadata_class(self.parent)
+        self.Class.ImagePosition = _imageposition_class(self.parent)
         self.Class.VideoMetadata = _videometadata_class(self.parent)
         self.Class.properties_table = Table(
             'ImageProperties',
