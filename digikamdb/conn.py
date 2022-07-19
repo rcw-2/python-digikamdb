@@ -16,7 +16,7 @@ from .tags import Tags
 from .albumroots import AlbumRoots
 from .albums import Albums
 from .images import Images
-
+from .exceptions import DigikamConfigError
 
 class Digikam:
     """
@@ -29,9 +29,15 @@ class Digikam:
     
     When initializing a ``Digikam`` object, you have to supply parameters to
     specify the database. This is usually done with the ``database``
-    parameter. ``Digikam`` can also use the local Digikam application's
-    database configuration in :file:`$HOME/.config/digikamrc`. To use this
-    feature, specify ``use_digikam_config = True``.
+    parameter. It can be one of the following:
+    
+    The string **"digikamrc"**:
+        Use the local Digikam application's database configuration in
+        :file:`$HOME/.config/digikamrc`.
+    Any other :class:`str`:
+        Use the string as database URL in :func:`~sqlalchemy.create_engine`.
+    A SQLAlchemy :class:`~sqlalchemy.engine.Engine` object:
+        Use this object as the database engine
     
     Access to actual data is mostly done through the following properties:
     
@@ -42,10 +48,7 @@ class Digikam:
     * settings (class :class:`~digikamdb.settings.Settings`)
     
     Parameters:
-        database:   Digikam database. Can be a ``str`` or a SQLAlchemy
-                    :class:`~sqlalchemy.engine.Engine` object.
-                    With the value ``digikamrc`` the database specification
-                    is read from :file:`$HOME/.config/digikamrc`.
+        database:   Digikam database.
         sql_echo:   Sets the ``echo`` option of SQLAlchemy.
         root_override:  Can be used to override the location of album roots
                         in the file system.
@@ -94,23 +97,51 @@ class Digikam:
         
         Returns:
             Database connection object
+        Raises:
+            DigikamConfigError:     ~/.config/digikamrc cannot be read
+                                    or interpreted.
         """
         configfile = os.path.join(os.path.expanduser('~'), '.config/digikamrc')
         config = configparser.ConfigParser()
         config.read(configfile)
+        try:
+            dbtype = config['Database Settings']['Database Type']
+        except KeyError as e:
+            raise DigikamConfigError('Database Type not specified: ' + e)
         
-        if config['Database Settings']['Database Type'] != 'QMYSQL':
-            raise ValueError('Only MySQL is supported')
+        if dbtype == 'QMYSQL':
+            try:
+                if config['Database Settings']['Internal Database Server']:
+                    raise DigikamConfigError('Internal MySQL server is not supported')
+                
+                return create_engine(
+                    'mysql+pymysql://%s:%s@%s/%s?charset=utf8?port=%d' % (
+                        config['Database Settings']['Database Username'],
+                        config['Database Settings']['Database Password'],
+                        config['Database Settings']['Database Hostname'],
+                        config['Database Settings']['Database Name'],
+                        int(config['Database Settings']['Database Port'])
+                    ),
+                    future = True,
+                    echo = sql_echo)
+            except DigikamError:
+                raise
+            except KeyError as e:
+                raise DigikamError('Configuration not found: ' + e)
         
-        return create_engine(
-            "mysql+pymysql://%s:%s@%s/%s?charset=utf8?port=%d" % (
-                config['Database Settings']['Database Username'],
-                config['Database Settings']['Database Password'],
-                config['Database Settings']['Database Hostname'],
-                config['Database Settings']['Database Name'],
-                int(config['Database Settings']['Database Port'])),
-            future = True,
-            echo = sql_echo)
+        if dbtype == 'QSQLITE':
+            try:
+                return create_engine(
+                    'sqlite:///%s' % (
+                        config['Database Settings']['Database Name']
+                    ),
+                    future = True,
+                    echo = sql_echo)
+            except KeyError as e:
+                raise DigikamError('Configuration not found: ' + e)
+        
+        raise DigikamConfigError('Unknown database type ' + dbtype)
+
     
     def destroy(self):
         """Clears the object."""
@@ -166,22 +197,22 @@ class Digikam:
     
     @property
     def albumroot_class(self) -> type:
-        """Returns the :class:`~docs._sqla.AlbumRoot` class"""
+        """Returns the :class:`~_sqla.AlbumRoot` class"""
         return self.albumRoots.Class
     
     @property
     def album_class(self) -> type:
-        """Returns the :class:`~docs._sqla.Album` class"""
+        """Returns the :class:`~_sqla.Album` class"""
         return self.albums.Class
     
     @property
     def image_class(self) -> type:
-        """Returns the :class:`~docs._sqla.Image` class"""
+        """Returns the :class:`~_sqla.Image` class"""
         return self.images.Class
     
     @property
     def tag_class(self) -> type:
-        """Returns the :class:`~docs._sqla.Tag` class"""
+        """Returns the :class:`~_sqla.Tag` class"""
         return self.tags.Class
 
 
@@ -197,9 +228,8 @@ def _digikamobject_class(base: type) -> type:
     class DigikamObject(DeferredReflection, base):
         """
         Abstract base class for objects stored in database.
-        
         Derived from :class:`~sqlalchemy.ext.declarative.DeferredReflection`
-        and :func:`~sqlalchemy.ext.declarative.declarative_base`.
+        and :func:`~sqlalchemy.orm.declarative_base`.
         """
         
         __abstract__ = True
