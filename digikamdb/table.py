@@ -4,7 +4,7 @@ Basic Digikam Table Class
 
 from typing import Iterable, Optional
 
-from sqlalchemy import select, text
+from sqlalchemy import delete, select, text
 
 
 class DigikamTable:
@@ -86,5 +86,40 @@ class DigikamTable:
         self.session.add(new)
 #        self.session.commit()
         return new
+    
+    def delete(
+        self,
+        where_clause: Optional[str] = None,
+        **kwargs
+    ) -> None:
+        """
+        Deletes rows from the table.
+        
+        Args:
+            where_clause:   Contains a SQL WHERE clause, processed by
+                            :func:`~sqlalchemy.sql.expression.text` and
+                            :meth:`~sqlalchemy.orm.Query.where`.
+            kwargs:         Other keyword arguments are used as arguments for
+                            :meth:`~sqlalchemy.orm.Query.filter_by`.
+        """
+        if where_clause:
+            if kwargs:
+                self.session.execute(
+                    delete(self.Class)
+                    .where(text(where_clause))
+                    .filter_by(**kwargs))
+            else:
+                self.session.execute(
+                    delete(self.Class)
+                    .where(text(where_clause)))
+        else:
+            if kwargs:
+                self.session.execute(
+                    delete(self.Class)
+                    .filter_by(**kwargs))
+            else:
+                self.session.execute(
+                    delete(self.Class))
+        
     
 

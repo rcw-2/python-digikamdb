@@ -52,7 +52,7 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
         # Other properties and methods
         
         @validates('identifier')
-        def _val_identifier(self, value):
+        def _val_identifier(self, key: str, value: str):
             """Deletes cached mountpoint."""
             if hasattr(self, '_mountpoint'):
                 delattr(self, '_mountpoint')

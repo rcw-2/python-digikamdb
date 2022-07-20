@@ -1,8 +1,9 @@
+import datetime
 import os
 import logging
 from shutil import unpack_archive, rmtree
 from tempfile import mkdtemp
-from unittest import TestCase
+from unittest import TestCase, skip
 
 from sqlalchemy import create_engine
 from sqlalchemy.exc import NoResultFound
@@ -26,6 +27,7 @@ class Wrapper:
             for data in self.test_data['albumroots']:
                 with self.subTest(albumrootid = data['id']):
                     ar = self.dk.albumRoots[data['id']]
+                    self.assertIsInstance(ar, self.dk.albumroot_class)
                     self.assertEqual(ar.label, data['label'])
                     self.assertEqual(
                         ar.mountpoint,
@@ -37,7 +39,9 @@ class Wrapper:
         def test_albums(self):
             for al in self.dk.albums:
                 with self.subTest(albumid = al.id):
+                    self.assertIsInstance(al, self.dk.album_class)
                     self.assertEqual(al.albumRoot, al.root.id)
+                    self.assertIn(al, al.root.albums)
                     self.assertEqual(
                         os.path.commonpath([self.mydir, al.abspath]),
                         self.mydir)
@@ -54,7 +58,9 @@ class Wrapper:
         def test_images(self):
             for img in self.dk.images:
                 with self.subTest(imageid = img.id):
+                    self.assertIsInstance(img, self.dk.image_class)
                     self.assertEqual(img.album, img.albumObj.id)
+                    self.assertIn(img, img.albumObj.images)
                     self.assertEqual(
                         os.path.commonpath([self.mydir, img.abspath]),
                         self.mydir)
@@ -188,8 +194,12 @@ class Wrapper:
         def test_tags(self):
             for tag in self.dk.tags:
                 with self.subTest(tagid = tag.id):
+                    self.assertIsInstance(tag, self.dk.tag_class)
+                    if tag.parent:
+                        self.assertIn(tag, tag.parent.children)
                     for ch in tag.children:
                         self.assertEqual(tag.id, ch.pid)
+                        self.assertIs(tag, ch.parent)
         
         def test_tags_access(self):
             for data in self.test_data['tags']:
@@ -207,6 +217,120 @@ class Wrapper:
             for tag in internal.children:
                 with self.subTest(internal_tag = tag.name):
                     self.assertIn('internalTag', tag.properties)
+        
+        @skip
+        def test_imagetags(self):
+            pass
+        
+        # This only works on Linux
+        def _get_albumroot_data(self, path):
+            mountpoints = {}
+            with open('/proc/mounts', 'r') as mt:
+                for line in mt.readlines():
+                    dev, dir, fstype, options = line.strip().split(maxsplit=3)
+                    mountpoints[dir] = dev
+            uuids = {}
+            for f in os.scandir('/dev/disk/by-uuid'):
+                if f.is_symlink():
+                    uuids[os.path.realpath(f.path)] = f.name
+            mpt = os.path.realpath(path)
+            while mpt != '/':
+                while not os.path.ismount(mpt):
+                    mpt = os.path.dirname(mpt)
+                if mpt in mountpoints:
+                    dev = mountpoints[mpt]
+                    if dev in uuids:
+                        return (
+                            'volumeid:?uuid=' + uuids[dev],
+                            '/' + os.path.relpath(path, mpt).rstrip('.')
+                        )
+            return None
+        
+        def test_new_data_A(self):
+            basedir = mkdtemp()
+            new_data = {
+                'basedir':  basedir
+            }
+            
+            ident, spath = self._get_albumroot_data(basedir)
+            new_root = self.dk.albumRoots.insert(
+                label = 'New AlbumRoot',
+                status = 0,
+                type = 1,
+                identifier = ident,
+                specificPath = spath
+            )
+            self.dk.session.commit()
+            new_data['albumroot'] = {
+                'id':           new_root.id,
+                'label':        'New AlbumRoot',
+                'identifier':   ident,
+                'specificPath': spath,
+                'path':         new_data['basedir'],
+            }
+            
+            self.__class__.new_data = new_data
+        
+        def test_new_data_B(self):
+            new_data = self.__class__.new_data
+            root = self.dk.albumRoots[new_data['albumroot']['id']]
+            self.assertEqual(root.id, new_data['albumroot']['id'])
+            self.assertEqual(root.label, new_data['albumroot']['label'])
+            self.assertEqual(root.status, 0)
+            self.assertEqual(root.type, 1)
+            self.assertEqual(root.identifier, new_data['albumroot']['identifier'])
+            self.assertEqual(root.specificPath, new_data['albumroot']['specificPath'])
+            self.assertEqual(root.abspath, new_data['albumroot']['path'])
+            
+            today = datetime.date.today()
+            new_album = self.dk.albums.insert(
+                albumRoot = root.id,
+                relativePath = '/New_Album',
+                date = today,
+                caption = None,
+                collection = None,
+                icon = None
+            )
+            self.dk.session.commit()
+            new_data['album'] = {
+                'id':           new_album.id,
+                'albumRoot':    root.id,
+                'relativePath': '/New_Album',
+                'date':         today,
+                'caption':      None,
+                'collection':   None,
+                'icon':         None,
+                'path':         os.path.join(root.abspath, 'New_Album'),
+            }
+        
+        def test_new_data_C(self):
+            new_data = self.__class__.new_data
+            album = self.dk.albums[new_data['album']['id']]
+            self.assertEqual(album.id, new_data['album']['id'])
+            self.assertEqual(album.albumRoot, new_data['album']['albumRoot'])
+            self.assertEqual(album.relativePath, new_data['album']['relativePath'])
+            self.assertEqual(album.date, new_data['album']['date'])
+            self.assertEqual(album.caption, new_data['album']['caption'])
+            self.assertEqual(album.collection, new_data['album']['collection'])
+            self.assertEqual(album.icon, new_data['album']['icon'])
+            self.assertEqual(album.abspath, new_data['album']['path'])
+            if new_data['album']['icon'] is None:
+                self.assertIsNone(album.iconImage)
+            else:
+                self.assertIsInstance(album.iconImage, self.dk.image_class)
+       
+        def test_new_data_Y(self):
+            new_data = self.__class__.new_data
+            self.dk.albums.delete(id = new_data['album']['id'])
+            self.dk.albumRoots.delete(id = new_data['albumroot']['id'])
+            self.dk.session.commit()
+
+        def test_new_data_Z(self):
+            new_data = self.__class__.new_data
+            with self.assertRaises(NoResultFound):
+                _ = self.dk.albums[new_data['album']['id']]
+            with self.assertRaises(NoResultFound):
+                _ = self.dk.albumRoots[new_data['albumroot']['id']]
 
 
 class DigikamSQLiteTest(Wrapper.DigikamTestBase):
@@ -288,7 +412,22 @@ class DigikamMySQLTest(Wrapper.DigikamTestBase):
                 'mountpoint': 'MYDIR',
                 'path': 'MYDIR/home/digikam2/Pictures'}],
             'albums': [{'id': 1, 'path': 'MYDIR/home/digikam2/Pictures'}],
-            'images': [{'id': 1, 'name': '20210806_165143.jpg'}],
+            'images': [{
+                'id': 1,
+                'name': '20210806_165143.jpg',
+                'comments': {
+                    'title': {
+                        '_default':     'New title for image 1',
+                        'de-DE':        'Die Destillerie',
+                    },
+                    'caption': {
+                        '_default':     'New caption for image 1',
+                        'de-DE': {
+                            'RCW':      'Ein Kommentar von RCW',
+                        },
+                    },
+                },
+            }],
             'tags': [{'id': 22, 'pid': 0, 'name': 'Normandy'}]
         }
     
@@ -315,5 +454,6 @@ class DigikamMySQLTest(Wrapper.DigikamTestBase):
         root = self.dk.tags._root
         self.assertEqual(root.id, 0)
         self.assertEqual(root.pid, -1)
+        self.assertIsNone(root.parent)
         self.assertEqual(root.name, '_Digikam_root_tag_')
     

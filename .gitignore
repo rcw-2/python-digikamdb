@@ -12,6 +12,7 @@ DEADJOE
 
 # Logs
 *.log
+.coverage
 
 # Generated package and documentation:
 digikamdb/_version.py
