@@ -97,6 +97,7 @@ jobs:
         root_override = None
         test_data = None
         EOF
+        mount
         python -m unittest -v
 #    - name: Test with pytest
 #      run: |
