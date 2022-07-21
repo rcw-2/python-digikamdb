@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - main
-      - workflow
     paths-ignore:
       - ".github/**"
       - ".gitignore"
@@ -18,7 +17,6 @@ on:
   pull_request:
     branches:
       - main
-      - workflow
     paths-ignore:
       - ".github/**"
       - ".gitignore"
