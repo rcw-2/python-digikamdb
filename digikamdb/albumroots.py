@@ -3,6 +3,7 @@ Provides access to Digikam album roots
 """
 
 import os
+import re
 from typing import List, Mapping, Optional
 
 from sqlalchemy.orm import relationship, validates
@@ -87,11 +88,20 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
                 dev = os.path.realpath(os.path.join('/dev/disk/by-uuid', uuid))
                 with open('/proc/mounts', 'r') as mt:
                     for line in mt.readlines():
-                        mntinfo = line.strip().split()
-                        if mntinfo[0] == 'UUID=' + uuid or mntinfo[0] == dev:
-                            path = mntinfo[1]
+                        mdev, mdir, moptions = line.strip().split(maxsplit=2)
+                        if mdev == 'UUID=' + uuid or mdev == dev:
+                            path = mdir
                             break
-            
+                        if mdev == '/dev/root':
+                            st1 = os.stat(mdev)
+                            for f in os.scandir('/dev'):
+                                if not re.match(r'sd', f.name):
+                                    continue
+                                st2 = f.stat()
+                                if st1.st_dev == st2.st_dev:
+                                    path = f.path
+                                    break
+                        
             if os.path.isdir(os.path.join(
                 path,
                 self.specificPath.lstrip('/')
