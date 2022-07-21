@@ -233,11 +233,11 @@ class Wrapper:
                     if dev == '/dev/root':
                         st1 = os.stat(dev)
                         for f in os.scandir('/dev'):
-                            if not re.match(r'/dev/sd'):
+                            if not re.match(r'sd', f.name):
                                 continue
                             st2 = f.stat()
                             if st1.st_dev == st2.st_dev:
-                                dev = f.name
+                                dev = f.path
                                 break
                     mountpoints[dir] = dev
             
