@@ -248,7 +248,7 @@ class Wrapper:
                                 if not re.match(r'sd', f.name):
                                     continue
                                 st2 = f.stat()
-                                if st1.st_dev == st2.st_dev:
+                                if st1.st_rdev == st2.st_rdev:
                                     log.debug('Replacing {0} with {1}'.format(
                                         dev, f.path
                                     ))
