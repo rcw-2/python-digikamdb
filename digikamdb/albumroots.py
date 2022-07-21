@@ -99,7 +99,7 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
                                     continue
                                 st2 = f.stat()
                                 if st1.st_dev == st2.st_dev:
-                                    path = f.path
+                                    path = mdir
                                     break
                         
             if os.path.isdir(os.path.join(
