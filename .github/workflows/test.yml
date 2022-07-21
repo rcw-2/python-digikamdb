@@ -99,6 +99,7 @@ jobs:
         test_data = None
         EOF
         mount
+        ls -l /dev/disk/by-uuid
         python -m unittest -v
 #    - name: Test with pytest
 #      run: |
