@@ -234,7 +234,7 @@ class Wrapper:
                 if f.is_symlink():
                     uuids[os.path.realpath(f.path)] = f.name
             mpt = os.path.realpath(path)
-            while mpt != '/':
+            while True:
                 while not os.path.ismount(mpt):
                     mpt = os.path.dirname(mpt)
                 if mpt in mountpoints:
@@ -244,6 +244,8 @@ class Wrapper:
                             'volumeid:?uuid=' + uuids[dev],
                             '/' + os.path.relpath(path, mpt).rstrip('.')
                         )
+                if mpt == '/':
+                    break
             return None
         
         def test_new_data_A(self):
