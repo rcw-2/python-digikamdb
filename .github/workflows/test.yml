@@ -107,6 +107,7 @@ jobs:
         cat /proc/mounts
         ls -l /dev/disk/by-uuid
         ls -la /dev/root
+        ls -la /dev/sd*
         pwd
         python -m unittest -v
 #    - name: Test with pytest
