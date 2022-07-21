@@ -24,6 +24,7 @@ on:
       - "docs/**"
       - MANIFEST.in
       - README.rst
+  workflow_dispatch: {}
 
 jobs:
   check:
