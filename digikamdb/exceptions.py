@@ -17,3 +17,10 @@ class DigikamConfigError(DigikamError):
     pass
 
 
+class DigikamFileError(DigikamError):
+    """
+    Error accessing an image file or album directory
+    """
+    pass
+
+

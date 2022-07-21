@@ -233,58 +233,23 @@ class Wrapper:
         def test_imagetags(self):
             pass
         
-        # This only works on Linux
-        def _get_albumroot_data(self, path):
-            mountpoints = {}
-            with open('/proc/mounts', 'r') as mt:
-                for line in mt.readlines():
-                    dev, dir, fstype, options = line.strip().split(maxsplit=3)
-                    # Resolve /dev/root for some installations
-                    if dev == '/dev/root':
-                        from digikamdb.albumroots import _substitute_device
-                        dev = _substitute_device(dev)
-                    mountpoints[dir] = dev
-            
-            uuids = {}
-            for f in os.scandir('/dev/disk/by-uuid'):
-                if f.is_symlink():
-                    uuids[os.path.realpath(f.path)] = f.name
-            mpt = os.path.realpath(path)
-            while True:
-                while not os.path.ismount(mpt):
-                    mpt = os.path.dirname(mpt)
-                if mpt in mountpoints:
-                    dev = mountpoints[mpt]
-                    if dev in uuids:
-                        return (
-                            'volumeid:?uuid=' + uuids[dev],
-                            '/' + os.path.relpath(path, mpt).rstrip('.')
-                        )
-                if mpt == '/':
-                    break
-            
-            return None
-        
         def test_new_data_A(self):
             basedir = mkdtemp()
             new_data = {
                 'basedir':  basedir
             }
             
-            ident, spath = self._get_albumroot_data(basedir)
-            new_root = self.dk.albumRoots._insert(
+            new_root = self.dk.albumRoots.add(
+                basedir,
                 label = 'New AlbumRoot',
-                status = 0,
-                type = 1,
-                identifier = ident,
-                specificPath = spath
+                check_dir = False,
             )
             self.dk.session.commit()
             new_data['albumroot'] = {
                 'id':           new_root.id,
                 'label':        'New AlbumRoot',
-                'identifier':   ident,
-                'specificPath': spath,
+                'identifier':   new_root.identifier,
+                'specificPath': new_root.specificPath,
                 'path':         new_data['basedir'],
             }
             

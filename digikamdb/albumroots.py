@@ -11,7 +11,7 @@ from typing import List, Mapping, Optional
 from sqlalchemy.orm import relationship, validates
 
 from .table import DigikamTable
-from .exceptions import DigikamError
+from .exceptions import DigikamFileError
 
 
 log = logging.getLogger(__name__)
@@ -37,6 +37,8 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
         * **specificPath** (*str*) - Relative directory, starts with a :file:`/`
         
         The location can be accessed with :attr:`abspath`.
+        
+        .. todo:: What do the status and type columns mean?
         
         See also:
             * Class :class:`~digikamdb.albumroots.AlbumRoots`
@@ -124,7 +126,7 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
                 )
                 return path
             
-            raise DigikamError(
+            raise DigikamFileError(
                 'No path found for {0}, candidate {1}'.format(vid, path)
             )
                         
@@ -189,7 +191,92 @@ class AlbumRoots(DigikamTable):
     ):
         super().__init__(parent)
         self.Class.override = override
-
+    
+    @classmethod
+    def _get_mountpoints(cls) -> Mapping[str, str]:
+        if hasattr(cls, '_mountpoints'):
+            return cls._mountpoints
+        
+        mountpoints = {}
+        with open('/proc/mounts', 'r') as mt:
+            for line in mt.readlines():
+                dev, dir, fstype, options = line.strip().split(maxsplit=3)
+                # Resolve /dev/root for some installations
+                if dev == '/dev/root':
+                    from digikamdb.albumroots import _substitute_device
+                    dev = _substitute_device(dev)
+                mountpoints[dir] = dev
+        
+        cls._mountpoints = mountpoints
+        return mountpoints
+    
+    @classmethod
+    def _get_uuids(cls) -> Mapping[str, str]:
+        if hasattr(cls, '_uuids'):
+            return cls._uuids
+        
+        uuids = {}
+        for f in os.scandir('/dev/disk/by-uuid'):
+            if f.is_symlink():
+                uuids[os.path.realpath(f.path)] = f.name
+        
+        cls._uuids = uuids
+        return uuids
+        
+    def add(
+        self,
+        path: str,
+        label: Optional[str] = None,
+        status: int = 0,
+        type_: int = 1,
+        check_dir: bool = True,
+        use_uuid: bool = True
+    ) -> 'AlbumRoot':                                       # noqa: F821
+        """
+        Adds a new album root.
+        
+        If check_dir is False, the identifier will be path.
+        
+        Args:
+            path:       Path to new album root
+            check_dir:  Check if the directory exists
+            status:     The new root's status
+            use_uuid:   Use UUID of filesystem as identifier
+        Returns:
+            The newly created AlbumRoot object.
+        """
+        if check_dir and not os.path.isdir(path):
+            raise DigikamFileError('Directory %s not found' % path)
+        
+        if use_uuid:
+            mountpoints = self._get_mountpoints()
+            uuids = self._get_uuids()
+            
+            mpt = os.path.realpath(path)
+            while True:
+                while not os.path.ismount(mpt):
+                    mpt = os.path.dirname(mpt)
+                if mpt in mountpoints:
+                    dev = mountpoints[mpt]
+                    if dev in uuids:
+                        ident = 'volumeid:?uuid=' + uuids[dev]
+                        spath = '/' + os.path.relpath(path, mpt).rstrip('.')
+                        break
+                if mpt == '/':
+                    raise DigikamFileError('No mountpoint found for ' + path)
+        
+        else:
+            ident = 'volumeid:?path=' + path
+            spath = '/'
+        
+        return self._insert(
+            label = label,
+            status = 0,
+            type = 1,
+            identifier = ident,
+            specificPath = spath
+        )
+            
 
 _device_regex = re.compile(r'(sd[a-z](\n+)?|nvme\d+n\d+(p\d+)?)')
 
@@ -205,18 +292,17 @@ def _substitute_device(dev: str) -> str:
     with os.scandir('/dev') as sc:
         for f in sc:
             if not _device_regex.match(f.name):
+                log.debug('%s does not match disk regex', f.name)
                 continue
             st2 = f.stat()
             if not stat.S_ISBLK(st2.st_mode):
+                log.debug('%s is not a block device', f.path)
                 continue
             if st1.st_rdev != st2.st_rdev:
+                log.debug('Device numbers differ between %s and %s', dev, f.path)
                 continue
             if f.path == dev:
-                log.debug(
-                    'Replacing %s with %s',
-                    dev,
-                    f.path
-                )
+                log.debug('Replacing %s with %s', dev, f.path)
                 return f.path
     
     log.warning('No replacement device found for %s', dev)

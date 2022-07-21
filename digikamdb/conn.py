@@ -135,7 +135,7 @@ class Digikam:
             except DigikamError:
                 raise
             except KeyError as e:
-                raise DigikamError('Configuration not found: ' + e)
+                raise DigikamConfigError('Configuration not found: ' + e)
         
         if dbtype == 'QSQLITE':
             try:
@@ -146,7 +146,7 @@ class Digikam:
                     future = True,
                     echo = sql_echo)
             except KeyError as e:
-                raise DigikamError('Configuration not found: ' + e)
+                raise DigikamConfigError('Configuration not found: ' + e)
         
         raise DigikamConfigError('Unknown database type ' + dbtype)
     
