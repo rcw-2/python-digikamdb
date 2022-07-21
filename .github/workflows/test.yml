@@ -118,7 +118,9 @@ jobs:
       run: |
         # Show some system information
         echo "Disk devices"
-        ls -l /dev/sd* /dev/nvme*
+        for d in /dev/sd* /dev/nvme*; do
+            test -e $d && ls -l $d
+        done
         ls -l /dev/disk/by-uuid
         echo "Mounted devices"
         cat /proc/mounts | grep ^/dev/
