@@ -95,14 +95,17 @@ jobs:
         GRANT ALL PRIVILEGES ON digikam.* TO digikam@localhost;
         EOF
         zcat tests/data/testdb.sql.gz | mysql -u digikam -h 127.0.0.1 -p"${{ secrets.MYSQL_USER_PW }}" digikam
-    - name: Test with Python unittest
+    - name: Prepare test configuration
       run: |
         cat >mysql_data.py <<EOF
         mysql_db = 'mysql+pymysql://digikam:${{ secrets.MYSQL_USER_PW }}@localhost/digikam'
         root_override = None
         test_data = None
         EOF
+    - name: Test with Python unittest
+      run: |
         python -m unittest -v
     - name: Test log
+      if: ${{ failure() }}
       run: |
         cat test.log
