@@ -113,3 +113,13 @@ jobs:
       run: |
         # Show the test log
         cat test.log
+    - name: System information for debugging
+      if: ${{ failure() }}
+      run: |
+        # Show some system information
+        echo "Disk devices"
+        ls -l /dev/sd* /dev/nvme*
+        ls -l /dev/disk/by-uuid
+        echo "Mounted devices"
+        cat /proc/mounts | grep ^/dev/
+

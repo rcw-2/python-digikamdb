@@ -238,15 +238,32 @@ class AlbumRoots(DigikamTable):
         If check_dir is False, the identifier will be path.
         
         Args:
-            path:       Path to new album root
-            check_dir:  Check if the directory exists
-            status:     The new root's status
-            use_uuid:   Use UUID of filesystem as identifier
+            path:       Path to new album root.
+            check_dir:  Check if the directory exists and is not a subdir
+                        of another album root or vice versa.
+            status:     The new root's status.
+            use_uuid:   Use UUID of filesystem as identifier.
         Returns:
             The newly created AlbumRoot object.
         """
-        if check_dir and not os.path.isdir(path):
-            raise DigikamFileError('Directory %s not found' % path)
+        if check_dir:
+            if not os.path.isdir(path):
+                raise DigikamFileError('Directory %s not found' % path)
+            
+            for r in self:
+                if os.path.commonpath(path, r.abspath) == r.abspath:
+                    raise DigikamFileError(
+                        '%s is a subdir of %s (albumroot %s)' % (
+                            path, r.abspath, r.label
+                        )
+                    )
+                if os.path.commonpath(path, r.abspath) == path:
+                    raise DigikamFileError(
+                        '%s (albumroot %s) is a subdir of %s' % (
+                            r.abspath, r.label, path
+                        )
+                    )
+                        
         
         if use_uuid:
             mountpoints = self._get_mountpoints()
@@ -286,20 +303,26 @@ def _substitute_device(dev: str) -> str:
     dev = os.path.realpath(dev)
     st1 = os.stat(dev)
     if not stat.S_ISBLK(st1.st_mode):
-        log.warning('%s is not a device', dev)
+        log.warning('%s is not a block device', dev)
         return dev
 
     with os.scandir('/dev') as sc:
         for f in sc:
             if not _device_regex.match(f.name):
-                log.debug('%s does not match disk regex', f.name)
+#                log.debug('%s does not match disk regex', f.name)
                 continue
             st2 = f.stat()
             if not stat.S_ISBLK(st2.st_mode):
                 log.debug('%s is not a block device', f.path)
                 continue
             if st1.st_rdev != st2.st_rdev:
-                log.debug('Device numbers differ between %s and %s', dev, f.path)
+                log.debug(
+                    'Device numbers differ between %s(%d) and %s(%d)',
+                    dev,
+                    st1.st_rdev,
+                    f.path,
+                    st2.st_rdev
+                )
                 continue
             if f.path == dev:
                 log.debug('Replacing %s with %s', dev, f.path)
