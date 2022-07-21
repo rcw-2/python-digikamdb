@@ -294,7 +294,7 @@ class AlbumRoots(DigikamTable):
         )
             
 
-_device_regex = re.compile(r'(sd[a-z](\n+)?|nvme\d+n\d+(p\d+)?)')
+_device_regex = re.compile(r'(sd[a-z]\d*|nvme\d+n\d+(p\d+)?)')
 
 
 # Substitutes the standard device in /dev for the given device
@@ -308,7 +308,7 @@ def _substitute_device(dev: str) -> str:
     with os.scandir('/dev') as sc:
         for f in sc:
             if not _device_regex.match(f.name):
-                # log.debug('%s does not match disk regex', f.name)
+                log.debug('%s does not match disk regex', f.name)
                 continue
             st2 = f.stat()
             if not stat.S_ISBLK(st2.st_mode):

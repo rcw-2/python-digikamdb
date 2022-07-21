@@ -118,7 +118,7 @@ jobs:
       run: |
         # Show some system information
         echo "Disk devices"
-        for d in /dev/sd* /dev/nvme*; do
+        for d in /dev/root /dev/sd* /dev/nvme*; do
             test -e $d && ls -l $d
         done
         ls -l /dev/disk/by-uuid
