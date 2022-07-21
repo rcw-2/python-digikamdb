@@ -1,5 +1,6 @@
 import datetime
 import os
+import re
 import logging
 from shutil import unpack_archive, rmtree
 from tempfile import mkdtemp
@@ -228,7 +229,17 @@ class Wrapper:
             with open('/proc/mounts', 'r') as mt:
                 for line in mt.readlines():
                     dev, dir, fstype, options = line.strip().split(maxsplit=3)
+                    # Resolve /dev/root for some installations
+                    if dev == '/dev/root':
+                        st1 = os.stat(dev)
+                        for f in os.scandir('/dev'):
+                            if not re.match(r'/dev/sd'): continue
+                            st2 = f.stat()
+                            if st1.st_dev == st2.st_dev:
+                                dev = f.name
+                                break
                     mountpoints[dir] = dev
+            
             uuids = {}
             for f in os.scandir('/dev/disk/by-uuid'):
                 if f.is_symlink():
@@ -244,8 +255,8 @@ class Wrapper:
                             'volumeid:?uuid=' + uuids[dev],
                             '/' + os.path.relpath(path, mpt).rstrip('.')
                         )
-                if mpt == '/':
-                    break
+                if mpt == '/': break
+            
             return None
         
         def test_new_data_A(self):
