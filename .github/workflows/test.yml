@@ -60,7 +60,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version:
+          - "3.7"
+          - "3.8"
+          - "3.9"
+          - "3.10"
         mysql-version:
           - "mysql-8.0"
           - "mariadb-10.4"
@@ -98,9 +102,7 @@ jobs:
         root_override = None
         test_data = None
         EOF
-        mount
-        ls -l /dev/disk/by-uuid
         python -m unittest -v
-#    - name: Test with pytest
-#      run: |
-#        pytest
+    - name: Test log
+      run: |
+        cat test.log
