@@ -100,7 +100,7 @@ jobs:
         root_override = None
         test_data = None
         EOF
-        mount
+        cat /proc/mounts
         ls -l /dev/disk/by-uuid
         pwd
         python -m unittest -v
