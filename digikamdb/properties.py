@@ -1,12 +1,17 @@
 """Basic class for properties"""
 
+import logging
 from typing import Iterable, Optional
 
 from sqlalchemy import delete, func, insert, select, text, update
 
+
 # TagProperties and ImageProperties have no primary key in Digikam, so
 # the ORM will not work. Instead, we use derivatives of this class to
 # access properties.
+
+
+log = logging.getLogger(__name__)
 
 
 class BasicProperties:
@@ -43,23 +48,28 @@ class BasicProperties:
         self,
         parent: 'DigikamObject'                             # noqa: F821
     ):
-        self.parent = parent
-        self.table  = parent.properties_table
-        self.session = parent.session
+        log.debug(
+            'Creating %s object for %d',
+            self.__class__.__name__,
+            parent.id
+        )
+        self._parent = parent
+        self._table  = parent.properties_table
+        self._session = parent.session
     
     def __contains__(self, prop: str) -> bool:
-        return self.session.connection().execute(
+        return self._session.connection().execute(
             select(func.count('*'))
-            .select_from(self.table)
+            .select_from(self._table)
             .filter(text("%s = '%s'" %
-                         (self._parent_id_col, self.parent.id)))
+                         (self._parent_id_col, self._parent.id)))
             .filter(text("%s = '%s'" %
                          (self._key_col, prop)))
         ).one()[0] > 0
     
     def __getitem__(self, prop: str) -> 'TagProperty':      # noqa: F821
-        return self.session.connection().execute(
-            select(self.table)
+        return self._session.connection().execute(
+            select(self._table)
             .filter(text("%s = '%s'" %
                          (self._parent_id_col, self.parent.id)))
             .filter(text("%s = '%s'" %
@@ -67,31 +77,38 @@ class BasicProperties:
         ).one().value
     
     def __setitem__(self, prop: str, value: Optional[str]):
-        conn = self.session.connection()
+        log.debug(
+            'Setting %s[%s] of %d to %s',
+            self.__class__.__name__,
+            prop,
+            self._parent.id,
+            value
+        )
+        conn = self._session.connection()
         if prop in self:
             kwargs = {
                 self._parent.value_col:  value
             }
             conn.execute(
-                update(self.table)
+                update(self._table)
                 .filter("%s = '%s'" %
                         (self._parent_id_col, self.parent.id))
                 .filter("%s = '%s'" % (self._key_col, prop))
                 .values(**kwargs))
         else:
             kwargs = {
-                self._parent_id_col:     self.parent.id,
+                self._parent_id_col:     self._parent.id,
                 self._parent.key_col:    prop,
                 self._parent.value_col:  value
             }
             conn.execute(
-                insert(self.table).values(**kwargs))
+                insert(self._table).values(**kwargs))
         conn.commit()
 
     def __iter__(self) -> Iterable:
-        for row in self.session.connection().execute(
-            select(self.table)
-            .filter("%s = '%s'" % (self._parent_id_col, self.parent.id))
+        for row in self._session.connection().execute(
+            select(self._table)
+            .filter("%s = '%s'" % (self._parent_id_col, self._parent.id))
         ):
             yield row[self._key_col]
     
@@ -99,10 +116,10 @@ class BasicProperties:
         """
         Returns the properties as an iterable yielding (key, value) tuples.
         """
-        for row in self.session.connection().execute(
-            select(self.table)
+        for row in self._session.connection().execute(
+            select(self._table)
             .filter(text("%s = '%s'" %
-                         (self._parent_id_col, self.parent.id)))
+                         (self._parent_id_col, self._parent.id)))
         ):
             yield row[self._key_col], row[self._value_col]
     
@@ -113,11 +130,17 @@ class BasicProperties:
         Args:
             prop:   Property to remove.
         """
-        conn = self.session.connection()
+        log.debug(
+            'Removing %s[%s] from %d',
+            self.__class__.__name__,
+            prop,
+            self._parent.id,
+        )
+        conn = self._session.connection()
         conn.execute(
-            delete(self.table)
+            delete(self._table)
             .filter(text("%s = %s" %
-                         (self._parent_id_col, self.parent.id)))
+                         (self._parent_id_col, self._parent.id)))
             .filter(text("%s = '%s'" %
                          (self._key_col, prop))))
         conn.commit()

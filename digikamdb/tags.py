@@ -2,6 +2,7 @@
 Enables access to Digikam tags.
 """
 
+import logging
 from typing import Iterable, List, Optional, Union
 
 from sqlalchemy import Table, case, event, inspect, select, text
@@ -10,6 +11,9 @@ from sqlalchemy.orm import object_session
 from .table import DigikamTable
 from .properties import BasicProperties
 from .exceptions import DigikamError
+
+
+log = logging.getLogger(__name__)
 
 
 def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
@@ -226,7 +230,8 @@ class Tags(DigikamTable):
 
         if instance.pid < 0:
             raise ValueError('Parent must be specified')
-
+        
+        log.debug('Reordering nested sets for tags before insert')
         tags = mapper.mapped_table
         right_most_sibling = connection.scalar(
             select(tags.c.rgt).where(
@@ -258,6 +263,7 @@ class Tags(DigikamTable):
         if not self._do_before_update:
             return
         
+        log.debug('Reordering nested sets for tags before update')
         if object_session(instance).is_modified(
             instance,
             include_collections = False
@@ -287,6 +293,8 @@ class Tags(DigikamTable):
         if instance.rgt - instance.lft > 1:
             raise DigikamError('Cannot delete tag with sub-tags')
 
+        log.debug('Reordering nested sets for tags after delete')
+        
         tags = mapper.mapped_table
         right = instance.rgt
         
@@ -340,7 +348,7 @@ class Tags(DigikamTable):
         
         Raises :exc:`~sqlalchemy.exc.NoResultError` in SQLite.
         """
-        return self.select(pid = -1).one()
+        return self._select(pid = -1).one()
     
     def add(self, name: str, parent: Union[int, 'Tag']) -> 'Tag':   # noqa: F821
         """
@@ -362,7 +370,7 @@ class Tags(DigikamTable):
         else:
             raise TypeError('Parent must be int or Tag')
         
-        return self.insert(name = name, pid = pid)
+        return self._insert(name = name, pid = pid)
     
     def remove(self, tag: Union[int, 'Tag']):               # noqa: F821
         """
@@ -381,7 +389,7 @@ class Tags(DigikamTable):
         else:
             raise TypeError('Tag must be int or Tag')
         
-        self.parent.delete(tag)
+        self._delete(tag)
 #        self.parent.commit()
     
     def check(self):

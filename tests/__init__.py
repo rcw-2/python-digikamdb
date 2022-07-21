@@ -12,6 +12,7 @@ from sqlalchemy.exc import NoResultFound
 from digikamdb import Digikam
 
 logging.basicConfig(filename = 'test.log', level = logging.DEBUG)
+log = logging.getLogger(__name__)
 
 
 # Hide DigikamTestBase so unittest doesn't run it
@@ -20,6 +21,16 @@ class Wrapper:
     class DigikamTestBase(TestCase):
         
         __abstract__ = True
+        
+        @classmethod
+        def setUpClass(cls):
+            log.debug('Setting up %s', cls.__name__)
+            cls.mydir = mkdtemp()
+
+        @classmethod
+        def tearDownClass(cls):
+            log.debug('Tearing down %s', cls.__name__)
+            rmtree(cls.mydir)
         
         def replacepath(self, path):
             return path.replace('MYDIR', self.mydir)
@@ -232,13 +243,16 @@ class Wrapper:
                     # Resolve /dev/root for some installations
                     if dev == '/dev/root':
                         st1 = os.stat(dev)
-                        for f in os.scandir('/dev'):
-                            if not re.match(r'sd', f.name):
-                                continue
-                            st2 = f.stat()
-                            if st1.st_dev == st2.st_dev:
-                                dev = f.path
-                                break
+                        with os.scandir('/dev') as sc:
+                            for f in sc:
+                                if not re.match(r'sd', f.name):
+                                    continue
+                                st2 = f.stat()
+                                if st1.st_dev == st2.st_dev:
+                                    log.debug('Replacing {0} with {1}'.format(
+                                        dev, f.path
+                                    ))
+                                    dev = f.path
                     mountpoints[dir] = dev
             
             uuids = {}
@@ -268,7 +282,7 @@ class Wrapper:
             }
             
             ident, spath = self._get_albumroot_data(basedir)
-            new_root = self.dk.albumRoots.insert(
+            new_root = self.dk.albumRoots._insert(
                 label = 'New AlbumRoot',
                 status = 0,
                 type = 1,
@@ -298,7 +312,7 @@ class Wrapper:
             self.assertEqual(root.abspath, new_data['albumroot']['path'])
             
             today = datetime.date.today()
-            new_album = self.dk.albums.insert(
+            new_album = self.dk.albums._insert(
                 albumRoot = root.id,
                 relativePath = '/New_Album',
                 date = today,
@@ -336,8 +350,8 @@ class Wrapper:
        
         def test_new_data_Y(self):
             new_data = self.__class__.new_data
-            self.dk.albums.delete(id = new_data['album']['id'])
-            self.dk.albumRoots.delete(id = new_data['albumroot']['id'])
+            self.dk.albums._delete(id = new_data['album']['id'])
+            self.dk.albumRoots._delete(id = new_data['albumroot']['id'])
             self.dk.session.commit()
             rmtree(new_data['basedir'])
 
@@ -353,11 +367,11 @@ class DigikamSQLiteTest(Wrapper.DigikamTestBase):
     
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         archive = os.path.join(
             os.path.dirname(__file__),
             'data',
             'testdb.tar.gz')
-        cls.mydir = mkdtemp()
         unpack_archive(archive, cls.mydir)
         cls.root_override = {
             'ids':      {1: 'TEST'},
@@ -389,10 +403,6 @@ class DigikamSQLiteTest(Wrapper.DigikamTestBase):
             'tags': [{'id': 22, 'pid': 0, 'name': 'France'}]
         }
     
-    @classmethod
-    def tearDownClass(cls):
-        rmtree(cls.mydir)
-    
     def setUp(self):
         dbfile = os.path.join(self.mydir, 'digikam4.db')
         db = create_engine('sqlite:///' + dbfile)
@@ -411,8 +421,8 @@ class DigikamMySQLTest(Wrapper.DigikamTestBase):
     
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         import mysql_data
-        cls.mydir = mkdtemp()
         cls.mysql_db = mysql_data.mysql_db
         cls.root_override = mysql_data.root_override or {
             'ids': {
@@ -446,10 +456,6 @@ class DigikamMySQLTest(Wrapper.DigikamTestBase):
             }],
             'tags': [{'id': 22, 'pid': 0, 'name': 'Normandy'}]
         }
-    
-    @classmethod
-    def tearDownClass(cls):
-        rmtree(cls.mydir)
     
     def setUp(self):
         db = create_engine(self.mysql_db)

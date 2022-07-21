@@ -2,14 +2,24 @@
 Basic Digikam Table Class
 """
 
+import logging
 from typing import Iterable, Optional
 
 from sqlalchemy import delete, select, text
 
 
+log = logging.getLogger(__name__)
+
+
 class DigikamTable:
     """
     An abstract base class for table classes
+    
+    Provides some low-level methods for accessing data:
+    
+    * Members can be accessed by id via ``object[id]``.
+    * Class is iterable, returning all rows of the table.
+    * Some internal functionality
     
     Parameters:
         parent:     ``Digikam`` object
@@ -37,7 +47,7 @@ class DigikamTable:
             select(self.Class).filter_by(id = key)
         ).one()
     
-    def select(
+    def _select(
         self,
         where_clause: Optional[str] = None,
         **kwargs
@@ -54,6 +64,12 @@ class DigikamTable:
         Returns:
             Iterable query result.
         """
+        log.debug(
+            'Selecting %s objects with %s and %s',
+            self.__class__.__name__,
+            where_clause,
+            kwargs
+        )
         if where_clause:
             if kwargs:
                 return self.session.scalars(
@@ -73,7 +89,7 @@ class DigikamTable:
                 return self.session.scalars(
                     select(self.Class))
     
-    def insert(self, **kwargs) -> 'DigikamObject':          # noqa: F821
+    def _insert(self, **kwargs) -> 'DigikamObject':          # noqa: F821
         """
         Inserts a new record.
         
@@ -82,12 +98,17 @@ class DigikamTable:
         Returns:
             The generated object.
         """
+        log.debug(
+            'Creating %s object with %s',
+            self.__class__.__name__,
+            kwargs
+        )
         new = self.Class(**kwargs)
         self.session.add(new)
 #        self.session.commit()
         return new
     
-    def delete(
+    def _delete(
         self,
         where_clause: Optional[str] = None,
         **kwargs
@@ -102,6 +123,12 @@ class DigikamTable:
             kwargs:         Other keyword arguments are used as arguments for
                             :meth:`~sqlalchemy.orm.Query.filter_by`.
         """
+        log.debug(
+            'Deleting %s objects with %s and %s',
+            self.__class__.__name__,
+            where_clause,
+            kwargs
+        )
         if where_clause:
             if kwargs:
                 self.session.execute(

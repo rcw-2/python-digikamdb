@@ -3,6 +3,7 @@ Defines the ``Digikam`` class for database access.
 """
 
 import configparser
+import logging
 import os
 from typing import Mapping, Optional, Union
 
@@ -17,6 +18,9 @@ from .albumroots import AlbumRoots
 from .albums import Albums
 from .images import Images
 from .exceptions import DigikamError, DigikamConfigError
+
+
+log = logging.getLogger(__name__)
 
 
 class Digikam:
@@ -64,7 +68,10 @@ class Digikam:
         """
         Constructor
         """
-        
+        log.info(
+            'Initializing Digikam object from %s',
+            database
+        )
         if isinstance(database, Engine):
             self._engine = database
         elif isinstance(database, str):
@@ -76,7 +83,7 @@ class Digikam:
                     future = True,
                     echo = sql_echo)
         else:
-            raise TypeError('Database not specified')
+            raise TypeError('Database specification must be Engine or str')
         
         self._session = Session(self.engine)
 
@@ -145,6 +152,7 @@ class Digikam:
     
     def destroy(self):
         """Clears the object."""
+        log.info('Tearing down Digikam object')
         self._settings = None
         self._tags = None
         self._albumRoots = None

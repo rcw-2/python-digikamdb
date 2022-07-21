@@ -5,6 +5,7 @@ Digikam images can be accessed via the ``Digikam`` property
 :attr:`~Digikam.images`, which is an object of class :class:`Images`.
 """
 
+import logging
 import os
 from datetime import datetime
 from typing import List, Optional, Tuple, Union
@@ -14,6 +15,9 @@ from sqlalchemy.orm import relationship, validates
 
 from .table import DigikamTable
 from .properties import BasicProperties
+
+
+log = logging.getLogger(__name__)
 
 
 class ImageProperties(BasicProperties):
@@ -122,6 +126,15 @@ class Comment:
             author:     The comment's author, defaults to ``None``
             date:       New date value for comment, defaults to ``None``
         """
+        log.debug(
+            'Setting comment(%d,%s,%s) of image %d (%s) to %s',
+            self._type,
+            language,
+            author,
+            self._parent.id,
+            self._parent.name,
+            value
+        )
         row = self._parent._comments.filter_by(
             type = self._type,
             language = language,
@@ -155,6 +168,14 @@ class Comment:
             language:   The comment's, defaults to 'x-default'
             author:     The comment's author, defaults to ``None``
         """
+        log.debug(
+            'Deleting comment(%d,%s,%s) of image %d (%s)',
+            self._type,
+            language,
+            author,
+            self._parent.id,
+            self._parent.name,
+        )
         row = self._parent._comments.filter_by(
             type = self._type,
             language = language,
@@ -200,6 +221,7 @@ class Title(Comment):
         """
         Returns NotImplemented since titles do't appear to have dates.
         """
+        log.warning('get_date is not implemented for title')
         return NotImplemented
     
     def set(
@@ -271,13 +293,20 @@ class Copyright:
             return row.value, row.extraValue
     
     def __setitem__(self, key: str, value: Optional[Union[str, List, Tuple]]):
+        log.debug(
+            'Setting copyright info %s of image %d (%s) to %s',
+            key,
+            self._parent.id,
+            self._parent.name,
+            value
+        )
         if isinstance(value, (list, tuple)):
             extravalue = value[1]
             value = value[0]
         else:
             extravalue = None
         if key in self:
-            row = self.parent._copyright.filter(property = key).one()
+            row = self._parent._copyright.filter(property = key).one()
             row.value = value
             row.extraValue = extravalue
         else:
@@ -663,6 +692,12 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         
         @position.setter
         def position(self, pos: Optional[Tuple]):
+            log.debug(
+                'Setting position of image %d (%s) to %s',
+                self.id,
+                self.name,
+                pos
+            )
             if pos is None:
                 if self._position:
                     self.session.execute(
@@ -822,7 +857,7 @@ class Images(DigikamTable):
         path = os.path.abspath(name)
         
         # Seleft images with correct name:
-        found = self.select(name = base)
+        found = self._select(name = base)
         
         # Look for image that is the same file as path:
         if os.path.isfile(path):
@@ -832,11 +867,23 @@ class Images(DigikamTable):
                     os.path.isfile(img.abspath) and
                     os.path.samefile(img.abspath, path)
                 ):
+                    log.debug(
+                        '%s is the same file as image %d (%s)',
+                        path,
+                        img.id,
+                        img.name
+                    )
                     return img
         
         # Look for path:
         for img in found:
             if (img.abspath == path):
+                log.debug(
+                    '%s found in database: %d (%s)',
+                    path,
+                    img.id,
+                    img.name
+                )
                 return img
         
         # If nothing was found, return None

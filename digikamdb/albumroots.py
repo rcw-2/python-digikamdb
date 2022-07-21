@@ -2,6 +2,7 @@
 Provides access to Digikam album roots
 """
 
+import logging
 import os
 import re
 from typing import List, Mapping, Optional
@@ -10,6 +11,9 @@ from sqlalchemy.orm import relationship, validates
 
 from .table import DigikamTable
 from .exceptions import DigikamError
+
+
+log = logging.getLogger(__name__)
 
 
 def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
@@ -76,9 +80,19 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
                 if 'ids' in self.override:
                     if self.id in self.override['ids']:
                         self._mountpoint = self.override['ids'][self.id]
+                        log.debug(
+                            'Root override: setting mountpoint of %d to %s',
+                            self.id,
+                            self._mountpoint
+                        )
                         return self._mountpoint
                     if self.identifier in self.override['ids']:
                         self._mountpoint = self.override['ids'][self.identifier]
+                        log.debug(
+                            'Root override: setting mountpoint for %s to %s',
+                            self.identifier,
+                            self._mountpoint
+                        )
                         return self._mountpoint
             
             vid = self.identifier
@@ -107,6 +121,11 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
                         
             if os.path.isdir(path):
                 self._mountpoint = path
+                log.debug(
+                    'Setting mountpoint for %s to %s',
+                    self.identifier,
+                    self._mountpoint
+                )
                 return path
             
             raise DigikamError(
@@ -126,9 +145,11 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
             if override is not None:
                 if 'paths' in override:
                     if self.id in override['paths']:
+                        log.debug('Overriding path')
                         return override['paths'][self.id]
                     path = self.identifier + self.specificPath
                     if path in override['paths']:
+                        log.debug('Overriding path')
                         return override['paths'][path]
                 
             return os.path.abspath(os.path.join(
