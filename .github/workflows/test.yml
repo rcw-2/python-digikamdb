@@ -106,6 +106,7 @@ jobs:
         EOF
         cat /proc/mounts
         ls -l /dev/disk/by-uuid
+        ls -la /dev/root
         pwd
         python -m unittest -v
 #    - name: Test with pytest
