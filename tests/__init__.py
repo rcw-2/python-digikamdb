@@ -256,7 +256,8 @@ class Wrapper:
                             'volumeid:?uuid=' + uuids[dev],
                             '/' + os.path.relpath(path, mpt).rstrip('.')
                         )
-                if mpt == '/': break
+                if mpt == '/':
+                    break
             
             return None
         
