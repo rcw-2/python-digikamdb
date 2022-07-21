@@ -263,7 +263,6 @@ class AlbumRoots(DigikamTable):
                             r.abspath, r.label, path
                         )
                     )
-                        
         
         if use_uuid:
             mountpoints = self._get_mountpoints()
@@ -309,7 +308,7 @@ def _substitute_device(dev: str) -> str:
     with os.scandir('/dev') as sc:
         for f in sc:
             if not _device_regex.match(f.name):
-#                log.debug('%s does not match disk regex', f.name)
+                # log.debug('%s does not match disk regex', f.name)
                 continue
             st2 = f.stat()
             if not stat.S_ISBLK(st2.st_mode):
