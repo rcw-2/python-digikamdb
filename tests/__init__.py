@@ -1,7 +1,6 @@
 import datetime
-import os
-import re
 import logging
+import os
 from shutil import unpack_archive, rmtree
 from tempfile import mkdtemp
 from unittest import TestCase, skip
@@ -242,17 +241,8 @@ class Wrapper:
                     dev, dir, fstype, options = line.strip().split(maxsplit=3)
                     # Resolve /dev/root for some installations
                     if dev == '/dev/root':
-                        st1 = os.stat(dev)
-                        with os.scandir('/dev') as sc:
-                            for f in sc:
-                                if not re.match(r'sd', f.name):
-                                    continue
-                                st2 = f.stat()
-                                if st1.st_rdev == st2.st_rdev:
-                                    log.debug('Replacing {0} with {1}'.format(
-                                        dev, f.path
-                                    ))
-                                    dev = f.path
+                        from digikamdb.albumroots import _substitute_device
+                        dev = _substitute_device(dev)
                     mountpoints[dir] = dev
             
             uuids = {}
@@ -343,13 +333,35 @@ class Wrapper:
             self.assertEqual(album.collection, new_data['album']['collection'])
             self.assertEqual(album.icon, new_data['album']['icon'])
             self.assertEqual(album.abspath, new_data['album']['path'])
-            if new_data['album']['icon'] is None:
-                self.assertIsNone(album.iconImage)
-            else:
-                self.assertIsInstance(album.iconImage, self.dk.image_class)
-       
+            self.assertIsNone(album.iconImage)
+            
+            new_data['images'] = []
+            now = datetime.datetime.now()
+            new_image = self.dk.images._insert(
+                album = new_data['album']['id'],
+                name = 'new_image.jpg',
+                status = 1,
+                category = 1,
+                modificationDate = now,
+                fileSize = 249416,
+                uniqueHash = 'e5f60a712fc36977a14816727242262b'
+            )
+            self.dk.session.commit()
+            new_data['images'].append({
+                'id':               new_image.id,
+                'album':            new_data['album']['id'],
+                'name':             'new_image.jpg',
+                'status':           1,
+                'category':         1,
+                'modificationDate': now,
+                'fileSize':         249416,
+                'uniqueHash':       'e5f60a712fc36977a14816727242262b',
+            })
+        
         def test_new_data_Y(self):
             new_data = self.__class__.new_data
+            for img in new_data['images']:
+                self.dk.images._delete(id = img['id'])
             self.dk.albums._delete(id = new_data['album']['id'])
             self.dk.albumRoots._delete(id = new_data['albumroot']['id'])
             self.dk.session.commit()
@@ -357,6 +369,10 @@ class Wrapper:
 
         def test_new_data_Z(self):
             new_data = self.__class__.new_data
+            for img in new_data['images']:
+                with self.subTest(imageid = img['id']):
+                    with self.assertRaises(NoResultFound):
+                        _ = self.dk.images[img['id']]
             with self.assertRaises(NoResultFound):
                 _ = self.dk.albums[new_data['album']['id']]
             with self.assertRaises(NoResultFound):

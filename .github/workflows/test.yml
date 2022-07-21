@@ -89,6 +89,7 @@ jobs:
         pip install -e .[mysql]
     - name: Prepare database
       run: |
+        # Prepare the MySQL database
         mysql -u root -h 127.0.0.1 -p"${{ secrets.MYSQL_ROOT_PW }}" <<EOF
         CREATE DATABASE digikam;
         CREATE USER digikam@localhost IDENTIFIED BY '${{ secrets.MYSQL_USER_PW }}';
@@ -97,6 +98,7 @@ jobs:
         zcat tests/data/testdb.sql.gz | mysql -u digikam -h 127.0.0.1 -p"${{ secrets.MYSQL_USER_PW }}" digikam
     - name: Prepare test configuration
       run: |
+        # Generate test MySQL configuration
         cat >mysql_data.py <<EOF
         mysql_db = 'mysql+pymysql://digikam:${{ secrets.MYSQL_USER_PW }}@localhost/digikam'
         root_override = None
@@ -104,8 +106,10 @@ jobs:
         EOF
     - name: Test with Python unittest
       run: |
+        # Run Python test
         python -m unittest -v
     - name: Test log
       if: ${{ true }}
       run: |
+        # Show the test log
         cat test.log

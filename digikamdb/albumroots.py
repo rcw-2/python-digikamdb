@@ -5,6 +5,7 @@ Provides access to Digikam album roots
 import logging
 import os
 import re
+import stat
 from typing import List, Mapping, Optional
 
 from sqlalchemy.orm import relationship, validates
@@ -103,22 +104,17 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
                 with open('/proc/mounts', 'r') as mt:
                     for line in mt.readlines():
                         mdev, mdir, moptions = line.strip().split(maxsplit=2)
+                        
+                        if mdev == '/dev/root':
+                            mdev = _substitute_device(mdev)
+                        
                         if mdev == 'UUID=' + uuid or mdev == dev:
                             path = mdir
                             break
-                        if mdev == '/dev/root':
-                            st1 = os.stat(mdev)
-                            with os.scandir('/dev') as sc:
-                                for f in sc:
-                                    if not re.match(r'sd', f.name):
-                                        continue
-                                    st2 = f.stat()
-                                    if st1.st_dev != st2.st_dev:
-                                        continue
-                                    if f.path == dev:
-                                        path = mdir
-                                        break
-                        
+            
+            if vid.startswith('volumeid:?path='):
+                path = vid[15:]
+            
             if os.path.isdir(path):
                 self._mountpoint = path
                 log.debug(
@@ -193,5 +189,37 @@ class AlbumRoots(DigikamTable):
     ):
         super().__init__(parent)
         self.Class.override = override
+
+
+_device_regex = re.compile(r'(sd[a-z](\n+)?|nvme\d+n\d+(p\d+)?)')
+
+
+# Substitutes the standard device in /dev for the given device
+def _substitute_device(dev: str) -> str:
+    dev = os.path.realpath(dev)
+    st1 = os.stat(dev)
+    if not stat.S_ISBLK(st1.st_mode):
+        log.warning('%s is not a device', dev)
+        return dev
+
+    with os.scandir('/dev') as sc:
+        for f in sc:
+            if not _device_regex.match(f.name):
+                continue
+            st2 = f.stat()
+            if not stat.S_ISBLK(st2.st_mode):
+                continue
+            if st1.st_rdev != st2.st_rdev:
+                continue
+            if f.path == dev:
+                log.debug(
+                    'Replacing %s with %s',
+                    dev,
+                    f.path
+                )
+                return f.path
+    
+    log.warning('No replacement device found for %s', dev)
+    return dev
 
 
