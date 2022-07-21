@@ -308,7 +308,7 @@ def _substitute_device(dev: str) -> str:
     with os.scandir('/dev') as sc:
         for f in sc:
             if not _device_regex.match(f.name):
-                log.debug('%s does not match disk regex', f.name)
+                # log.debug('%s does not match disk regex', f.name)
                 continue
             st2 = f.stat()
             if not stat.S_ISBLK(st2.st_mode):
@@ -323,9 +323,8 @@ def _substitute_device(dev: str) -> str:
                     st2.st_rdev
                 )
                 continue
-            if f.path == dev:
-                log.debug('Replacing %s with %s', dev, f.path)
-                return f.path
+            log.debug('Replacing %s with %s', dev, f.path)
+            return f.path
     
     log.warning('No replacement device found for %s', dev)
     return dev
