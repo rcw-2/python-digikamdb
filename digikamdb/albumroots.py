@@ -94,22 +94,24 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
                             break
                         if mdev == '/dev/root':
                             st1 = os.stat(mdev)
-                            for f in os.scandir('/dev'):
-                                if not re.match(r'sd', f.name):
-                                    continue
-                                st2 = f.stat()
-                                if st1.st_dev == st2.st_dev:
-                                    path = mdir
-                                    break
+                            with os.scandir('/dev') as sc:
+                                for f in sc:
+                                    if not re.match(r'sd', f.name):
+                                        continue
+                                    st2 = f.stat()
+                                    if st1.st_dev != st2.st_dev:
+                                        continue
+                                    if f.path == dev:
+                                        path = mdir
+                                        break
                         
-            if os.path.isdir(os.path.join(
-                path,
-                self.specificPath.lstrip('/')
-            )):
+            if os.path.isdir(path):
                 self._mountpoint = path
                 return path
             
-            raise DigikamError('No path found for ' + vid)
+            raise DigikamError(
+                'No path found for {0}, candidate {1}'.format(vid, path)
+            )
                         
         @property
         def abspath(self) -> str:

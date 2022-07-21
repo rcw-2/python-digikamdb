@@ -339,6 +339,7 @@ class Wrapper:
             self.dk.albums.delete(id = new_data['album']['id'])
             self.dk.albumRoots.delete(id = new_data['albumroot']['id'])
             self.dk.session.commit()
+            rmtree(new_data['basedir'])
 
         def test_new_data_Z(self):
             new_data = self.__class__.new_data
