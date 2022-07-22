@@ -95,14 +95,14 @@ jobs:
         CREATE USER digikam@localhost IDENTIFIED BY '${{ secrets.MYSQL_USER_PW }}';
         GRANT ALL PRIVILEGES ON digikam.* TO digikam@localhost;
         EOF
-        zcat tests/data/testdb.sql.gz | mysql -u digikam -h 127.0.0.1 -p"${{ secrets.MYSQL_USER_PW }}" digikam
     - name: Prepare test configuration
       run: |
         # Generate test MySQL configuration
         cat >mysql_data.py <<EOF
-        mysql_db = 'mysql+pymysql://digikam:${{ secrets.MYSQL_USER_PW }}@localhost/digikam'
-        root_override = None
-        test_data = None
+        db_host = 'localhost'
+        db_user = 'digikam'
+        db_pass = '${{ secrets.MYSQL_USER_PW }}'
+        db_name = 'digikam'
         EOF
     - name: Test with Python unittest
       run: |

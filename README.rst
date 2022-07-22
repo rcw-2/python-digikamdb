@@ -46,11 +46,12 @@ Running the Tests
 
 The MySQL tests need a MySQL database to run. The database must be specified
 in a module ``mysql_data`` somewhere in the Python path (e.g. in the same
-directory as this file, it will be ignored by Git) in a variable ``mysql_db``.
-The database must exist and be filled for running the tests.
+directory as this file, it will be ignored by Git) that defines the variables
+``db_host``, ``db_user``, ``db_pass`` and ``db_name``. The given user must
+have all privileges on the given database.
 
-The module can also supply a variable named ``test_data``. See
-``tests/__init__.py`` for example data``.
+To fill the database, the :command:`mysql` binary is called, so make sure to
+have ``mysql-client`` installed.
 
 
 
