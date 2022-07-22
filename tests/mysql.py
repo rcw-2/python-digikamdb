@@ -1,6 +1,6 @@
 import logging
 import os
-from subprocess import run
+from subprocess import run, CalledProcessError
 
 from sqlalchemy import create_engine
 from sqlalchemy.exc import NoResultFound                    # noqa: F401
@@ -24,18 +24,27 @@ class MySQLTestBase(DigikamTestBase):
         super().setUpClass()
         import mysql_data
         
-        run(
-            'zcat {0} | mysql -h {1} -u {2} -p"{3}" {4}'.format(
-                os.path.join(os.path.dirname(__file__), 'data', 'testdb.sql.gz'),
-                mysql_data.db_host,
-                mysql_data.db_user,
-                mysql_data.db_pass,
-                mysql_data.db_name,
-            ),
-            shell = True,
-            check = True,
-            capture_output = True
-        )
+        try:
+            run(
+                'zcat {0} | mysql -h {1} -u {2} -p"{3}" {4}'.format(
+                    os.path.join(os.path.dirname(__file__), 'data', 'testdb.sql.gz'),
+                    mysql_data.db_host,
+                    mysql_data.db_user,
+                    mysql_data.db_pass,
+                    mysql_data.db_name,
+                ),
+                shell = True,
+                check = True,
+                capture_output = True
+            )
+        except CalledProcessError as e:
+            # Replace password in command line
+            e.cmd = e.cmd.replace(mysql_data.db_pass, 'XXX')
+            # Raise another Exception to make stderr visible
+            # in unittest output
+            raise RuntimeError(e.stderr.decode('utf-8'))
+        
+        
         cls.mysql_db = 'mysql+pymysql://{0}:{1}@{2}/{3}'.format(
             mysql_data.db_user,
             mysql_data.db_pass,

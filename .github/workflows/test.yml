@@ -71,13 +71,13 @@ jobs:
           - "mariadb-10.5"
           - "mariadb-10.6"
     steps:
-    - name: Set up MariaDB ${{ matrix.mysql-version }}
+    - uses: actions/checkout@v3
+    - name: Set up MySQL ${{ matrix.mysql-version }}
       uses: shogo82148/actions-setup-mysql@v1
       with:
         distribution:   ${{ matrix.mysql-flavor }}
         mysql-version:  ${{ matrix.mysql-version }}
         root-password:  ${{ secrets.MYSQL_ROOT_PW }}
-    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
