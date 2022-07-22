@@ -251,13 +251,13 @@ class AlbumRoots(DigikamTable):
                 raise DigikamFileError('Directory %s not found' % path)
             
             for r in self:
-                if os.path.commonpath(path, r.abspath) == r.abspath:
+                if os.path.commonpath([path, r.abspath]) == r.abspath:
                     raise DigikamFileError(
                         '%s is a subdir of %s (albumroot %s)' % (
                             path, r.abspath, r.label
                         )
                     )
-                if os.path.commonpath(path, r.abspath) == path:
+                if os.path.commonpath([path, r.abspath]) == path:
                     raise DigikamFileError(
                         '%s (albumroot %s) is a subdir of %s' % (
                             r.abspath, r.label, path

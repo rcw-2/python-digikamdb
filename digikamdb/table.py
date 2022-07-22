@@ -25,8 +25,6 @@ class DigikamTable:
         parent:     ``Digikam`` object
     """
     
-    __abstract__ = True
-    
     _class_function = None
     
     def __init__(self, parent: 'Digikam'):                  # noqa: F821
@@ -147,6 +145,4 @@ class DigikamTable:
             else:
                 self.session.execute(
                     delete(self.Class))
-        
-    
 
