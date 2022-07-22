@@ -99,7 +99,7 @@ jobs:
       run: |
         # Generate test MySQL configuration
         cat >mysql_data.py <<EOF
-        db_host = 'localhost'
+        db_host = '127.0.0.1'
         db_user = 'digikam'
         db_pass = '${{ secrets.MYSQL_USER_PW }}'
         db_name = 'digikam'
