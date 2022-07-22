@@ -43,8 +43,7 @@ class MySQLTestBase(DigikamTestBase):
             # Raise another Exception to make stderr visible
             # in unittest output
             raise RuntimeError(e.stderr.decode('utf-8'))
-        
-        
+                
         cls.mysql_db = 'mysql+pymysql://{0}:{1}@{2}/{3}'.format(
             mysql_data.db_user,
             mysql_data.db_pass,
