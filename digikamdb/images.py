@@ -442,6 +442,15 @@ def _imagemetadata_class(dk: 'Digikam') -> type:            # noqa: F821
         * **subjectDistanceCategory** (*int*)
         """
         __tablename__ = 'ImageMetadata'
+        
+        # Retrieve double as float
+        if dk.is_mysql:
+            from sqlalchemy.dialects.mysql import DOUBLE
+            aperture = Column(DOUBLE(asdecimal = False))
+            focalLength = Column(DOUBLE(asdecimal = False))
+            focalLength35 = Column(DOUBLE(asdecimal = False))
+            exposureTime = Column(DOUBLE(asdecimal = False))
+            subjectDistance = Column(DOUBLE(asdecimal = False))
     
     return ImageMetadata
 
@@ -458,6 +467,17 @@ def _imageposition_class(dk: 'Digikam') -> type:            # noqa: F821
         Should be accessed through :attr:`Image.position`.
         """
         __tablename__ = 'ImagePositions'
+        
+        # Retrieve double as float
+        if dk.is_mysql:
+            from sqlalchemy.dialects.mysql import DOUBLE
+            latitudeNumber = Column(DOUBLE(asdecimal = False))
+            longitudeNumber = Column(DOUBLE(asdecimal = False))
+            altitude = Column(DOUBLE(asdecimal = False))
+            orientation = Column(DOUBLE(asdecimal = False))
+            tilt = Column(DOUBLE(asdecimal = False))
+            roll = Column(DOUBLE(asdecimal = False))
+            accuracy = Column(DOUBLE(asdecimal = False))
     
     return ImagePosition
 
@@ -677,7 +697,9 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
             setting the property, latitude and longitude can be given as a
             signed float, as a stringified float or as a string containing
             the absolute value followed by ``N``, ``S``, ``W`` or ``E``. The
-            altitude can be omitted.
+            altitude can be omitted, in this case it is not changed if already
+            present. To remove an existing altitude, give the position as
+            ``(latitude, longitude, None)``
             
             When ``position`` is set to ``None``, the row in ImagePositions
             will be deleted.
@@ -708,9 +730,6 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
             
             lat = pos[0]
             lng = pos[1]
-            alt = None
-            if len(pos) > 2:
-                alt = pos[2]
             
             if isinstance(lat, str):
                 if lat[-1] == 'N':
@@ -744,9 +763,12 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
                 self._position.longitude = lngstr
                 self._position.latitudeNumber = lat
                 self._position.longitudeNumber = lng
-                if alt:
-                    self._position.altitude = alt
+                if len(pos) > 2:
+                    self._position.altitude = pos[2]
             else:
+                alt = None
+                if len(pos) > 2:
+                    alt = pos[2]
                 newpos = self.ImagePosition(
                     imageid = self.id,
                     latitude = latstr,
