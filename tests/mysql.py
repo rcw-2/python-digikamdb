@@ -19,19 +19,78 @@ log = logging.getLogger(__name__)
 
 class MySQLTestBase(DigikamTestBase):
     
+    # File containing test database
+    test_db_dump = 'testdb.sql.xz'
+    
+    # Root override for test DB
+    root_override = {
+        'ids': {
+            'volumeid:?uuid=722b9c6f-0249-4fc2-8acf-d9926bb2995a': 'MYDIR',
+        },
+    }
+    
+    # Test data
+    test_data = {
+        'albumroots': [{
+            'id': 1,
+            'label': 'Pictures',
+            'mountpoint': 'MYDIR',
+            'path': 'MYDIR/home/digikam2/Pictures'}],
+        'albums': [{'id': 1, 'path': 'MYDIR/home/digikam2/Pictures'}],
+        'images': [
+            {
+                'id': 1,
+                'name': '20210806_165143.jpg',
+            },
+            {
+                'id':       5,
+                'name':     '20220722_190613.jpg',
+                'position': (49.875974899927776, 8.66468980047438, 529),
+            },
+        ],
+        'tags': [{'id': 22, 'pid': 0, 'name': 'Normandy'}]
+    }
+    
+    # Test data for comment changes
+    test_comments = [
+        {
+            'id': 1,
+            'title': {
+                '_default':     'New title for image 1',
+                'de-DE':        'Die Destillerie',
+            },
+            'caption': {
+                '_default':     'New caption for image 1',
+                'de-DE': {
+                    'RCW':      'Ein Kommentar von RCW',
+                },
+            },
+        },
+    ]
+    
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         import mysql_data
         
+        if cls.test_db_dump.endswith('.xz'):
+            cat = 'xzcat'
+        elif cls.test_db_dump.endswith('gz'):
+            cat = 'zcat'
+        elif cls.test_db_dump.endswith('bz2'):
+            cat = 'bzcat'
+        else:
+            cat = 'cat'
+        
         try:
             run(
-                'zcat {0} | mysql -h {1} -u {2} -p"{3}" {4}'.format(
-                    os.path.join(os.path.dirname(__file__), 'data', 'testdb.sql.gz'),
+                '{4} {5} | mysql -h {0} -u {1} -p"{2}" {3}'.format(
                     mysql_data.db_host,
                     mysql_data.db_user,
                     mysql_data.db_pass,
                     mysql_data.db_name,
+                    cat,
+                    os.path.join(cls.datadir, cls.test_db_dump),
                 ),
                 shell = True,
                 check = True,
@@ -50,55 +109,13 @@ class MySQLTestBase(DigikamTestBase):
             mysql_data.db_host,
             mysql_data.db_name,
         )
-        
-        cls.root_override = {
-            'ids': {
-                'volumeid:?uuid=722b9c6f-0249-4fc2-8acf-d9926bb2995a': 'MYDIR',
-            },
-        }
-        
-        # Test data
-        cls.test_data = {
-            'albumroots': [{
-                'id': 1,
-                'label': 'Pictures',
-                'mountpoint': 'MYDIR',
-                'path': 'MYDIR/home/digikam2/Pictures'}],
-            'albums': [{'id': 1, 'path': 'MYDIR/home/digikam2/Pictures'}],
-            'images': [{
-                'id': 1,
-                'name': '20210806_165143.jpg',
-                'comments': {
-                    'title': {
-                        '_default':     'New title for image 1',
-                        'de-DE':        'Die Destillerie',
-                    },
-                    'caption': {
-                        '_default':     'New caption for image 1',
-                        'de-DE': {
-                            'RCW':      'Ein Kommentar von RCW',
-                        },
-                    },
-                },
-            }],
-            'tags': [{'id': 22, 'pid': 0, 'name': 'Normandy'}]
-        }
     
     def setUp(self):
         super().setUp()
         db = create_engine(self.mysql_db)
 
-        root_override = {}
-        for group in ['ids', 'paths']:
-            if group in self.root_override:
-                root_override[group] = {}
-                for key, value in self.root_override[group].items():
-                    root_override[group][key] = self.replacepath(value)
-        self.dk = Digikam(db, root_override = root_override)
-    
-    def tearDown(self):
-        self.dk.destroy()
-        
+        self.dk = Digikam(db, root_override = self.replace_root_override())
+
 
 class MySQL_01_SanityCheck(MySQLTestBase, SanityCheck):
     
@@ -122,6 +139,9 @@ class MySQL_03_CheckComments(MySQLTestBase, CheckComments):
 
 
 class MySQL_04_NewData(MySQLTestBase, NewData):
-    pass
+    
+    # Use empty database without root_override
+    test_db_dump = 'empty.sql.xz'
+    root_override = None
 
 

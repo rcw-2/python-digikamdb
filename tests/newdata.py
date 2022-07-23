@@ -3,6 +3,7 @@
 import datetime
 import logging
 import os
+from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase, skip     # noqa: F401
@@ -70,6 +71,22 @@ class NewData:
             use_uuid = False
         )
     
+    def test11_change_roots(self):
+        new_data = self.__class__.new_data
+        rootdata = new_data['albumroots'][0]
+        root = self.dk.albumRoots[rootdata['id']]
+        self.assertEqual(root.id, rootdata['id'])
+        self.assertEqual(root.identifier, rootdata['identifier'])
+        self.assertEqual(root.specificPath, rootdata['specificPath'])
+        self.assertEqual(root.abspath, rootdata['path'])
+        root.identifier = 'volumeid:?path=' + rootdata['path']
+        root.specificPath = '/'
+        self.dk.session.commit()
+        rootdata.update(
+            identifier = 'volumeid:?path=' + rootdata['path'],
+            specificPath = '/',
+        )
+    
     def test15_verify_roots(self):
         new_data = self.__class__.new_data
         for rootdata in new_data['albumroots']:
@@ -82,38 +99,53 @@ class NewData:
                 self.assertEqual(root.identifier, rootdata['identifier'])
                 self.assertEqual(root.specificPath, rootdata['specificPath'])
                 self.assertEqual(root.abspath, rootdata['path'])
-        
+                self.assertTrue(os.path.isdir(root.abspath))
+    
+    def _add_album(
+        self,
+        data: List,
+        albumRoot: int,
+        relativePath: str,
+        date: datetime
+    ) -> 'Album':                                           # noqa: F821
+        with self.subTest(Album = relativePath):
+            new_album = self.dk.albums._insert(
+                albumRoot = albumRoot,
+                relativePath = relativePath,
+                date = date,
+                caption = None,
+                collection = None,
+                icon = None
+            )
+            self.dk.session.commit()
+            root = self.dk.albumRoots[albumRoot]
+            if relativePath == '/':
+                abspath = root.abspath
+            else:
+                abspath = os.path.join(root.abspath, relativePath.lstrip('/'))
+            data.append({
+                '_idx':         len(data),
+                'id':           new_album.id,
+                'albumRoot':    albumRoot,
+                'relativePath': relativePath,
+                'date':         date,
+                'caption':      None,
+                'collection':   None,
+                'icon':         None,
+                'path':         abspath,
+            })
+        return new_album
+    
     def test20_add_albums(self):
         new_data = self.__class__.new_data
-        root = self.dk.albumRoots[new_data['albumroots'][0]['id']]
+        root1 = self.dk.albumRoots[new_data['albumroots'][0]['id']]
+        root2 = self.dk.albumRoots[new_data['albumroots'][1]['id']]
         today = datetime.date.today()
         
-        for relpath in ['/', '/New_Album']:
-            with self.subTest(Album = relpath):
-                new_album = self.dk.albums._insert(
-                    albumRoot = root.id,
-                    relativePath = relpath,
-                    date = today,
-                    caption = None,
-                    collection = None,
-                    icon = None
-                )
-                self.dk.session.commit()
-                if relpath == '/':
-                    abspath = root.abspath
-                else:
-                    abspath = os.path.join(root.abspath, relpath.lstrip('/'))
-                new_data['albums'].append({
-                    '_idx':         len(new_data['albums']),
-                    'id':           new_album.id,
-                    'albumRoot':    root.id,
-                    'relativePath': relpath,
-                    'date':         today,
-                    'caption':      None,
-                    'collection':   None,
-                    'icon':         None,
-                    'path':         abspath,
-                })
+        os.mkdir(os.path.join(root1.abspath, 'New_Album'))
+        self._add_album(new_data['albums'], root1.id, '/', today)
+        self._add_album(new_data['albums'], root1.id, '/New_Album', today)
+        self._add_album(new_data['albums'], root2.id, '/', today)
     
     def test25_verify_albums(self):
         new_data = self.__class__.new_data
@@ -130,31 +162,77 @@ class NewData:
                 self.assertEqual(album.abspath, albumdata['path'])
                 self.assertIsNone(album.iconImage)
     
+    def _add_image(
+        self,
+        data: List,
+        album: int,
+        name: str,
+        modificationDate: datetime,
+        fileSize: int,
+        uniqueHash: str,
+    ) -> 'Image':                                           # noqa: F821
+        with self.subTest(image = name):
+            new_image = self.dk.images._insert(
+                album = album,
+                name = name,
+                status = 1,
+                category = 1,
+                modificationDate = modificationDate,
+                fileSize = fileSize,
+                uniqueHash = uniqueHash
+            )
+            self.dk.session.commit()
+            data.append({
+                '_idx':             len(data),
+                'id':               new_image.id,
+                'album':            album,
+                'name':             name,
+                'status':           1,
+                'category':         1,
+                'modificationDate': modificationDate,
+                'fileSize':         fileSize,
+                'uniqueHash':       uniqueHash,
+            })
+        return new_image
+    
     def test30_add_images(self):
         new_data = self.__class__.new_data
         album = self.dk.albums[new_data['albums'][1]['id']]
         now = datetime.datetime.now().replace(microsecond = 0)
-        new_image = self.dk.images._insert(
-            album = album.id,
-            name = 'new_image.jpg',
-            status = 1,
-            category = 1,
-            modificationDate = now,
-            fileSize = 249416,
-            uniqueHash = 'e5f60a712fc36977a14816727242262b'
+        path = os.path.join(album.abspath, 'new_image.jpg')
+        Path(path).touch()
+        img1 = self._add_image(
+            new_data['images'],
+            album.id,
+            'new_image.jpg',
+            now,
+            638843,
+            '54b4f8875a9885643582a31edf933822'
         )
+        img2 = self.dk.images.find(path)
+        self.assertEqual(img1.id, img2.id)
+        self.assertIs(img1, img2)
+    
+    def test31_image_position(self):
+        new_data = self.__class__.new_data
+        imgdata = new_data['images'][0]
+        img = self.dk.images[imgdata['id']]
+        img.position = (50.10961004586001, 8.702938349511566)
         self.dk.session.commit()
-        new_data['images'].append({
-            '_idx':             len(new_data['images']),
-            'id':               new_image.id,
-            'album':            album.id,
-            'name':             'new_image.jpg',
-            'status':           1,
-            'category':         1,
-            'modificationDate': now,
-            'fileSize':         249416,
-            'uniqueHash':       'e5f60a712fc36977a14816727242262b',
-        })
+        imgdata['position'] = (50.10961004586001, 8.702938349511566, None)
+    
+    def test32_change_image_position(self):
+        new_data = self.__class__.new_data
+        imgdata = new_data['images'][0]
+        img = self.dk.images[imgdata['id']]
+        self.assertEqual(
+            imgdata['position'],
+            (50.10961004586001, 8.702938349511566, None)
+        )
+        self.assertEqual(img.position, imgdata['position'])
+        img.position = (50.11088572429458, 8.668430363718421)
+        self.dk.session.commit()
+        imgdata['position'] = (50.11088572429458, 8.668430363718421, None)
     
     def test35_verify_images(self):
         new_data = self.__class__.new_data
@@ -169,6 +247,14 @@ class NewData:
                 self.assertEqual(img.modificationDate, imgdata['modificationDate'])
                 self.assertEqual(img.fileSize, imgdata['fileSize'])
                 self.assertEqual(img.uniqueHash, imgdata['uniqueHash'])
+    
+    def test36_verify_image_position(self):
+        new_data = self.__class__.new_data
+        for imgdata in new_data['images']:
+            if 'position' in imgdata:
+                with self.subTest(image = imgdata['_idx']):
+                    img = self.dk.images[imgdata['id']]
+                    self.assertEqual(img.position, imgdata['position'])
     
     def _add_tag(
         self,
@@ -229,7 +315,7 @@ class NewData:
         tag4 = self._add_tag(                               # noqa: F841
             new_data['tags'],
             'New Tag 4',
-            self.test_data['tags'][0]['id'],
+            tag2,
             self.dk.images[imgid]
         )
     

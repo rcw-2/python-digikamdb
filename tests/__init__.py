@@ -13,6 +13,8 @@ from .mysql import (                                        # noqa: F401
     MySQL_03_CheckComments,
     MySQL_04_NewData
 )
+from .digikamrc import DigikamRCTest                        # noqa: F401
+
 
 logging.basicConfig(filename = 'test.log', level = logging.DEBUG)
 log = logging.getLogger(__name__)

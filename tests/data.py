@@ -38,8 +38,8 @@ class TestData:
         for data in self.test_data['images']:
             with self.subTest(imageid = data['id']):
                 img = self.dk.images[data['id']]
-                self.assertEqual(img.id, data['id'])
-                self.assertEqual(img.name, data['name'])
+                for prop, value in data.items():
+                    self.assertEqual(getattr(img, prop), value)
                 
                 img2 = self.dk.images.find(img.abspath)
                 self.assertIs(img, img2)

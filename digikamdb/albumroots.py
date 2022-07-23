@@ -99,7 +99,7 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
                         return self._mountpoint
             
             vid = self.identifier
-            path = '/'
+            path = None
             if vid.startswith('volumeid:?uuid='):
                 uuid = vid[15:]
                 dev = os.path.realpath(os.path.join('/dev/disk/by-uuid', uuid))
@@ -191,6 +191,8 @@ class AlbumRoots(DigikamTable):
     ):
         super().__init__(parent)
         self.Class.override = override
+        if override is not None:
+            log.debug('Root override specified')
     
     @classmethod
     def _get_mountpoints(cls) -> Mapping[str, str]:

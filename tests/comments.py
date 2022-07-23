@@ -54,28 +54,27 @@ class CheckComments:
     def test10_create_comments(self):
         # Set new values
         old_comments = {}
-        for data in self.test_data['images']:
-            if 'comments' in data:
-                with self.subTest(imageid = data['id']):
-                    img = self.dk.images[data['id']]
-                    self.assertEqual(img.id, data['id'])
-                    old_comments[img.id] = {}
-                    
-                    if 'title' in data['comments']:
-                        old_comments[img.id]['title'] = self._set_titles(
-                            img,
-                            data['comments']['title']
-                        )
-                    
-                    if 'caption' in data['comments']:
-                        old_comments[img.id]['caption'] = self._set_captions(
-                            img,
-                            data['comments']['caption']
-                        )
+        for data in self.test_comments:
+            with self.subTest(imageid = data['id']):
+                img = self.dk.images[data['id']]
+                self.assertEqual(img.id, data['id'])
+                old_comments[img.id] = {}
+                
+                if 'title' in data:
+                    old_comments[img.id]['title'] = self._set_titles(
+                        img,
+                        data['title'],
+                    )
+                
+                if 'caption' in data:
+                    old_comments[img.id]['caption'] = self._set_captions(
+                        img,
+                        data['caption'],
+                    )
         self.dk.session.commit()
         self.__class__.old_image_comments = old_comments
     
-    def test11_verify_comments(self):
+    def test20_verify_comments(self):
         # Check new values
         for data in self.test_data['images']:
             if 'comments' in data:
@@ -91,7 +90,7 @@ class CheckComments:
                             data['comments']['caption']
                         )
     
-    def test12_restore_comments(self):
+    def test30_restore_comments(self):
         # Restore old values
         old_comments = self.__class__.old_image_comments
         for id_, comments in old_comments.items():
@@ -104,7 +103,7 @@ class CheckComments:
                     self._set_captions(img, comments['caption'])
         self.dk.session.commit()
     
-    def test13_verify_restored_comments(self):
+    def test40_verify_restored_comments(self):
         # Check old values
         old_comments = self.__class__.old_image_comments
         for id_, comments in old_comments.items():
