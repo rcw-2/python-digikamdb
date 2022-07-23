@@ -33,3 +33,7 @@ packages = ["digikamdb"]
 [tool.setuptools_scm]
 write_to = "digikamdb/_version.py"
 
+[tool.coverage.run]
+source = ["digikamdb"]
+branch = true
+
