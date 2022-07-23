@@ -2,7 +2,6 @@
 Defines the ``Digikam`` class for database access.
 """
 
-import configparser
 import logging
 import os
 from typing import Mapping, Optional, Union
@@ -98,8 +97,18 @@ class Digikam:
         self.base.prepare(self.engine)
         self.tags.setup()
     
+    _db_config_keys = dict(
+        db_host = 'Database Hostname',
+        db_name = 'Database Name',
+        db_pass = 'Database Password',
+        db_port = 'Database Port',
+        db_type = 'Database Type',
+        db_user = 'Database Username',
+        db_internal = 'Internal Database Server'
+    )
+    
     @classmethod
-    def db_from_config(cls, sql_echo = False) -> Engine:
+    def db_from_config(cls, sql_echo = False) -> Engine:    # noqa: C901
         """
         Creates the database connection from :file:`digikamrc`.
         
@@ -109,46 +118,95 @@ class Digikam:
             DigikamConfigError:     ~/.config/digikamrc cannot be read
                                     or interpreted.
         """
-        configfile = os.path.join(os.path.expanduser('~'), '.config/digikamrc')
-        config = configparser.ConfigParser()
-        config.read(configfile)
         try:
-            dbtype = config['Database Settings']['Database Type']
-        except KeyError as e:
-            raise DigikamConfigError('Database Type not specified: ' + e)
+            configfile = os.path.join(os.path.expanduser('~'), '.config/digikamrc')
+            config = None
+            # configparser cannot process digikamrc, so we do it manually...
+            with open(configfile, 'r') as cfg:
+                for line in cfg.readlines():
+                    line = line.strip()
+                    
+                    if config is None:
+                        if line == '[Database Settings]':
+                            config = {}
+                        continue
+                    
+                    if line.startswith('['):
+                        break
+                    
+                    if '=' not in line:
+                        continue
+                    
+                    key, value = line.split('=', maxsplit=1)
+                    key, value = key.strip(), value.strip()
+                    
+                    for key1, key2 in cls._db_config_keys.items():
+                        if key == key2:
+                            config[key1] = value
+                            break
         
-        if dbtype == 'QMYSQL':
+        except DigikamError:
+            raise
+        except Exception as e:
+            raise DigikamConfigError('Error reading config file: ' + str(e))
+        
+        if 'db_type' not in config:
+            raise DigikamConfigError('Database Type not found')
+        if config['db_type'] not in ['QMYSQL', 'QSQLITE']:
+            raise DigikamConfigError('Unknown Database Type ' + config['db_type'])
+        
+        if 'db_internal' in config and config['db_internal'].lower() != 'false':
+            raise DigikamConfigError('Internal Database Server is not supported')
+        
+        if config['db_type'] == 'QMYSQL':
             try:
-                if config['Database Settings']['Internal Database Server']:
-                    raise DigikamConfigError('Internal MySQL server is not supported')
+                if 'db_port' in config:
+                    config['db_host'] = '%s:%s' % (
+                        config['db_host'],
+                        config['db_port']
+                    )
+                db_str = 'mysql+pymysql://%s:%s@%s/%s?charset=utf8' % (
+                    config['db_user'],
+                    config['db_pass'],
+                    config['db_host'],
+                    config['db_name'],
+                )
+                log.debug(
+                    'Using MySQL database %s',
+                    db_str.replace(config['db_pass'], 'XXX')
+                )
+                return create_engine(db_str, future = True, echo = sql_echo)
+            
+            except DigikamError:
+                raise
+            except KeyError as e:
+                if e.args[0] in cls._db_config_keys:
+                    raise DigikamConfigError(
+                        'Configuration not found: ' + cls._db_config_keys[e.args[0]]
+                    )
+                else:
+                    raise
                 
+        if config['db_type'] == 'QSQLITE':
+            try:
+                log.debug('Using SQLite database in %s', config['db_name'])
                 return create_engine(
-                    'mysql+pymysql://%s:%s@%s/%s?charset=utf8?port=%d' % (
-                        config['Database Settings']['Database Username'],
-                        config['Database Settings']['Database Password'],
-                        config['Database Settings']['Database Hostname'],
-                        config['Database Settings']['Database Name'],
-                        int(config['Database Settings']['Database Port'])
+                    'sqlite:///%s' % (
+                        os.path.join(config['db_name'], 'digikam4.db')
                     ),
                     future = True,
                     echo = sql_echo)
             except DigikamError:
                 raise
             except KeyError as e:
-                raise DigikamConfigError('Configuration not found: ' + e)
+                if e.args[0] in cls._db_config_keys:
+                    raise DigikamConfigError(
+                        'Configuration not found: ' + cls._db_config_keys[e.args[0]]
+                    )
+                else:
+                    raise
         
-        if dbtype == 'QSQLITE':
-            try:
-                return create_engine(
-                    'sqlite:///%s' % (
-                        config['Database Settings']['Database Name']
-                    ),
-                    future = True,
-                    echo = sql_echo)
-            except KeyError as e:
-                raise DigikamConfigError('Configuration not found: ' + e)
-        
-        raise DigikamConfigError('Unknown database type ' + dbtype)
+        raise RuntimeError('This line should never be reached')
     
     def destroy(self):
         """
