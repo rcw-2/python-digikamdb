@@ -7,7 +7,7 @@ class.
 """
 
 from .conn import Digikam               # noqa: F401
-from .exceptions import DigikamError    # noqa: F401
+from .exceptions import *               # noqa: F401, F403
 
 from ._version import version
 __version__ = version

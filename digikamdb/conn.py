@@ -151,7 +151,11 @@ class Digikam:
         raise DigikamConfigError('Unknown database type ' + dbtype)
     
     def destroy(self):
-        """Clears the object."""
+        """
+        Clears the object.
+        
+        This will call :meth:`Session.close` and :meth:`Engine.dispose`.
+        """
         log.info('Tearing down Digikam object')
         self._settings = None
         self._tags = None

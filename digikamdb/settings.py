@@ -2,7 +2,7 @@
 Provides access to Digikam settings.
 """
 
-from typing import Iterable
+from typing import Generator, Iterable, Tuple               # noqa: F401
 
 from sqlalchemy import MetaData, Table, select
 
@@ -43,8 +43,13 @@ class Settings:
             ).one()
             row.value = value
     
-    def items(self) -> Iterable:
-        """Returns an iterable with (key, value) pairs."""
+    def items(self) -> Iterable[Tuple[str, str]]:
+        """
+        Returns an iterable with (key, value) pairs.
+        
+        Yields:
+            The settings (key, value) pairs.
+        """
         with self.parent.session.connection() as conn:
             for row in conn.execute(select(self.table)):
                 yield row.keyword, row.value
