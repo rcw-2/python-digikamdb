@@ -25,7 +25,7 @@ class TestData:
                     ar.abspath,
                     self.replacepath(data['path']))
     
-    def test11_albums(self):
+    def test20_albums(self):
         for data in self.test_data['albums']:
             with self.subTest(albumid = data['id']):
                 al = self.dk.albums[data['id']]
@@ -34,7 +34,7 @@ class TestData:
                     al.abspath,
                     self.replacepath(data['path']))
     
-    def test12_images(self):
+    def test30_images(self):
         for data in self.test_data['images']:
             with self.subTest(imageid = data['id']):
                 img = self.dk.images[data['id']]
@@ -47,7 +47,7 @@ class TestData:
         with self.subTest(file = 'not in DB'):
             self.assertIsNone(self.dk.images.find('/does/not/exist'))
     
-    def test13_tags(self):
+    def test40_tags(self):
         for data in self.test_data['tags']:
             with self.subTest(tagid = data['id']):
                 tag = self.dk.tags[data['name']]

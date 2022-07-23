@@ -5,7 +5,7 @@ from shutil import unpack_archive
 from sqlalchemy import create_engine
 from sqlalchemy.exc import NoResultFound
 
-from digikamdb import Digikam
+from digikamdb import Digikam, DigikamDataIntegrityError    # noqa: F401
 
 from .base import DigikamTestBase
 from .sanity import SanityCheck
@@ -58,6 +58,7 @@ class SQLiteTestBase(DigikamTestBase):
         }
     
     def setUp(self):
+        super().setUp()
         dbfile = os.path.join(self.mydir, 'digikam4.db')
         db = create_engine('sqlite:///' + dbfile)
         self.dk = Digikam(db, root_override = self.root_override)
@@ -70,8 +71,12 @@ class SQLite_01_SanityCheck(SQLiteTestBase, SanityCheck):
     
     def test00_sqlite(self):
         self.assertFalse(self.dk.is_mysql)
+    
+    def test45_root_tag(self):
         with self.assertRaises(NoResultFound):
             _ = self.dk.tags._root
+        with self.assertRaises(NoResultFound):
+            _ = self.dk.tags[0]
 
 
 class SQLite_02_TestData(SQLiteTestBase, TestData):

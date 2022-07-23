@@ -6,9 +6,11 @@ import os
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase, skip     # noqa: F401
-from typing import List
+from typing import Any, List, Optional
 
 from sqlalchemy.exc import NoResultFound
+
+from digikamdb import DigikamDataIntegrityError
 
 
 log = logging.getLogger(__name__)
@@ -17,7 +19,7 @@ log = logging.getLogger(__name__)
 class NewData:
     """Mixin to test adding new objects"""
     
-    def test10_defines(self):
+    def test00_defines(self):
         basedir = mkdtemp()
         new_data = {
             'basedir':      basedir,
@@ -35,7 +37,7 @@ class NewData:
         label: str,
         check_dir: bool = True,
         use_uuid: bool = True,
-    ) -> None:
+    ) -> 'AlbumRoot':                                       # noqa: F821
         """Add albumroot"""
         new_root = self.dk.albumRoots.add(
             basedir,
@@ -52,8 +54,9 @@ class NewData:
             'specificPath': new_root.specificPath,
             'path':         basedir,
         })
+        return new_root
             
-    def test11_add_roots(self):
+    def test10_add_roots(self):
         new_data = self.__class__.new_data
         self._add_root(
             new_data['albumroots'],
@@ -67,7 +70,7 @@ class NewData:
             use_uuid = False
         )
     
-    def test12_verify_roots(self):
+    def test15_verify_roots(self):
         new_data = self.__class__.new_data
         for rootdata in new_data['albumroots']:
             with self.subTest(albumroot = rootdata['_idx']):
@@ -80,7 +83,7 @@ class NewData:
                 self.assertEqual(root.specificPath, rootdata['specificPath'])
                 self.assertEqual(root.abspath, rootdata['path'])
         
-    def test13_add_albums(self):
+    def test20_add_albums(self):
         new_data = self.__class__.new_data
         root = self.dk.albumRoots[new_data['albumroots'][0]['id']]
         today = datetime.date.today()
@@ -112,7 +115,7 @@ class NewData:
                     'path':         abspath,
                 })
     
-    def test14_verify_albums(self):
+    def test25_verify_albums(self):
         new_data = self.__class__.new_data
         for albumdata in new_data['albums']:
             with self.subTest(album = albumdata['_idx']):
@@ -127,7 +130,7 @@ class NewData:
                 self.assertEqual(album.abspath, albumdata['path'])
                 self.assertIsNone(album.iconImage)
     
-    def test15_add_images(self):
+    def test30_add_images(self):
         new_data = self.__class__.new_data
         album = self.dk.albums[new_data['albums'][1]['id']]
         now = datetime.datetime.now().replace(microsecond = 0)
@@ -153,7 +156,7 @@ class NewData:
             'uniqueHash':       'e5f60a712fc36977a14816727242262b',
         })
     
-    def test16_verify_images(self):
+    def test35_verify_images(self):
         new_data = self.__class__.new_data
         for imgdata in new_data['images']:
             with self.subTest(image = imgdata['_idx']):
@@ -167,8 +170,119 @@ class NewData:
                 self.assertEqual(img.fileSize, imgdata['fileSize'])
                 self.assertEqual(img.uniqueHash, imgdata['uniqueHash'])
     
-    def test88_remove_new_data(self):
+    def _add_tag(
+        self,
+        data: List,
+        name: str,
+        parent: Any,
+        icon: Optional[Any] = None
+    ) -> 'Tag':                                             # noqa: F821
+        """Adds a tag and saves data"""
+        tag = self.dk.tags.add(name, parent, icon)
+        self.dk.session.commit()
+        
+        if isinstance(parent, self.dk.tag_class):
+            parent = parent.id
+        
+        if icon is None:
+            iconkde = None
+        elif isinstance(icon, self.dk.image_class):
+            icon = icon.id
+            iconkde = None
+        elif isinstance(icon, int):
+            iconkde = None
+        elif isinstance(icon, str):
+            iconkde = icon
+            icon = None
+        
+        data.append({
+            '_idx':     len(data),
+            'id':       tag.id,
+            'pid':      parent,
+            'name':     name,
+            'icon':     icon,
+            'iconkde':  iconkde,
+        })
+        
+        return tag
+    
+    def test40_add_tags(self):
         new_data = self.__class__.new_data
+        tag1 = self._add_tag(
+            new_data['tags'],
+            'New Tag 1',
+            0
+        )
+        tag2 = self._add_tag(
+            new_data['tags'],
+            'New Tag 2',
+            tag1,
+            'applications-development'
+        )
+        imgid = new_data['images'][0]['id']
+        tag3 = self._add_tag(                               # noqa: F841
+            new_data['tags'],
+            'New Tag 3',
+            tag2.id,
+            imgid
+        )
+        tag4 = self._add_tag(                               # noqa: F841
+            new_data['tags'],
+            'New Tag 4',
+            self.test_data['tags'][0]['id'],
+            self.dk.images[imgid]
+        )
+    
+    def test41_tag_properties(self):
+        new_data = self.__class__.new_data
+        tagdata = new_data['tags'][0]
+        tag = self.dk.tags[tagdata['id']]
+        tag.properties['tagKeyboardShortcut'] = 'Alt+Shift+S'
+        self.dk.session.commit()
+        tagdata['properties'] = {
+            'tagKeyboardShortcut':  'Alt+Shift+S'
+        }
+    
+    def test42_change_tag_properties(self):
+        new_data = self.__class__.new_data
+        tagdata = new_data['tags'][0]
+        tag = self.dk.tags[tagdata['id']]
+        self.assertEqual(tagdata['properties']['tagKeyboardShortcut'], 'Alt+Shift+S')
+        self.assertEqual(tag.properties['tagKeyboardShortcut'], 'Alt+Shift+S')
+        tag.properties['tagKeyboardShortcut'] = 'Alt+Shift+A'
+        self.dk.session.commit()
+        tagdata['properties']['tagKeyboardShortcut'] = 'Alt+Shift+A'
+    
+    def test45_verify_tags(self):
+        with self.subTest(msg = 'data integrity check'):
+            try:
+                self.dk.tags.check()
+            except DigikamDataIntegrityError:
+                self.fail('Tags table inconsistent')
+        new_data = self.__class__.new_data
+        for tagdata in new_data['tags']:
+            with self.subTest(tag = tagdata['_idx']):
+                tag = self.dk.tags[tagdata['id']]
+                self.assertEqual(tag.id, tagdata['id'])
+                self.assertEqual(tag.pid, tagdata['pid'])
+                self.assertEqual(tag.name, tagdata['name'])
+                self.assertEqual(tag.icon, tagdata['icon'])
+                self.assertEqual(tag.iconkde, tagdata['iconkde'])
+    
+    def test46_verify_tag_properties(self):
+        new_data = self.__class__.new_data
+        for tagdata in new_data['tags']:
+            if 'properties' in tagdata:
+                with self.subTest(tag = tagdata['_idx']):
+                    tag = self.dk.tags[tagdata['id']]
+                    for prop, value in tagdata['properties'].items():
+                        self.assertEqual(tag.properties[prop], value)
+    
+    def test90_remove_new_data(self):
+        new_data = self.__class__.new_data
+        for tag in new_data['tags']:
+            with self.subTest(tag = tag['_idx']):
+                self.dk.tags.remove(tag['id'])
         for img in new_data['images']:
             with self.subTest(image = img['_idx']):
                 self.dk.images._delete(id = img['id'])
@@ -180,19 +294,27 @@ class NewData:
                 rmtree(self.dk.albumRoots[ar['id']].abspath)
                 self.dk.albumRoots._delete(id = ar['id'])
         self.dk.session.commit()
-
-    def test89_verify_removal(self):
+    
+    def test95_verify_removal(self):
         new_data = self.__class__.new_data
+        for tag in new_data['tags']:
+            with self.subTest(tag = tag['_idx']):
+                with self.assertRaises(NoResultFound):
+                    _ = self.dk.tags[tag['id']]
+                self.assertFalse(self.dk.tags._select(id = tag['id']).all())
         for img in new_data['images']:
             with self.subTest(image = img['_idx']):
                 with self.assertRaises(NoResultFound):
                     _ = self.dk.images[img['id']]
+                self.assertFalse(self.dk.images._select(id = img['id']).all())
         for alb in new_data['albums']:
             with self.subTest(album = alb['_idx']):
                 with self.assertRaises(NoResultFound):
                     _ = self.dk.albums[alb['id']]
+                self.assertFalse(self.dk.albums._select(id = alb['id']).all())
         for ar in new_data['albumroots']:
             with self.subTest(albumroot = ar['_idx']):
                 with self.assertRaises(NoResultFound):
                     _ = self.dk.albumRoots[ar['id']]
+                self.assertFalse(self.dk.albumRoots._select(id = ar['id']).all())
 

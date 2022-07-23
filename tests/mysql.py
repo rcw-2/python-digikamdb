@@ -5,7 +5,7 @@ from subprocess import run, CalledProcessError
 from sqlalchemy import create_engine
 from sqlalchemy.exc import NoResultFound                    # noqa: F401
 
-from digikamdb import Digikam
+from digikamdb import Digikam, DigikamDataIntegrityError    # noqa: F401
 
 from .base import DigikamTestBase
 from .sanity import SanityCheck
@@ -85,6 +85,7 @@ class MySQLTestBase(DigikamTestBase):
         }
     
     def setUp(self):
+        super().setUp()
         db = create_engine(self.mysql_db)
 
         root_override = {}
@@ -103,6 +104,8 @@ class MySQL_01_SanityCheck(MySQLTestBase, SanityCheck):
     
     def test00_mysql(self):
         self.assertTrue(self.dk.is_mysql)
+    
+    def test45_root_tag(self):
         root = self.dk.tags._root
         self.assertEqual(root.id, 0)
         self.assertEqual(root.pid, -1)
@@ -120,4 +123,5 @@ class MySQL_03_CheckComments(MySQLTestBase, CheckComments):
 
 class MySQL_04_NewData(MySQLTestBase, NewData):
     pass
+
 
