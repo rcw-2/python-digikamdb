@@ -10,7 +10,7 @@ from sqlalchemy.orm import object_session
 
 from .table import DigikamTable
 from .properties import BasicProperties
-from .exceptions import DigikamError
+from .exceptions import DigikamError, DigikamDataIntegrityError
 
 
 log = logging.getLogger(__name__)
@@ -41,10 +41,15 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
         * The :meth:`hierarchicalname` method.
         
         .. note::
-            The tree structure differs between SQLite and MySQL. On SQLite,
-            tags at the top level have a parent id of ``0``, for which no
-            row exists. On MySQL, there is a tag ``_Digikam_Root_Tag_`` with
-            ``id == 0`` and parent id -1, for which there is no row.
+            The tree structure differs between SQLite and MySQL:
+            
+            *   On SQLite, tags at the top level have a ``pid == 0``,
+                and there is no row with ``id == 0``. There can be many
+                tags without a parent tag.
+            *   On MySQL, there is a tag ``_Digikam_Root_Tag_`` with
+                ``id == 0`` and ``pid == -1``, and there is no tag with
+                ``id == -1``. All other tags are descendents of
+                ``_Digikam_Root_Tag_``.
 
         See also:
             * Class :class:`~digikamdb.tags.Tags`
@@ -71,18 +76,28 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
         
         @property
         def ancestors(self) -> List:
+            log.debug('Getting ancestors for tag %d', self.id)
+            
             if self.is_mysql:
                 # MySQL
-                return [tag.id for tag in self.session.scalars(
-                    select(Tag)
-                        .where(Tag.lft < self.lft,
-                               Tag.rgt > self.rgt))]
+                return [
+                    tag.id
+                    for tag in self.session.scalars(
+                        select(Tag)
+                        .where(Tag.lft < self.lft, Tag.rgt > self.rgt)
+                    )
+                ]
             
             # We're on SQLite
             conn = self.session.connection()
-            return [row['id'] for row in conn.execute(
-                select(self.tagtree_table)
-                    .filter(text("id = %d" % self.id)))]
+            return [
+                row['pid']
+                for row in conn.execute(
+                    select(self.tagstree_table)
+                    .filter(text("id = %d" % self.id))
+                )
+                if row['pid'] > 0
+            ]
             
         # Other properties and methods
         
@@ -136,25 +151,54 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             else:
                 return self.parent.hierarchicalname() + '/' + self.name
         
-        def check_tree(self):
+        def _check(self):
             """
-            Checks if the tree is consistent
-            """
+            Checks if the tree is consistent.
             
-            d = self.rgt - self.lft
-            if d <= 0 or d % 2 == 0:
-                raise DigikamError('Tag table inconsistent: %d (%d,%d)' % (
-                    self.id, self.lft, self.rgt))
+            Raises:
+                DigikamDataIntegrityError
+            """
             
             p = self.parent
+            if p and self not in p:
+                raise DigikamDataIntegrityError(
+                    'Tag table: Tag id=%d is not in children of parent (%d)' % (
+                        self.id, p.id
+                    )
+                )
             while p:
+                if not isinstance(p, Tag):
+                    raise DigikamError(
+                        'Tag parent is of class %s, not Tag' % p.__class__.__name__
+                    )
                 if self not in p:
-                    raise DigikamError('Internal Error')
+                    raise DigikamDataIntegrityError(
+                        'Tag table inconsistent: Tag id=%d is not in descendents ' +
+                        'of ancestor %d' % (self.id, p.id)
+                    )
+                if p.id == self.id:
+                    raise DigikamDataIntegrityError(
+                        'Tag table inconsistent: Circular ancestry in id=%d' % self.id
+                    )
                 p = p.parent
+        
+        def _check_nested_sets(self):
+            """
+            Checks if the tree is consistent.
             
+            Raises:
+                DigikamDataIntegrityError
+            """
+            d = self.rgt - self.lft
+            if d <= 0 or d % 2 == 0:
+                raise DigikamDataIntegrityError(
+                    'Tag table: inconsistent lft, rgt in id=%d (%d,%d)' % (
+                        self.id, self.lft, self.rgt
+                    )
+                )
             for ch in self.children:
                 if not (self.lft < ch.lft and self.rgt > ch.rgt):
-                    raise DigikamError(
+                    raise DigikamDataIntegrityError(
                         'Tag table inconsistent: parent %d (%d,%d), child %d (%d,%d)' % (
                             self.id, self.lft, self.rgt, ch.id, ch.lft, ch.rgt))
                 for ch2 in self.children:
@@ -162,11 +206,11 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                         continue
                     if ch.rgt < ch2.lft or ch.lft > ch2.rgt:
                         continue
-                    raise DigikamError(
-                        'Tag table inconsistent: ' +
+                    raise DigikamDataIntegrityError(
+                        'Tag table has ' +
                         'overlapping siblings %d (%d,%d), %d (%d,%d)' % (
                             ch.id, ch.lft, ch.rgt, ch2.id, ch2.lft, ch2.rgt))
-                ch.check_tree()
+                ch._check_nested_sets()
     
     return Tag
 
@@ -210,7 +254,7 @@ class Tags(DigikamTable):
             parent.base.metadata,
             autoload_with = self.parent.engine)
         if not self.is_mysql:
-            self.Class.tagtree_table = Table(
+            self.Class.tagstree_table = Table(
                 'TagsTree',
                 parent.base.metadata,
                 autoload_with = self.parent.engine)
@@ -232,7 +276,7 @@ class Tags(DigikamTable):
             raise ValueError('Parent must be specified')
         
         log.debug('Reordering nested sets for tags before insert')
-        tags = mapper.mapped_table
+        tags = mapper.persist_selectable
         right_most_sibling = connection.scalar(
             select(tags.c.rgt).where(
                 tags.c.id == instance.pid))
@@ -350,15 +394,25 @@ class Tags(DigikamTable):
         """
         return self._select(pid = -1).one()
     
-    def add(self, name: str, parent: Union[int, 'Tag']) -> 'Tag':   # noqa: F821
+    def add(
+        self,
+        name: str,
+        parent: Union[int, 'Tag'],
+        icon: Optional[Union['Image', str, int]] = None,
+    ) -> 'Tag':                                             # noqa: F821
         """
         Adds a new tag.
         
         To create a Tag at the root of the tag tree, set ``parent`` to 0.
         
         Parameters:
-            name:   the new tag's name
-            parent: the new tag's parent as an id or a Tag object
+            name:   The new tag's name
+            parent: The new tag's parent as an id or a Tag object
+            icon:   The new tag's icon. If given as an Image, the icon is set
+                    to this Image from the Digikam collection. If given as an
+                    int, the icon is set to the image with the id **icon**. If
+                    given as a str, the icon is set to the corresponding KDE
+                    icon.
         Returns:
             The newly created tag object.
         """
@@ -370,7 +424,18 @@ class Tags(DigikamTable):
         else:
             raise TypeError('Parent must be int or Tag')
         
-        return self._insert(name = name, pid = pid)
+        options = {}
+        if icon:
+            if isinstance(icon, self.parent.image_class):
+                options['icon'] = icon.id
+            elif isinstance(icon, int):
+                options['icon'] = icon
+            elif isinstance(icon, str):
+                options['iconkde'] = icon
+            else:
+                raise TypeError('Icon must be int, str or Image')
+        
+        return self._insert(name = name, pid = pid, **options)
     
     def remove(self, tag: Union[int, 'Tag']):               # noqa: F821
         """
@@ -381,28 +446,32 @@ class Tags(DigikamTable):
         """
         
         if isinstance(tag, self.Class):
-            pass
-        elif isinstance(tag, int):
-            tag = self.session.scalars(
-                select(self.Class).filter_by(id = tag)
-            ).one()
-        else:
-            raise TypeError('Tag must be int or Tag')
+            tag = tag.id
+        elif not isinstance(tag, int):
+            raise TypeError('Tag must be int or ' + self.Class.__name__)
         
-        self._delete(tag)
-#        self.parent.commit()
+        self._delete(id = tag)
     
     def check(self):
         """
         Checks the integrity of the *Tags* table.
         
-        On MySQL, checks it the nested sets structure of the ``Tags`` table is
-        correct. If not, an exception is raised.
+        Checks that
         
-        Raises an exception on SQLite.
+        * each tag is among the children of its parent
+        * each tag is contained in its ancestors
+        * there are no circular parent-child relations
+        * the nested sets and adjacency list structures are consistent
+          (MySQL only)
+        
+        Raises:
+            DigikamDataIntegrityError:  Table is in an inconsistent state.
         """
-        
-        self._root.check_tree()
+
+        for tag in self:
+            tag._check()
+        if self.Class.is_mysql:
+            self._root._check_nested_sets()
 
 
 class TagProperties(BasicProperties):

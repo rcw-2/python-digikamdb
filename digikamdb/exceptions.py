@@ -5,7 +5,9 @@ Digikam Exceptions
 
 class DigikamError(Exception):
     """
-    General Digikam Exception
+    General Digikam Exception.
+    
+    All other Digikam-DB exceptions are derived from this class.
     """
     pass
 
@@ -24,3 +26,7 @@ class DigikamFileError(DigikamError):
     pass
 
 
+class DigikamDataIntegrityError(DigikamError):
+    """
+    The database is in an inconsistent state.
+    """

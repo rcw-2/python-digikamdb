@@ -71,7 +71,7 @@ class BasicProperties:
         return self._session.connection().execute(
             select(self._table)
             .filter(text("%s = '%s'" %
-                         (self._parent_id_col, self.parent.id)))
+                         (self._parent_id_col, self._parent.id)))
             .filter(text("%s = '%s'" %
                          (self._key_col, prop)))
         ).one().value
@@ -87,23 +87,23 @@ class BasicProperties:
         conn = self._session.connection()
         if prop in self:
             kwargs = {
-                self._parent.value_col:  value
+                self._value_col:  value
             }
             conn.execute(
                 update(self._table)
-                .filter("%s = '%s'" %
-                        (self._parent_id_col, self.parent.id))
-                .filter("%s = '%s'" % (self._key_col, prop))
-                .values(**kwargs))
+                .filter(text("%s = '%s'" % (self._parent_id_col, self._parent.id)))
+                .filter(text("%s = '%s'" % (self._key_col, prop)))
+                .values(**kwargs)
+            )
         else:
             kwargs = {
-                self._parent_id_col:     self._parent.id,
-                self._parent.key_col:    prop,
-                self._parent.value_col:  value
+                self._parent_id_col:    self._parent.id,
+                self._key_col:          prop,
+                self._value_col:        value
             }
             conn.execute(
-                insert(self._table).values(**kwargs))
-        conn.commit()
+                insert(self._table).values(**kwargs)
+            )
 
     def __iter__(self) -> Iterable:
         for row in self._session.connection().execute(
