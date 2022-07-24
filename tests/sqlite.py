@@ -96,6 +96,6 @@ class SQLite_03_CheckComments(SQLiteTestBase, CheckComments):
 class SQLite_04_NewData(SQLiteTestBase, NewData):
     
     # Use empty database without root_override
-    test_db = 'empty.tar.gz'
+    test_db = 'empty.tar.xz'
     root_override = None
 
