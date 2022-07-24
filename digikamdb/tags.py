@@ -397,8 +397,8 @@ class Tags(DigikamTable):
     def add(
         self,
         name: str,
-        parent: Union[int, 'Tag'],
-        icon: Optional[Union['Image', str, int]] = None,
+        parent: Union[int, 'Tag'],                          # noqa: F821
+        icon: Optional[Union['Image', str, int]] = None,    # noqa: F821
     ) -> 'Tag':                                             # noqa: F821
         """
         Adds a new tag.
