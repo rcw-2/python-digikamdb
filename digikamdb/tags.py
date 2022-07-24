@@ -79,21 +79,26 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             if Tag.is_mysql:
                 return self.lft < obj.lft and self.rgt > obj.rgt
             else:
-                return self.id in obj.ancestors
+                return self.id in obj._ancestors
         
         @property
-        def ancestors(self) -> List:
+        def _ancestors(self) -> List:
+            """
+            Returns the ancestors of a tag.
+            
+            Returns:
+                In SQLite, an unsorted list with the ancestor's ids.
+                In MySQL, a sorted list (top-down) with the ancestor objects.
+            """
             log.debug('Getting ancestors for tag %d', self.id)
             
             if self.is_mysql:
                 # MySQL
-                return [
-                    tag.id
-                    for tag in self.session.scalars(
+                return self.session.scalars(
                         select(Tag)
                         .where(Tag.lft < self.lft, Tag.rgt > self.rgt)
-                    )
-                ]
+                        .order_by(Tag.lft)
+                ).all()
             
             # We're on SQLite
             conn = self._session.connection()
@@ -132,7 +137,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             """
             Returns the tag's children.
             """
-            yield from self._container._select(pid = self.id)
+            return self._container._select(pid = self.id)
         
         @property
         def properties(self) -> TagProperties:
@@ -147,10 +152,25 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             """
             Returns the name including parents, separated by ``/``.
             """
+            
+            # Parent is the root tag or does not exist
             if self.pid <= 0:
                 return self.name
+            
+            # No hierarchical name for internal tags:
+            if 'internalTag' in self.properties:
+                return self.name
+            
+            if self.is_mysql:
+                return '/'.join([t.name for t in self._ancestors if t.id > 0])
+            
             if self.parent:
                 return self.parent.hierarchicalname() + '/' + self.name
+            
+            raise DigikamDataIntegrityError(
+                'Unable to generate hierarchical name for tag %d (%s)',
+                self.id, self.name,
+            )
         
         def _check(self):
             """
@@ -485,6 +505,20 @@ class Tags(DigikamTable):
             tag._check()
         if self.Class.is_mysql:
             self._root._check_nested_sets()
+    
+    def find(self, name: str) -> List['Tag']:               # noqa: F821
+        """
+        Finds all tags with a certain name.
+        
+        Since tags are hierarchical, it is possible that more than one tag
+        have the same name. This funcion returns a list with all of them.
+        
+        Args:
+            name:   Tag name to find.
+        Returns:
+            List containing the found tags
+        """
+        return self._select(name = name).all()
 
 
 def _tagproperty_class(dk: 'Digikam') -> type:              # noqa: F821

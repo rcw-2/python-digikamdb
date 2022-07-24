@@ -822,7 +822,6 @@ class Images(DigikamTable):
             This table should be accessed via
             Class :class:`~digikamdb.images.ImageProperties`.
             """
-            
             __tablename__ = 'ImageProperties'
             
             imageid = Column(Integer, primary_key = True)
@@ -867,7 +866,6 @@ class Images(DigikamTable):
             name:   Path to image file. Can be given as any type that the
                     :mod:`os.path` functions understand.
         """
-        
         base = os.path.basename(name)
         path = os.path.abspath(name)
         
