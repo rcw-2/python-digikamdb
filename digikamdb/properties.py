@@ -5,16 +5,13 @@ from typing import Iterable, Optional
 
 from sqlalchemy import delete, func, insert, select, text, update
 
-
-# TagProperties and ImageProperties have no primary key in Digikam, so
-# the ORM will not work. Instead, we use derivatives of this class to
-# access properties.
+from .table import DigikamTable
 
 
 log = logging.getLogger(__name__)
 
 
-class BasicProperties:
+class BasicProperties(DigikamTable):
     """
     Basic class for properties
     
@@ -32,6 +29,7 @@ class BasicProperties:
     :meth:`~BasicProperties.items` similar to that of :class:`python.dict`.
     
     Args:
+        digikam:    Digikam object.
         parent:     Object the properties belong to.
     """
     
@@ -44,39 +42,28 @@ class BasicProperties:
     # Value column
     _value_col = None
     
-    def __init__(
-        self,
-        parent: 'DigikamObject'                             # noqa: F821
-    ):
-        log.debug(
-            'Creating %s object for %d',
-            self.__class__.__name__,
-            parent.id
-        )
+    def __init__(self, parent: 'DigikamObject'):            # noqa: F821
+        log.debug('Creating properties object for %d', parent.id)
+        super().__init__(parent._container.digikam)
         self._parent = parent
-        self._table  = parent.properties_table
-        self._session = parent.session
+    
+    @property
+    def parent(self) -> 'DigikamObject':                    # noqa: F821
+        """Returns the parent object."""
+        return self._parent
     
     def __contains__(self, prop: str) -> bool:
-        return self._session.connection().execute(
-            select(func.count('*'))
-            .select_from(self._table)
-            .filter(text("%s = '%s'" %
-                         (self._parent_id_col, self._parent.id)))
-            .filter(text("%s = '%s'" %
-                         (self._key_col, prop)))
-        ).one()[0] > 0
+        """in operator"""
+        kwargs = { self._parent_id_col: self.parent.id, self._key_col: prop }
+        return self._select(**kwargs).one_or_none() is not None
     
-    def __getitem__(self, prop: str) -> 'TagProperty':      # noqa: F821
-        return self._session.connection().execute(
-            select(self._table)
-            .filter(text("%s = '%s'" %
-                         (self._parent_id_col, self._parent.id)))
-            .filter(text("%s = '%s'" %
-                         (self._key_col, prop)))
-        ).one().value
+    def __getitem__(self, prop: str) -> str:                # noqa: F821
+        """[] operator"""
+        kwargs = { self._parent_id_col: self._parent.id, self._key_col: prop }
+        return getattr(self._select(**kwargs).one(), self._value_col)
     
     def __setitem__(self, prop: str, value: Optional[str]):
+        """[] operator"""
         log.debug(
             'Setting %s[%s] of %d to %s',
             self.__class__.__name__,
@@ -84,44 +71,26 @@ class BasicProperties:
             self._parent.id,
             value
         )
-        conn = self._session.connection()
-        if prop in self:
-            kwargs = {
-                self._value_col:  value
-            }
-            conn.execute(
-                update(self._table)
-                .filter(text("%s = '%s'" % (self._parent_id_col, self._parent.id)))
-                .filter(text("%s = '%s'" % (self._key_col, prop)))
-                .values(**kwargs)
-            )
+        kwargs = { self._parent_id_col: self.parent.id, self._key_col: prop }
+        row = self._select(**kwargs).one_or_none()
+        if row:
+            setattr(row, self._value_col, value)
         else:
-            kwargs = {
-                self._parent_id_col:    self._parent.id,
-                self._key_col:          prop,
-                self._value_col:        value
-            }
-            conn.execute(
-                insert(self._table).values(**kwargs)
-            )
-
+            kwargs[self._value_col] = value
+            self._insert(**kwargs)
+    
     def __iter__(self) -> Iterable:
-        for row in self._session.connection().execute(
-            select(self._table)
-            .filter("%s = '%s'" % (self._parent_id_col, self._parent.id))
-        ):
-            yield row[self._key_col]
+        kwargs = { self._parent_id_col: self.parent.id }
+        for row in self._select(**kwargs):
+            yield getattr(row, self._value_col)
     
     def items(self) -> Iterable:
         """
         Returns the properties as an iterable yielding (key, value) tuples.
         """
-        for row in self._session.connection().execute(
-            select(self._table)
-            .filter(text("%s = '%s'" %
-                         (self._parent_id_col, self._parent.id)))
-        ):
-            yield row[self._key_col], row[self._value_col]
+        kwargs = { self._parent_id_col: self.parent.id }
+        for row in self._select(**kwargs):
+            yield getattr(row, self._key_col), getattr(row, self._value_col)
     
     def remove(self, prop: str):
         """
@@ -136,11 +105,6 @@ class BasicProperties:
             prop,
             self._parent.id,
         )
-        conn = self._session.connection()
-        conn.execute(
-            delete(self._table)
-            .filter(text("%s = %s" %
-                         (self._parent_id_col, self._parent.id)))
-            .filter(text("%s = '%s'" %
-                         (self._key_col, prop))))
-        conn.commit()
+        kwargs = { self._parent_id_col: self.parent.id, self._key_col: prop }
+        self._delete(**kwargs)
+

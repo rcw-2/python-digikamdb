@@ -415,6 +415,8 @@ class NewData:
                 with self.assertRaises(NoResultFound):
                     _ = self.dk.tags[tag['id']]
                 self.assertFalse(self.dk.tags._select(id = tag['id']).all())
+        with self.subTest(msg = 'tags sanity check'):
+            self.dk.tags.check()
         for img in new_data['images']:
             with self.subTest(image = img['_idx']):
                 with self.assertRaises(NoResultFound):

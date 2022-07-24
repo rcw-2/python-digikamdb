@@ -5,7 +5,10 @@ Enables access to Digikam tags.
 import logging
 from typing import Iterable, List, Optional, Union
 
-from sqlalchemy import Table, case, event, inspect, select, text
+from sqlalchemy import (
+    Column, Integer, String, Table,
+    case, event, inspect, select, text,
+)
 from sqlalchemy.orm import object_session
 
 from .table import DigikamTable
@@ -89,7 +92,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                 ]
             
             # We're on SQLite
-            conn = self.session.connection()
+            conn = self._session.connection()
             return [
                 row['pid']
                 for row in conn.execute(
@@ -118,26 +121,20 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                 if self.pid <= 0:
                     return None
 
-            return self.session.scalars(
-                select(Tag).filter_by(id = self.pid)
-            ).one()
+            return self._container._select(id = self.pid).one()
         
         @property
         def children(self) -> Iterable['Tag']:              # noqa: F821
             """
             Returns the tag's children.
             """
-            # Since Digikam doesn't use a foreign key, this is a regular property.
-            
-            return self.session.scalars(
-                select(Tag).filter_by(pid = self.id))
+            yield from self._container._select(pid = self.id)
         
         @property
         def properties(self) -> TagProperties:
             """
             Returns the tag's properties
             """
-            
             if not hasattr(self, '_properties'):
                 self._properties = TagProperties(self)
             return self._properties
@@ -146,9 +143,9 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             """
             Returns the name including parents, separated by ``/``.
             """
-            if self.pid < 0:
+            if self.pid <= 0:
                 return self.name
-            else:
+            if self.parent:
                 return self.parent.hierarchicalname() + '/' + self.name
         
         def _check(self):
@@ -236,7 +233,7 @@ class Tags(DigikamTable):
     If there are multiple matches, an exception is raised.
     
     Parameters:
-        parent:     Digikam object for access to database and other classes.
+        digikam:     Digikam object for access to database and other classes.
     
     See also:
         * Class :class:`~_sqla.Tag`
@@ -246,18 +243,33 @@ class Tags(DigikamTable):
     
     def __init__(
         self,
-        parent: 'Digikam',                                  # noqa: F821
+        digikam: 'Digikam',                                  # noqa: F821
     ):
-        super().__init__(parent)
-        self.Class.properties_table = Table(
-            'TagProperties',
-            parent.base.metadata,
-            autoload_with = self.parent.engine)
+        super().__init__(digikam)
+        self._define_helper_tables()
+    
+    def _define_helper_tables(self):
+        """Defines the classes for helper tables."""
+        
+        class TagProperty(self.digikam.base):
+            """
+            Tag Properties
+            
+            This table should be accessed via
+            Class :class:`~digikamdb.tags.TagProperties`.
+            """
+            
+            __tablename__ = 'TagProperties'
+            
+            tagid = Column(Integer, primary_key = True)
+            property = Column(String, primary_key = True)
+        
+        self.Class.TagProperty = TagProperty
         if not self.is_mysql:
             self.Class.tagstree_table = Table(
                 'TagsTree',
-                parent.base.metadata,
-                autoload_with = self.parent.engine)
+                self.digikam.base.metadata,
+                autoload_with = self.digikam.engine)
     
     def _before_insert(
         self,
@@ -339,7 +351,7 @@ class Tags(DigikamTable):
 
         log.debug('Reordering nested sets for tags after delete')
         
-        tags = mapper.mapped_table
+        tags = mapper.persist_selectable
         right = instance.rgt
         
         connection.execute(
@@ -377,11 +389,8 @@ class Tags(DigikamTable):
             self._do_after_delete = False
     
     def __getitem__(self, key):
-        
         if isinstance(key, str):
-            return self.session.scalars(
-                select(self.Class).filter_by(name = key)
-            ).one_or_none()
+            return self._select(name = key).one()
         
         return super().__getitem__(key)
     
@@ -426,7 +435,7 @@ class Tags(DigikamTable):
         
         options = {}
         if icon:
-            if isinstance(icon, self.parent.image_class):
+            if isinstance(icon, self.digikam.image_class):
                 options['icon'] = icon.id
             elif isinstance(icon, int):
                 options['icon'] = icon
@@ -474,13 +483,22 @@ class Tags(DigikamTable):
             self._root._check_nested_sets()
 
 
+def _tagproperty_class(dk: 'Digikam') -> type:
+    """Defines the TagProperty class."""
+    return dk.tags.Class.TagProperty
+
+
 class TagProperties(BasicProperties):
     """
     Tag Properties
 
     Args:
-        parent(Tag): The corresponding ``Tag`` object.
+        digikam(Digikam):   Digikam object.
+        parent(Tag):        The corresponding ``Tag`` object.
     """
+    
+    # Funktion returning the table class
+    _class_function = _tagproperty_class
     
     # Parent id column
     _parent_id_col = 'tagid'
@@ -490,4 +508,8 @@ class TagProperties(BasicProperties):
     
     # Value column
     _value_col = 'value'
+    
+    tagid = Column(Integer, primary_key = True)
+    property = Column(String, primary_key = True)
+    
 

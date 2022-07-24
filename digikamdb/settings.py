@@ -49,8 +49,9 @@ class Settings(DigikamTable):
     _class_function = _settings_class
     _id_column = 'keyword'
     
-    def __contains__(self, key: str) -> bool:
-        return self._select(keyword = key).one_or_none() is not None
+    def __iter__(self) -> Iterable:
+        for s in super().__iter__:
+            yield s.keyword
     
     def __getitem__(self, key: str) -> str:
         return super().__getitem__(key).value

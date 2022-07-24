@@ -3,7 +3,7 @@ Basic Digikam Table Class
 """
 
 import logging
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable, Optional, Union
 
 from sqlalchemy import delete, select, text
 
@@ -22,24 +22,37 @@ class DigikamTable:
     * Some internal functionality
     
     Parameters:
-        parent:     ``Digikam`` object
+        digikam:     ``Digikam`` object
     """
     
     _class_function = None
     _id_column = 'id'
     
-    def __init__(self, parent: 'Digikam'):                  # noqa: F821
-        self.parent = parent
-        self.engine = self.parent.engine
-        self.session = self.parent.session
-        self.is_mysql = self.parent.is_mysql
-        self.Class = self.__class__._class_function(self.parent)
-        self.Class.engine = self.engine
-        self.Class.session = self.session
+    def __init__(self, digikam: 'Digikam'):                   # noqa: F821
+        log.debug('Creating %s', self.__class__.__name__)
+        self._digikam = digikam
+        self._session = self.digikam.session
+        self.is_mysql = self.digikam.is_mysql
+        self.Class = self.__class__._class_function(self.digikam)
+        self.Class._session = self._session
         self.Class.is_mysql = self.is_mysql
+        self.Class._container = self
+    
+    @property
+    def digikam(self) -> Union['Digikam', 'DigikamTable']:  # noqa: F821
+        """
+        Returns digikam object.
         
+        For Prope
+        """
+        return self._digikam
+    
     def __iter__(self) -> Iterable:
-        return self.session.scalars(select(self.Class))
+        yield from self._select()
+    
+    def __contains__(self, key: str) -> bool:
+        kwargs = { self._id_column: key }
+        return self._select(**kwargs).one_or_none() is not None
     
     def __getitem__(self, key: Any) -> 'DigikamObject':     # noqa: F821
         kwargs = { self._id_column: key }
@@ -70,21 +83,21 @@ class DigikamTable:
         )
         if where_clause:
             if kwargs:
-                return self.session.scalars(
+                return self._session.scalars(
                     select(self.Class)
                     .where(text(where_clause))
                     .filter_by(**kwargs))
             else:
-                return self.session.scalars(
+                return self._session.scalars(
                     select(self.Class)
                     .where(text(where_clause)))
         else:
             if kwargs:
-                return self.session.scalars(
+                return self._session.scalars(
                     select(self.Class)
                     .filter_by(**kwargs))
             else:
-                return self.session.scalars(
+                return self._session.scalars(
                     select(self.Class))
     
     def _insert(self, **kwargs) -> 'DigikamObject':          # noqa: F821
@@ -102,8 +115,7 @@ class DigikamTable:
             kwargs
         )
         new = self.Class(**kwargs)
-        self.session.add(new)
-#        self.session.commit()
+        self._session.add(new)
         return new
     
     def _delete(
@@ -129,20 +141,20 @@ class DigikamTable:
         )
         if where_clause:
             if kwargs:
-                self.session.execute(
+                self._session.execute(
                     delete(self.Class)
                     .where(text(where_clause))
                     .filter_by(**kwargs))
             else:
-                self.session.execute(
+                self._session.execute(
                     delete(self.Class)
                     .where(text(where_clause)))
         else:
             if kwargs:
-                self.session.execute(
+                self._session.execute(
                     delete(self.Class)
                     .filter_by(**kwargs))
             else:
-                self.session.execute(
+                self._session.execute(
                     delete(self.Class))
 

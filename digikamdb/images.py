@@ -10,7 +10,7 @@ import os
 from datetime import datetime
 from typing import List, Optional, Tuple, Union
 
-from sqlalchemy import Column, Table, delete
+from sqlalchemy import Column, Integer, String, Table, delete
 from sqlalchemy.orm import relationship, validates
 
 from .table import DigikamTable
@@ -20,13 +20,22 @@ from .properties import BasicProperties
 log = logging.getLogger(__name__)
 
 
+def _imageproperty_class(dk: 'Digikam') -> type:
+    """Returns the TagProperty class."""
+    return dk.images.Class.ImageProperty
+
+
 class ImageProperties(BasicProperties):
     """
     Image Properties
     
     Args:
-        parent(Image): The corresponding ``Image`` object.
+        digikam:    The Digikam object
+        parent:     The corresponding ``Image`` object.
     """
+    
+    # Funktion returning the table class
+    _class_function = _imageproperty_class
     
     #: Parent id column
     _parent_id_col = 'imageid'
@@ -151,7 +160,7 @@ class Comment:
                 author = author,
                 comment = value
             )
-            self._parent.session.add(row)
+            self._parent._session.add(row)
         
         if date is not None:
             row.date = date
@@ -183,7 +192,7 @@ class Comment:
         ).one_or_none()
         
         if row:
-            self._parent.session.delete(row)
+            self._parent._session.delete(row)
         
 
 class Title(Comment):
@@ -315,7 +324,7 @@ class Copyright:
                 property = key,
                 value = value,
                 extraValue = extravalue)
-            self._parent.session.add(row)
+            self._parent._session.add(row)
 
 
 def _imagecomment_class(dk: 'Digikam') -> type:             # noqa: F821
@@ -722,10 +731,10 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
             )
             if pos is None:
                 if self._position:
-                    self.session.execute(
+                    self._session.execute(
                         delete(self.ImagePosition)
                         .filter_by(imageid = self.id))
-#                    self.session.commit()
+#                    self._session.commit()
                 return
             
             lat = pos[0]
@@ -776,8 +785,8 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
                     latitudeNumber = lat,
                     longitudeNumber = lng,
                     altitude = alt)
-                self.session.add(newpos)
-#            self.session.commit()
+                self._session.add(newpos)
+#            self._session.commit()
         
         # Relationship to ImageProperties
         
@@ -838,7 +847,7 @@ class Images(DigikamTable):
             print(img.name)
     
     Parameters:
-        parent:     Digikam object for access to database and other classes.
+        digikam:    Digikam object for access to database and other classes.
 
     See also:
         * Class :class:`~_sqla.Image`
@@ -848,20 +857,35 @@ class Images(DigikamTable):
     
     def __init__(
         self,
-        parent: 'Digikam',                                  # noqa: F821
+        digikam: 'Digikam',                                  # noqa: F821
     ):
-        super().__init__(parent)
-        self.Class.ImageComment = _imagecomment_class(self.parent)
-        self.Class.ImageCopyright = _imagecopyright_class(self.parent)
-        self.Class.ImageHistory = _imagehistory_class(self.parent)
-        self.Class.ImageInformation = _imageinformation_class(self.parent)
-        self.Class.ImageMetadata = _imagemetadata_class(self.parent)
-        self.Class.ImagePosition = _imageposition_class(self.parent)
-        self.Class.VideoMetadata = _videometadata_class(self.parent)
-        self.Class.properties_table = Table(
-            'ImageProperties',
-            parent.base.metadata,
-            autoload_with = self.engine)
+        super().__init__(digikam)
+        self.Class.ImageComment = _imagecomment_class(self.digikam)
+        self.Class.ImageCopyright = _imagecopyright_class(self.digikam)
+        self.Class.ImageHistory = _imagehistory_class(self.digikam)
+        self.Class.ImageInformation = _imageinformation_class(self.digikam)
+        self.Class.ImageMetadata = _imagemetadata_class(self.digikam)
+        self.Class.ImagePosition = _imageposition_class(self.digikam)
+        self.Class.VideoMetadata = _videometadata_class(self.digikam)
+        self._define_helper_tables()
+    
+    def _define_helper_tables(self):
+        """Defines the classes for helper tables."""
+        
+        class ImageProperty(self.digikam.base):
+            """
+            Tag Properties
+            
+            This table should be accessed via
+            Class :class:`~digikamdb.images.ImageProperties`.
+            """
+            
+            __tablename__ = 'ImageProperties'
+            
+            imageid = Column(Integer, primary_key = True)
+            property = Column(String, primary_key = True)
+        
+        self.Class.ImageProperty = ImageProperty
     
     def find(
         self,

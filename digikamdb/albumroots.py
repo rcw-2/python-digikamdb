@@ -175,7 +175,7 @@ class AlbumRoots(DigikamTable):
             print(root.relativePath)
     
     Parameters:
-        parent:     :class:`~digikamdb.conn.Digikam` object
+        digikam:    :class:`~digikamdb.conn.Digikam` object
         override:   Dict containing override information
     
     See also:
@@ -186,10 +186,10 @@ class AlbumRoots(DigikamTable):
     
     def __init__(
         self,
-        parent: 'Digikam',                                  # noqa: F821
+        digikam: 'Digikam',                                  # noqa: F821
         override: Optional[Mapping] = None
     ):
-        super().__init__(parent)
+        super().__init__(digikam)
         self.Class.override = override
         if override is not None:
             log.debug('Root override specified')
