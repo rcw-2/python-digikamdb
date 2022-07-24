@@ -73,6 +73,20 @@ class SQLiteTestBase(DigikamTestBase):
         self.dk = Digikam(db, root_override = self.replace_root_override())
 
 
+class SQLite_00_FromString(SQLiteTestBase):
+    
+    def setUp(self):
+        super().setUp()
+        self.dk = Digikam(
+            'sqlite:///' + os.path.join(self.mydir, 'digikam4.db'),
+            root_override = self.replace_root_override()
+        )
+    
+    def test_data(self):
+        for al in self.dk.albums:
+            self.assertIsInstance(al.relativePath, str)
+
+
 class SQLite_01_SanityCheck(SQLiteTestBase, SanityCheck):
     
     def test00_sqlite(self):

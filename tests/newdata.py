@@ -320,7 +320,16 @@ class NewData:
             self.dk.images[imgid]
         )
     
-    def test41_tag_properties(self):
+    def test41_change_tags(self):
+        new_data = self.__class__.new_data
+        tagdata = new_data['tags'][0]
+        tag = self.dk.tags[tagdata['id']]
+        self.assertEqual(tag.name, tagdata['name'])
+        tag.name += 'a'
+        self.dk.session.commit()
+        tagdata['name'] += 'a'
+    
+    def test42_tag_properties(self):
         new_data = self.__class__.new_data
         tagdata = new_data['tags'][0]
         tag = self.dk.tags[tagdata['id']]
@@ -330,7 +339,7 @@ class NewData:
             'tagKeyboardShortcut':  'Alt+Shift+S'
         }
     
-    def test42_change_tag_properties(self):
+    def test43_change_tag_properties(self):
         new_data = self.__class__.new_data
         tagdata = new_data['tags'][0]
         tag = self.dk.tags[tagdata['id']]

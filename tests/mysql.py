@@ -117,6 +117,17 @@ class MySQLTestBase(DigikamTestBase):
         self.dk = Digikam(db, root_override = self.replace_root_override())
 
 
+class MySQL_00_FromString(MySQLTestBase):
+    
+    def setUp(self):
+        super().setUp()
+        self.dk = Digikam(self.mysql_db, root_override = self.replace_root_override())
+    
+    def test_data(self):
+        for al in self.dk.albums:
+            self.assertIsInstance(al.relativePath, str)
+
+
 class MySQL_01_SanityCheck(MySQLTestBase, SanityCheck):
     
     def test00_mysql(self):
@@ -129,6 +140,12 @@ class MySQL_01_SanityCheck(MySQLTestBase, SanityCheck):
         self.assertIsNone(root.parent)
         self.assertEqual(root.name, '_Digikam_root_tag_')
 
+    def test46_tags_move(self):
+        with self.assertRaises(NotImplementedError):
+            tag = self.dk.tags[5]
+            tag.pid = 0
+            self.dk.session.commit()
+    
 
 class MySQL_02_TestData(MySQLTestBase, TestData):
     pass

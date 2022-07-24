@@ -55,6 +55,13 @@ class SanityCheck:
                 for ch in tag.children:
                     self.assertEqual(tag.id, ch.pid)
                     self.assertIs(tag, ch.parent)
+                hname = tag.hierarchicalname()
+                if '/' in hname:
+                    self.assertEqual(
+                        self.parent.hierarchicalname() + '/' + self.name,
+                        hname
+                    )
+                self.assertIn(tag, self.dk.tags.find(tag.name))
     
     def test41_tags_check(self):
         try:
@@ -68,6 +75,7 @@ class SanityCheck:
         for tag in internal.children:
             with self.subTest(internal_tag = tag.name):
                 self.assertIn('internalTag', tag.properties)
+                self.assertFalse(tag.children.first())
     
     def test50_settings(self):
         for k, v in self.dk.settings.items():
