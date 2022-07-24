@@ -94,21 +94,19 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             
             if self.is_mysql:
                 # MySQL
-                return self.session.scalars(
-                        select(Tag)
-                        .where(Tag.lft < self.lft, Tag.rgt > self.rgt)
-                        .order_by(Tag.lft)
+                return self._session.scalars(
+                    select(Tag)
+                    .where(Tag.lft < self.lft, Tag.rgt > self.rgt)
+                    .order_by(Tag.lft)
                 ).all()
             
             # We're on SQLite
-            conn = self._session.connection()
             return [
-                row['pid']
-                for row in conn.execute(
-                    select(self.tagstree_table)
-                    .filter(text("id = %d" % self.id))
+                row.pid
+                for row in self._session.scalars(
+                    select(self.TagsTreeEntry).filter_by(id = self.id)
                 )
-                if row['pid'] > 0
+                if row.pid > 0
             ]
             
         # Other properties and methods
@@ -282,18 +280,22 @@ class Tags(DigikamTable):
             This table should be accessed via
             Class :class:`~digikamdb.tags.TagProperties`.
             """
-            
             __tablename__ = 'TagProperties'
             
             tagid = Column(Integer, primary_key = True)
             property = Column(String, primary_key = True)
         
-        self.Class.TagProperty = TagProperty
         if not self.is_mysql:
-            self.Class.tagstree_table = Table(
-                'TagsTree',
-                self.digikam.base.metadata,
-                autoload_with = self.digikam.engine)
+            class TagsTreeEntry(self.digikam.base):
+                """Class for the tags tree"""
+                __tablename__ = 'TagsTree'
+                
+                id = Column(Integer, primary_key = True)
+                pid = Column(Integer, primary_key = True)
+            
+            self.Class.TagsTreeEntry = TagsTreeEntry
+        
+        self.Class.TagProperty = TagProperty
     
     def _before_insert(
         self,
