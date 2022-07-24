@@ -299,10 +299,6 @@ class ImageCopyright(BasicProperties):
     #: Key column
     _key_col = 'property'
     
-
-#    def __init__(self, parent: 'Image'):                    # noqa: F821
-#        super().__init__(parent)
-    
     def __getitem__(self, key: str) -> Union[str, Tuple]:
         ret = []
         kwargs = { self._parent_id_col: self._parent.id, self._key_col: key }
@@ -324,7 +320,7 @@ class ImageCopyright(BasicProperties):
         self.remove(key)
         
         if value is None:
-            log.debug ('Setting None')
+            log.debug('Setting None')
             return
         
         log.debug('Setting values:')

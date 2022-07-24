@@ -30,4 +30,7 @@ extend-ignore =
     W293,
     # blank line at end of file - oh shut up!
     W391
+    #
+    # The following are ignored for development:
+    F401
 
