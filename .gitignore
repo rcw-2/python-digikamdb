@@ -28,3 +28,7 @@ digikamdb/_version.py
 
 # MySQL database access for tests
 /mysql_data.py
+
+# Experimental stuff
+/experiments
+

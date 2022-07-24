@@ -28,6 +28,7 @@ class NewData:
             'albums':       [],
             'images':       [],
             'tags':         [],
+            'settings':     [],
         }
         self.__class__.new_data = new_data
     
@@ -364,6 +365,29 @@ class NewData:
                     for prop, value in tagdata['properties'].items():
                         self.assertEqual(tag.properties[prop], value)
     
+    def test50_add_settings(self):
+        new_data = self.__class__.new_data
+        self.assertTrue('databaseUserImageFormats' not in self.dk.settings)
+        self.dk.settings['databaseUserImageFormats'] = '-cr2'
+        self.dk.session.commit()
+        new_data['settings'].append({
+            'keyword':  'databaseUserImageFormats',
+            'value':    '-cr2',
+        })
+    
+    def test51_change_settings(self):
+        new_data = self.__class__.new_data
+        setdata = new_data['settings'][0]
+        self.assertEqual(self.dk.settings[setdata['keyword']], setdata['value'])
+        self.dk.settings[setdata['keyword']] += ';-xcf'
+        self.dk.session.commit()
+        setdata['value'] += ';-xcf'
+    
+    def test55_verify_settings(self):
+        new_data = self.__class__.new_data
+        for setdata in new_data['settings']:
+            self.assertEqual(self.dk.settings[setdata['keyword']], setdata['value'])
+    
     def test90_remove_new_data(self):
         new_data = self.__class__.new_data
         for tag in new_data['tags']:
@@ -379,6 +403,9 @@ class NewData:
             with self.subTest(albumroot = ar['_idx']):
                 rmtree(self.dk.albumRoots[ar['id']].abspath)
                 self.dk.albumRoots._delete(id = ar['id'])
+        for st in new_data['settings']:
+            with self.subTest(setting = st['keyword']):
+                self.dk.settings._delete(keyword = st['keyword'])
         self.dk.session.commit()
     
     def test95_verify_removal(self):
@@ -403,4 +430,8 @@ class NewData:
                 with self.assertRaises(NoResultFound):
                     _ = self.dk.albumRoots[ar['id']]
                 self.assertFalse(self.dk.albumRoots._select(id = ar['id']).all())
+        for st in new_data['settings']:
+            with self.subTest(setting = st['keyword']):
+                with self.assertRaises(NoResultFound):
+                    _ = self.dk.settings[st['keyword']]
 

@@ -3,7 +3,7 @@ Basic Digikam Table Class
 """
 
 import logging
-from typing import Iterable, Optional
+from typing import Any, Iterable, Optional
 
 from sqlalchemy import delete, select, text
 
@@ -26,6 +26,7 @@ class DigikamTable:
     """
     
     _class_function = None
+    _id_column = 'id'
     
     def __init__(self, parent: 'Digikam'):                  # noqa: F821
         self.parent = parent
@@ -40,10 +41,9 @@ class DigikamTable:
     def __iter__(self) -> Iterable:
         return self.session.scalars(select(self.Class))
     
-    def __getitem__(self, key: int) -> 'DigikamObject':     # noqa: F821
-        return self.session.scalars(
-            select(self.Class).filter_by(id = key)
-        ).one()
+    def __getitem__(self, key: Any) -> 'DigikamObject':     # noqa: F821
+        kwargs = { self._id_column: key }
+        return self._select(**kwargs).one()
     
     def _select(
         self,

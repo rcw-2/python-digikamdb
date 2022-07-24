@@ -4,10 +4,30 @@ Provides access to Digikam settings.
 
 from typing import Generator, Iterable, Tuple               # noqa: F401
 
-from sqlalchemy import MetaData, Table, select
+from sqlalchemy import Column, String
+
+from .table import DigikamTable
 
 
-class Settings:
+def _settings_class(dk: 'Digikam') -> type:                    # noqa: F821
+    """Defines the Settings class."""
+    
+    class Setting(dk.base):
+        """
+        Digikam Settings
+        
+        This table should be accessed via
+        Class :class:`~digikamdb.settings.Settings`.
+        """
+
+        __tablename__ = 'Settings'
+        
+        keyword = Column(String, primary_key = True)
+    
+    return Setting
+
+
+class Settings(DigikamTable):
     """
     Digikam settings class
     
@@ -16,32 +36,31 @@ class Settings:
     .. code-block:: python
         
         dk = digikamdb.Digikam()
-        db_version = dk.settings['DBVersion']               # Get DB version
+        if 'DBVersion in dk.settings':
+            db_version = dk.settings['DBVersion']           # Get DB version
         dk.settings['databaseUserImageFormats'] = '-xcf'    # Exclude GIMP files
-    
-    You can alter existing settings this way, but not add new ones.
+        for k, v in dk.settings:                            # Iterate over settings
+            print(k, '=', v)
     
     Args:
         parent:     Digikam object
     """
     
-    def __init__(self, parent: 'Digikam'):                  # noqa: F821
-        self.parent = parent
-        self.table = Table('Settings', MetaData(), autoload_with = self.parent.engine)
+    _class_function = _settings_class
+    _id_column = 'keyword'
+    
+    def __contains__(self, key: str) -> bool:
+        return self._select(keyword = key).one_or_none() is not None
     
     def __getitem__(self, key: str) -> str:
-        with self.parent.session.connection() as conn:
-            row = conn.execute(
-                select(self.table).where(self.table.c.keyword == key)
-            ).one()
-        return row.value
+        return super().__getitem__(key).value
     
     def __setitem__(self, key: str, value: str):
-        with self.parent.session.connection() as conn:
-            row = conn.execute(
-                select(self.table).where(self.table.c.keyword == key)
-            ).one()
+        row = self._select(keyword = key).one_or_none()
+        if row:
             row.value = value
+        else:
+            self._insert(keyword = key, value = value)
     
     def items(self) -> Iterable[Tuple[str, str]]:
         """
@@ -50,9 +69,8 @@ class Settings:
         Yields:
             The settings (key, value) pairs.
         """
-        with self.parent.session.connection() as conn:
-            for row in conn.execute(select(self.table)):
-                yield row.keyword, row.value
+        for row in self._select():
+            yield row.keyword, row.value
 
 
 

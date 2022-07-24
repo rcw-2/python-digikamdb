@@ -13,7 +13,9 @@ exclude =
     # Local Sphinx extensions
     _ext,
     # MySQL data for tests
-    mysql_data.py
+    mysql_data.py,
+    # Experimental stuff
+    experiments
 
 # Ignore list
 extend-ignore =
@@ -22,7 +24,10 @@ extend-ignore =
     # * multiple spaces after ':'
     # * unexpected spaces around keyword / parameter equals
     E221, E241, E251,
+    # Other formatting
+    E201, E202,
     # blank line contains whitespace - OK when surrounding lines are indented
     W293,
     # blank line at end of file - oh shut up!
     W391
+
