@@ -68,4 +68,8 @@ class SanityCheck:
         for tag in internal.children:
             with self.subTest(internal_tag = tag.name):
                 self.assertIn('internalTag', tag.properties)
+    
+    def test50_settings(self):
+        for k, v in self.dk.settings.items():
+            self.assertEqual(self.dk.settings[k], v)
 
