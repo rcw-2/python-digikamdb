@@ -483,7 +483,7 @@ class Tags(DigikamTable):
             self._root._check_nested_sets()
 
 
-def _tagproperty_class(dk: 'Digikam') -> type:
+def _tagproperty_class(dk: 'Digikam') -> type:              # noqa: F821
     """Defines the TagProperty class."""
     return dk.tags.Class.TagProperty
 

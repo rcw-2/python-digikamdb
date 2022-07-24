@@ -10,7 +10,7 @@ import os
 from datetime import datetime
 from typing import List, Optional, Tuple, Union
 
-from sqlalchemy import Column, Integer, String, Table, delete
+from sqlalchemy import Column, Integer, String, delete
 from sqlalchemy.orm import relationship, validates
 
 from .table import DigikamTable
@@ -20,7 +20,7 @@ from .properties import BasicProperties
 log = logging.getLogger(__name__)
 
 
-def _imageproperty_class(dk: 'Digikam') -> type:
+def _imageproperty_class(dk: 'Digikam') -> type:            # noqa: F821
     """Returns the TagProperty class."""
     return dk.images.Class.ImageProperty
 

@@ -3,8 +3,6 @@
 import logging
 from typing import Iterable, Optional
 
-from sqlalchemy import delete, func, insert, select, text, update
-
 from .table import DigikamTable
 
 
