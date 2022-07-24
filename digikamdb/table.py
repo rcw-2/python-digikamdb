@@ -75,6 +75,25 @@ class DigikamTable:
         Returns:
             Iterable query result.
         """
+        return self._session.scalars(self._select_raw(where_clause, **kwargs))
+    
+    def _select_raw(
+        self,
+        where_clause: Optional[str] = None,
+        **kwargs
+    ) -> '~sqlalchemy.sql.expression.Select':               # noqa: F821
+        """
+        Returns a select for the table.
+        
+        Args:
+            where_clause:   Contains a SQL WHERE clause, processed by
+                            :func:`~sqlalchemy.sql.expression.text` and
+                            :meth:`~sqlalchemy.orm.Query.where`.
+            kwargs:         Other keyword arguments are used as arguments for
+                            :meth:`~sqlalchemy.orm.Query.filter_by`.
+        Returns:
+            Select object that can be processed further.
+        """
         log.debug(
             'Selecting %s objects with %s and %s',
             self.__class__.__name__,
@@ -83,18 +102,14 @@ class DigikamTable:
         )
         if where_clause:
             if kwargs:
-                return self._session.scalars(
-                    select(self.Class).where(text(where_clause)).filter_by(**kwargs))
+                return select(self.Class).where(text(where_clause)).filter_by(**kwargs)
             else:
-                return self._session.scalars(
-                    select(self.Class).where(text(where_clause)))
+                return select(self.Class).where(text(where_clause))
         else:
             if kwargs:
-                return self._session.scalars(
-                    select(self.Class).filter_by(**kwargs))
+                return select(self.Class).filter_by(**kwargs)
             else:
-                return self._session.scalars(
-                    select(self.Class))
+                return select(self.Class)
     
     def _insert(self, **kwargs) -> 'DigikamObject':          # noqa: F821
         """

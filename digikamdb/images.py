@@ -171,7 +171,7 @@ class Comment:
         if date is not None:
             row.date = date
     
-    def delete(
+    def remove(
         self,
         language: str = 'x-default',
         author: Optional[str] = None,
@@ -306,6 +306,8 @@ class ImageCopyright(BasicProperties):
             (entry.value, entry.extraValue)
             for entry in self._select(**kwargs)
         ]
+        if len(ret) == 0:
+            return None
         if len(ret) == 1 and ret[0][1] is None:
             return ret[0][0]
         return ret
@@ -339,10 +341,14 @@ class ImageCopyright(BasicProperties):
     def items(self) -> Iterable:
         kwargs = { self._parent_id_col: self._parent.id }
         for prop, rows in groupby(
-            self._select(**kwargs).order_by(text(self._key_col)),
+            self._session.scalars(
+                self._select_raw(**kwargs).order_by(text(self._key_col))
+            ),
             lambda x: getattr(x, self._key_col),
         ):
             value = [(row.value, row.extraValue) for row in rows]
+            if len(value) == 0:
+                value = None
             if len(value) == 1 and value[0][1] is None:
                 value = value[0][0]
             yield prop, value

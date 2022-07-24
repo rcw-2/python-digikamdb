@@ -235,6 +235,21 @@ class NewData:
         self.dk.session.commit()
         imgdata['position'] = (50.11088572429458, 8.668430363718421, None)
     
+    def test33_image_copyright(self):
+        new_data = self.__class__.new_data
+        imgdata = new_data['images'][0]
+        img = self.dk.images[imgdata['id']]
+        self.assertNotIn('creator', img.copyright)
+        self.assertNotIn('copyrightNotice', img.copyright)
+        img.copyright['creator'] = 'RCW'
+        img.copyright['copyrightNotice'] = [('(c) 2022 RCW', 'x-default')]
+        self.dk.session.commit()
+        imgdata['copyright'] = {
+            'creator':          'RCW',
+            'copyrightNotice':  [('(c) 2022 RCW', 'x-default')],
+        }
+        pass
+    
     def test35_verify_images(self):
         new_data = self.__class__.new_data
         for imgdata in new_data['images']:
@@ -256,6 +271,17 @@ class NewData:
                 with self.subTest(image = imgdata['_idx']):
                     img = self.dk.images[imgdata['id']]
                     self.assertEqual(img.position, imgdata['position'])
+    
+    def test38_verify_image_copyright(self):
+        new_data = self.__class__.new_data
+        for imgdata in new_data['images']:
+            if 'copyright' in imgdata:
+                with self.subTest(image = imgdata['_idx']):
+                    img = self.dk.images[imgdata['id']]
+                    for k, v in imgdata['copyright'].items():
+                        self.assertEqual(img.copyright[k], v)
+                    for k, v in img.copyright.items():
+                        self.assertEqual(imgdata['copyright'][k], v)
     
     def _add_tag(
         self,
