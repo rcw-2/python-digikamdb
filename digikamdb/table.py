@@ -28,7 +28,7 @@ class DigikamTable:
     _class_function = None
     _id_column = 'id'
     
-    def __init__(self, digikam: 'Digikam'):                   # noqa: F821
+    def __init__(self, digikam: 'Digikam'):                 # noqa: F821
         log.debug('Creating %s', self.__class__.__name__)
         self._digikam = digikam
         self._session = self.digikam.session
@@ -39,7 +39,7 @@ class DigikamTable:
         self.Class._container = self
     
     @property
-    def digikam(self) -> Union['Digikam', 'DigikamTable']:  # noqa: F821
+    def digikam(self) -> 'Digikam':                         # noqa: F821
         """
         Returns digikam object.
         
@@ -84,18 +84,14 @@ class DigikamTable:
         if where_clause:
             if kwargs:
                 return self._session.scalars(
-                    select(self.Class)
-                    .where(text(where_clause))
-                    .filter_by(**kwargs))
+                    select(self.Class).where(text(where_clause)).filter_by(**kwargs))
             else:
                 return self._session.scalars(
-                    select(self.Class)
-                    .where(text(where_clause)))
+                    select(self.Class).where(text(where_clause)))
         else:
             if kwargs:
                 return self._session.scalars(
-                    select(self.Class)
-                    .filter_by(**kwargs))
+                    select(self.Class).filter_by(**kwargs))
             else:
                 return self._session.scalars(
                     select(self.Class))
@@ -132,6 +128,8 @@ class DigikamTable:
                             :meth:`~sqlalchemy.orm.Query.where`.
             kwargs:         Other keyword arguments are used as arguments for
                             :meth:`~sqlalchemy.orm.Query.filter_by`.
+        
+        .. todo:: Do we need the where clause?
         """
         log.debug(
             'Deleting %s objects with %s and %s',

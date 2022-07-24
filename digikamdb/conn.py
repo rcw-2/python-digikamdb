@@ -88,11 +88,11 @@ class Digikam:
 
         self.base = _digikamobject_class(declarative_base())
         
-        self._settings = Settings(self)
-        self._tags = Tags(self)
+        self._settings  = Settings(self)
+        self._tags      = Tags(self)
         self._albumRoots = AlbumRoots(self, override = root_override)
-        self._albums = Albums(self)
-        self._images = Images(self)
+        self._albums    = Albums(self)
+        self._images    = Images(self)
 
         self.base.prepare(self.engine)
         self.tags.setup()

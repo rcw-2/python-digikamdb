@@ -9,7 +9,7 @@ from sqlalchemy import (
     Column, Integer, String, Table,
     case, event, inspect, select, text,
 )
-from sqlalchemy.orm import object_session
+from sqlalchemy.orm import object_session, relationship
 
 from .table import DigikamTable
 from .properties import BasicProperties
@@ -63,11 +63,15 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             "batch": False  # allows extension to fire for each
                             # instance before going to the next.
         }
+        _properties = relationship(
+            'TagProperty',
+            primaryjoin = 'foreign(TagProperty.tagid) == Tag.id',
+            lazy = 'dynamic')
         
         # Special functions
         
         def __repr__(self) -> str:
-            return 'Digikam Tag (%s, %d, %d)' % (self.name, self.id, self.pid)
+            return '<Digikam Tag (%s, %d, %d)>' % (self.name, self.id, self.pid)
         
         def __contains__(self, obj: 'Tag') -> bool:
             if not isinstance(obj, Tag):
@@ -135,9 +139,9 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             """
             Returns the tag's properties
             """
-            if not hasattr(self, '_properties'):
-                self._properties = TagProperties(self)
-            return self._properties
+            if not hasattr(self, '_propertiesObj'):
+                self._propertiesObj = TagProperties(self)
+            return self._propertiesObj
         
         def hierarchicalname(self) -> str:
             """

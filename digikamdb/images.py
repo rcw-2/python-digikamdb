@@ -8,9 +8,10 @@ Digikam images can be accessed via the ``Digikam`` property
 import logging
 import os
 from datetime import datetime
-from typing import List, Optional, Tuple, Union
+from itertools import groupby
+from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
-from sqlalchemy import Column, Integer, String, delete
+from sqlalchemy import Column, Integer, String, delete, text
 from sqlalchemy.orm import relationship, validates
 
 from .table import DigikamTable
@@ -18,6 +19,11 @@ from .properties import BasicProperties
 
 
 log = logging.getLogger(__name__)
+
+
+def _imagecopyrightentry_class(dk: 'Digikam') -> type:      # noqa: F821
+    """Returns the ImageCopyrightEntry class."""
+    return dk.images.Class.ImageCopyrightEntry
 
 
 def _imageproperty_class(dk: 'Digikam') -> type:            # noqa: F821
@@ -266,15 +272,16 @@ class Caption(Comment):
         super().__init__(parent, 1)
 
 
-class Copyright:
+class ImageCopyright(BasicProperties):
     """
     Encapsulates ImageCopyright.
     
     Individual copyright entries can be accessed similar to a :class:`dict`.
     Values can be:
     
-    * :class:`str` - The value column.
-    * :class:`tuple` - A tuple with the columns (value, extraValue).
+    * A string that is copied to the value column, the extravalue column
+      will be None in this case.
+    * A sequence of (value, extravalue) pairs.
     
     If extraValue is set, a tuple is returned, else a str. If no row with a
     given key exists, ``None`` is returned.
@@ -283,239 +290,66 @@ class Copyright:
         parent:     The corresponding ``Image`` object.
     """
     
-    def __init__(self, parent: 'Image'):                    # noqa: F821
-        self._parent = parent
+    # Mapped class
+    _class_function = _imagecopyrightentry_class
     
-    def __contains__(self, key: str) -> bool:
-        if self._parent._copyright.filter(property = key).fetchone():
-            return True
-        else:
-            return False
+    #: Parent id column
+    _parent_id_col = 'imageid'
+    
+    #: Key column
+    _key_col = 'property'
+    
+
+#    def __init__(self, parent: 'Image'):                    # noqa: F821
+#        super().__init__(parent)
     
     def __getitem__(self, key: str) -> Union[str, Tuple]:
-        row = self._parent._copyright.filter(property = key).one_or_none()
-        if not row:
-            return None
-        if row.extraValue is None:
-            return row.value
-        else:
-            return row.value, row.extraValue
+        ret = []
+        kwargs = { self._parent_id_col: self._parent.id, self._key_col: key }
+        ret = [
+            (entry.value, entry.extraValue)
+            for entry in self._select(**kwargs)
+        ]
+        if len(ret) == 1 and ret[0][1] is None:
+            return ret[0][0]
+        return ret
     
-    def __setitem__(self, key: str, value: Optional[Union[str, List, Tuple]]):
+    def __setitem__(self, key: str, value: Optional[Union[str, Sequence[Tuple]]]):
         log.debug(
-            'Setting copyright info %s of image %d (%s) to %s',
+            'Setting copyright info %s of image %d (%s)',
             key,
             self._parent.id,
-            self._parent.name,
-            value
+            self._parent.name
         )
-        if isinstance(value, (list, tuple)):
-            extravalue = value[1]
-            value = value[0]
-        else:
-            extravalue = None
-        if key in self:
-            row = self._parent._copyright.filter(property = key).one()
-            row.value = value
-            row.extraValue = extravalue
-        else:
-            row = self._parent.ImageCopyright(
-                imageid = self.parent.id,
-                property = key,
-                value = value,
-                extraValue = extravalue)
-            self._parent._session.add(row)
-
-
-def _imagecomment_class(dk: 'Digikam') -> type:             # noqa: F821
-    """
-    Defines the ImageComment class.
-    """
-    
-    class ImageComment(dk.base):
-        """
-        Digikam Image Comment
+        self.remove(key)
         
-        Data in this table should be accessed through the ``Image`` properties
-        :attr:`~Image.caption` and :attr:`~Image.title`.
-        """
-        __tablename__ = 'ImageComments'
-        if not dk.is_mysql:
-            from sqlalchemy.dialects.sqlite import DATETIME
-            date = Column(DATETIME(
-                storage_format = '%(year)04d-%(month)02d-%(day)02dT%(hour)02d:%(minute)02d:%(second)02d',   # noqa: E501
-                regexp = r'(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)'))
-    
-    return ImageComment
-
-
-def _imagecopyright_class(dk: 'Digikam') -> type:           # noqa: F821
-    """
-    Defines the ImageCopyright class.
-    """
-    
-    class ImageCopyright(dk.base):
-        """
-        Digikam Image Copyright
-        """
-        __tablename__ = 'ImageCopyright'
-    
-    return ImageCopyright
-
-
-def _imagehistory_class(dk: 'Digikam') -> type:             # noqa: F821
-    """
-    Defines the ImageHistory class.
-    """
-    
-    class ImageHistory(dk.base):
-        """
-        Digikam Image History
-
-        The following column-related properties can be directly accessed:
+        if value is None:
+            log.debug ('Setting None')
+            return
         
-        * **imageid** (*int*)
-        * **uuid** (*str*)
-        * **history** (*str*)
-        """
-        __tablename__ = 'ImageHistory'
+        log.debug('Setting values:')
+        if isinstance(value, str):
+            value = [(value, None)]
+        for v, ev in value:
+            kwargs = {
+                self._parent_id_col:    self.parent.id,
+                self._key_col:          key,
+                'value':                v,
+                'extraValue':           ev,
+            }
+            log.debug('- Setting value %s, %s', v, ev)
+            self._insert(**kwargs)
     
-    return ImageHistory
-
-
-def _imageinformation_class(dk: 'Digikam') -> type:         # noqa: F821
-    """
-    Defines the ImageInformation class
-    """
-    
-    class ImageInformation(dk.base):
-        """
-        Represents a row of the `ImageInformation` table
-        
-        The following column-related properties can be directly accessed:
-        
-        * **imageid** (*int*)
-        * **rating** (*int*) - The image's rating, must be from -1 to 5.
-        * **creationDate** (:class:`~datetime.datetime`)
-        * **digitizationDate** (:class:`~datetime.datetime`)
-        * **orientation** (*int*)
-        """
-        __tablename__ = 'ImageInformation'
-        
-        if not dk.is_mysql:
-            from sqlalchemy.dialects.sqlite import DATETIME
-            creationDate = Column(DATETIME(
-                storage_format = '%(year)04d-%(month)02d-%(day)02dT%(hour)02d:%(minute)02d:%(second)02d',   # noqa: E501
-                regexp = r'(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)'))
-            digitizationDate = Column(DATETIME(
-                storage_format = '%(year)04d-%(month)02d-%(day)02dT%(hour)02d:%(minute)02d:%(second)02d',   # noqa: E501
-                regexp = r'(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)'))
-        
-        @validates('rating')
-        def _validate_rating(self, key: int, value: int) -> int:
-            if value < -1 or value > 5:
-                raise ValueError('Image rating must be from -1 to 5')
-            return value
-    
-    return ImageInformation
-
-
-def _imagemetadata_class(dk: 'Digikam') -> type:            # noqa: F821
-    """
-    Defines the ImageMetadata class.
-    """
-    
-    class ImageMetadata(dk.base):
-        """
-        Represents a row of the ``ImageMetadata`` table.
-        
-        This object contains Exif information of the corresponding
-        :class:`Image` object. The following column-related properties
-        can be directly accessed:
-        
-        * **make** (*str*)
-        * **model** (*str*)
-        * **lens** (*str*)
-        * **aperture** (*float*)
-        * **focalLength** (*float*)
-        * **focalLength35** (*float*)
-        * **exposureTime** (*float*)
-        * **exposureProgram** (*int*)
-        * **exposureMode** (*int*)
-        * **sensitivity** (*int*)
-        * **flash** (*int*)
-        * **whiteBalance** (*int*)
-        * **whiteBalanceColorTemperature** (*int*)
-        * **meteringMode** (*int*)
-        * **subjectDistance** (*float*)
-        * **subjectDistanceCategory** (*int*)
-        """
-        __tablename__ = 'ImageMetadata'
-        
-        # Retrieve double as float
-        if dk.is_mysql:
-            from sqlalchemy.dialects.mysql import DOUBLE
-            aperture = Column(DOUBLE(asdecimal = False))
-            focalLength = Column(DOUBLE(asdecimal = False))
-            focalLength35 = Column(DOUBLE(asdecimal = False))
-            exposureTime = Column(DOUBLE(asdecimal = False))
-            subjectDistance = Column(DOUBLE(asdecimal = False))
-    
-    return ImageMetadata
-
-
-def _imageposition_class(dk: 'Digikam') -> type:            # noqa: F821
-    """
-    Defines the ImagePosition class
-    """
-    
-    class ImagePosition(dk.base):
-        """
-        Contains the Image's position.
-        
-        Should be accessed through :attr:`Image.position`.
-        """
-        __tablename__ = 'ImagePositions'
-        
-        # Retrieve double as float
-        if dk.is_mysql:
-            from sqlalchemy.dialects.mysql import DOUBLE
-            latitudeNumber = Column(DOUBLE(asdecimal = False))
-            longitudeNumber = Column(DOUBLE(asdecimal = False))
-            altitude = Column(DOUBLE(asdecimal = False))
-            orientation = Column(DOUBLE(asdecimal = False))
-            tilt = Column(DOUBLE(asdecimal = False))
-            roll = Column(DOUBLE(asdecimal = False))
-            accuracy = Column(DOUBLE(asdecimal = False))
-    
-    return ImagePosition
-
-
-def _videometadata_class(dk: 'Digikam') -> type:            # noqa: F821
-    """
-    Defines the VideoMetadata class
-    """
-    
-    class VideoMetadata(dk.base):
-        """
-        Digikam Video Metadata
-        
-        This object contains Video metadata of the corresponding
-        :class:`Image` object. The following column-related properties can be
-        directly accessed:
-        
-        * **aspectRatio** (*str*)
-        * **audioBitRate** (*str*)
-        * **audioChannelType** (*str*)
-        * **audioCompressor** (*str*)
-        * **duration** (*str*)
-        * **frameRate** (*str*)
-        * **exposureProgram** (*int*)
-        * **videoCodec** (*str*)
-        """
-        __tablename__ = 'VideoMetadata'
-    
-    return VideoMetadata
+    def items(self) -> Iterable:
+        kwargs = { self._parent_id_col: self._parent.id }
+        for prop, rows in groupby(
+            self._select(**kwargs).order_by(text(self._key_col)),
+            lambda x: getattr(x, self._key_col),
+        ):
+            value = [(row.value, row.extraValue) for row in rows]
+            if len(value) == 1 and value[0][1] is None:
+                value = value[0][0]
+            yield prop, value
 
 
 def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
@@ -573,8 +407,8 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
             primaryjoin = 'foreign(ImageComment.imageid) == Image.id',
             lazy = 'dynamic')
         _copyright = relationship(
-            'ImageCopyright',
-            primaryjoin = 'foreign(ImageCopyright.imageid) == Image.id',
+            'ImageCopyrightEntry',
+            primaryjoin = 'foreign(ImageCopyrightEntry.imageid) == Image.id',
             lazy = 'dynamic')
         _history = relationship(
             'ImageHistory',
@@ -592,6 +426,10 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
             'ImagePosition',
             primaryjoin = 'foreign(ImagePosition.imageid) == Image.id',
             uselist = False)
+        _properties = relationship(
+            'ImageProperty',
+            primaryjoin = 'foreign(ImageProperty.imageid) == Image.id',
+            lazy = 'dynamic')
         _tags = relationship(
             'Tag',
             primaryjoin = 'foreign(ImageTags.c.imageid) == Image.id',
@@ -659,13 +497,13 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         # Relationship to ImageCopyright
         
         @property
-        def copyright(self) -> Copyright:
+        def copyright(self) -> ImageCopyright:
             """
             Returns the copyright data.
             
             """
             if not hasattr(self, '_copyrightObj'):
-                self._copyrightObj = Copyright(self)
+                self._copyrightObj = ImageCopyright(self)
             return self._copyrightObj
         
         # Relationship to ImageHistory
@@ -796,9 +634,9 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
             Returns the image's properties
             """
             
-            if not hasattr(self, '_properties'):
-                self._properties = ImageProperties(self)
-            return self._properties
+            if not hasattr(self, '_propertiesObj'):
+                self._propertiesObj = ImageProperties(self)
+            return self._propertiesObj
         
         # Relationship to Tags
         
@@ -860,21 +698,130 @@ class Images(DigikamTable):
         digikam: 'Digikam',                                  # noqa: F821
     ):
         super().__init__(digikam)
-        self.Class.ImageComment = _imagecomment_class(self.digikam)
-        self.Class.ImageCopyright = _imagecopyright_class(self.digikam)
-        self.Class.ImageHistory = _imagehistory_class(self.digikam)
-        self.Class.ImageInformation = _imageinformation_class(self.digikam)
-        self.Class.ImageMetadata = _imagemetadata_class(self.digikam)
-        self.Class.ImagePosition = _imageposition_class(self.digikam)
-        self.Class.VideoMetadata = _videometadata_class(self.digikam)
         self._define_helper_tables()
     
     def _define_helper_tables(self):
         """Defines the classes for helper tables."""
         
+        class ImageComment(self.digikam.base):
+            """
+            Digikam Image Comment
+            
+            Data in this table should be accessed through the ``Image`` properties
+            :attr:`~Image.caption` and :attr:`~Image.title`.
+            """
+            __tablename__ = 'ImageComments'
+            if not self.is_mysql:
+                from sqlalchemy.dialects.sqlite import DATETIME
+                date = Column(DATETIME(
+                    storage_format = '%(year)04d-%(month)02d-%(day)02dT%(hour)02d:%(minute)02d:%(second)02d',   # noqa: E501
+                    regexp = r'(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)'))
+        
+        class ImageCopyrightEntry(self.digikam.base):
+            """
+            Digikam Image Copyright
+            """
+            __tablename__ = 'ImageCopyright'
+        
+        class ImageHistory(self.digikam.base):
+            """
+            Digikam Image History
+
+            The following column-related properties can be directly accessed:
+            
+            * **imageid** (*int*)
+            * **uuid** (*str*)
+            * **history** (*str*)
+            """
+            __tablename__ = 'ImageHistory'
+        
+        class ImageInformation(self.digikam.base):
+            """
+            Represents a row of the `ImageInformation` table
+            
+            The following column-related properties can be directly accessed:
+            
+            * **imageid** (*int*)
+            * **rating** (*int*) - The image's rating, must be from -1 to 5.
+            * **creationDate** (:class:`~datetime.datetime`)
+            * **digitizationDate** (:class:`~datetime.datetime`)
+            * **orientation** (*int*)
+            """
+            __tablename__ = 'ImageInformation'
+            
+            if not self.is_mysql:
+                from sqlalchemy.dialects.sqlite import DATETIME
+                creationDate = Column(DATETIME(
+                    storage_format = '%(year)04d-%(month)02d-%(day)02dT%(hour)02d:%(minute)02d:%(second)02d',   # noqa: E501
+                    regexp = r'(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)'))
+                digitizationDate = Column(DATETIME(
+                    storage_format = '%(year)04d-%(month)02d-%(day)02dT%(hour)02d:%(minute)02d:%(second)02d',   # noqa: E501
+                    regexp = r'(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)'))
+            
+            @validates('rating')
+            def _validate_rating(self, key: int, value: int) -> int:
+                if value < -1 or value > 5:
+                    raise ValueError('Image rating must be from -1 to 5')
+                return value
+        
+        class ImageMetadata(self.digikam.base):
+            """
+            Represents a row of the ``ImageMetadata`` table.
+            
+            This object contains Exif information of the corresponding
+            :class:`Image` object. The following column-related properties
+            can be directly accessed:
+            
+            * **make** (*str*)
+            * **model** (*str*)
+            * **lens** (*str*)
+            * **aperture** (*float*)
+            * **focalLength** (*float*)
+            * **focalLength35** (*float*)
+            * **exposureTime** (*float*)
+            * **exposureProgram** (*int*)
+            * **exposureMode** (*int*)
+            * **sensitivity** (*int*)
+            * **flash** (*int*)
+            * **whiteBalance** (*int*)
+            * **whiteBalanceColorTemperature** (*int*)
+            * **meteringMode** (*int*)
+            * **subjectDistance** (*float*)
+            * **subjectDistanceCategory** (*int*)
+            """
+            __tablename__ = 'ImageMetadata'
+            
+            # Retrieve double as float
+            if self.is_mysql:
+                from sqlalchemy.dialects.mysql import DOUBLE
+                aperture = Column(DOUBLE(asdecimal = False))
+                focalLength = Column(DOUBLE(asdecimal = False))
+                focalLength35 = Column(DOUBLE(asdecimal = False))
+                exposureTime = Column(DOUBLE(asdecimal = False))
+                subjectDistance = Column(DOUBLE(asdecimal = False))
+        
+        class ImagePosition(self.digikam.base):
+            """
+            Contains the Image's position.
+            
+            Should be accessed through :attr:`Image.position`.
+            """
+            __tablename__ = 'ImagePositions'
+            
+            # Retrieve double as float
+            if self.is_mysql:
+                from sqlalchemy.dialects.mysql import DOUBLE
+                latitudeNumber = Column(DOUBLE(asdecimal = False))
+                longitudeNumber = Column(DOUBLE(asdecimal = False))
+                altitude = Column(DOUBLE(asdecimal = False))
+                orientation = Column(DOUBLE(asdecimal = False))
+                tilt = Column(DOUBLE(asdecimal = False))
+                roll = Column(DOUBLE(asdecimal = False))
+                accuracy = Column(DOUBLE(asdecimal = False))
+        
         class ImageProperty(self.digikam.base):
             """
-            Tag Properties
+            Image Properties
             
             This table should be accessed via
             Class :class:`~digikamdb.images.ImageProperties`.
@@ -885,7 +832,33 @@ class Images(DigikamTable):
             imageid = Column(Integer, primary_key = True)
             property = Column(String, primary_key = True)
         
+        class VideoMetadata(self.digikam.base):
+            """
+            Digikam Video Metadata
+            
+            This object contains Video metadata of the corresponding
+            :class:`Image` object. The following column-related properties can be
+            directly accessed:
+            
+            * **aspectRatio** (*str*)
+            * **audioBitRate** (*str*)
+            * **audioChannelType** (*str*)
+            * **audioCompressor** (*str*)
+            * **duration** (*str*)
+            * **frameRate** (*str*)
+            * **exposureProgram** (*int*)
+            * **videoCodec** (*str*)
+            """
+            __tablename__ = 'VideoMetadata'
+        
+        self.Class.ImageComment = ImageComment
+        self.Class.ImageCopyrightEntry = ImageCopyrightEntry
+        self.Class.ImageHistory = ImageHistory
+        self.Class.ImageInformation = ImageInformation
+        self.Class.ImageMetadata = ImageMetadata
+        self.Class.ImagePosition = ImagePosition
         self.Class.ImageProperty = ImageProperty
+        self.Class.VideoMetadata = VideoMetadata
     
     def find(
         self,
