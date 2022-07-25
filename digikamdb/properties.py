@@ -152,7 +152,7 @@ class BasicProperties(DigikamTable):
                 self._post_process_value(row)
             )
     
-    def filter_by(self, **kwargs) -> Iterable['DigikamObject']:
+    def filter_by(self, **kwargs) -> Iterable['DigikamObject']:     # noqa: F821
         """
         Returns the result of ``filter_by`` on the parent's relationship
         attribute.
