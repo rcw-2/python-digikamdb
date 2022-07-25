@@ -21,4 +21,9 @@ Tag Properties
 .. autoclass:: TagProperties
     :members:
 
+.. ifconfig::   include_private_content
+    
+    .. autoclass::  _sqla.TagProperty
+        :members:
+
 

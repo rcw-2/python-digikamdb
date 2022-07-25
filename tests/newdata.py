@@ -242,11 +242,11 @@ class NewData:
         self.assertNotIn('creator', img.copyright)
         self.assertNotIn('copyrightNotice', img.copyright)
         img.copyright['creator'] = 'RCW'
-        img.copyright['copyrightNotice'] = [('(c) 2022 RCW', 'x-default')]
+        img.copyright['copyrightNotice'] = ('(c) 2022 RCW', 'x-default')
         self.dk.session.commit()
         imgdata['copyright'] = {
             'creator':          'RCW',
-            'copyrightNotice':  [('(c) 2022 RCW', 'x-default')],
+            'copyrightNotice':  ('(c) 2022 RCW', 'x-default'),
         }
         pass
     
@@ -294,12 +294,12 @@ class NewData:
         tag = self.dk.tags.add(name, parent, icon)
         self.dk.session.commit()
         
-        if isinstance(parent, self.dk.tag_class):
+        if isinstance(parent, self.dk.tags.Class):
             parent = parent.id
         
         if icon is None:
             iconkde = None
-        elif isinstance(icon, self.dk.image_class):
+        elif isinstance(icon, self.dk.images.Class):
             icon = icon.id
             iconkde = None
         elif isinstance(icon, int):

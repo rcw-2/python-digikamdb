@@ -86,7 +86,7 @@ class Digikam:
         
         self._session = Session(self.engine)
 
-        self.base = _digikamobject_class(declarative_base())
+        self._base = self._digikamobject_class(declarative_base())
         
         self._settings  = Settings(self)
         self._tags      = Tags(self)
@@ -106,6 +106,11 @@ class Digikam:
         db_user = 'Database Username',
         db_internal = 'Internal Database Server'
     )
+    
+    @property
+    def base(self) -> type:
+        """Returns the base class for table-mapped classes."""
+        return self._base
     
     @classmethod
     def db_from_config(cls, sql_echo = False) -> Engine:    # noqa: C901
@@ -214,7 +219,7 @@ class Digikam:
         
         This will call :meth:`Session.close` and :meth:`Engine.dispose`.
         """
-        log.info('Tearing down Digikam object')
+        log.info('Scrapping Digikam object')
         self._settings = None
         self._tags = None
         self._albumRoots = None
@@ -265,46 +270,24 @@ class Digikam:
         """Returns ``True`` if database is MySQL."""
         return (self.engine.dialect.name == 'mysql')
     
-    @property
-    def albumroot_class(self) -> type:
-        """Returns the :class:`~_sqla.AlbumRoot` class"""
-        return self.albumRoots.Class
-    
-    @property
-    def album_class(self) -> type:
-        """Returns the :class:`~_sqla.Album` class"""
-        return self.albums.Class
-    
-    @property
-    def image_class(self) -> type:
-        """Returns the :class:`~_sqla.Image` class"""
-        return self.images.Class
-    
-    @property
-    def tag_class(self) -> type:
-        """Returns the :class:`~_sqla.Tag` class"""
-        return self.tags.Class
-
-
-def _digikamobject_class(base: type) -> type:
-    """
-    Defines the DigikamObject class
-    
-    Args:
-        base:   parent class (generated with :func:`declarative_base`)
-    Returns:
-        Class that has the parents :class:`DeferredReflection` and *base*.
-    """
-    class DigikamObject(DeferredReflection, base):
+    def _digikamobject_class(self, base: type) -> type:
         """
-        Abstract base class for objects stored in database.
-        Derived from :class:`~sqlalchemy.ext.declarative.DeferredReflection`
-        and :func:`~sqlalchemy.orm.declarative_base`.
-        """
+        Defines the DigikamObject class
         
-        __abstract__ = True
-    
-    return DigikamObject
+        Args:
+            base:   parent class (generated with :func:`declarative_base`)
+        Returns:
+            Class that has the parents :class:`DeferredReflection` and *base*.
+        """
+        class DigikamObject(DeferredReflection, base):
+            """
+            Abstract base class for objects stored in database.
+            Derived from :class:`~sqlalchemy.ext.declarative.DeferredReflection`
+            and :func:`~sqlalchemy.orm.declarative_base`.
+            """
+            __abstract__ = True
+        
+        return DigikamObject
 
 
 

@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import datetime
 from subprocess import run, CalledProcessError
 
 from sqlalchemy import create_engine
@@ -41,6 +42,7 @@ class MySQLTestBase(DigikamTestBase):
             {
                 'id': 1,
                 'name': '20210806_165143.jpg',
+                'title': 'The distillery',
             },
             {
                 'id':       5,
@@ -62,7 +64,10 @@ class MySQLTestBase(DigikamTestBase):
             'caption': {
                 '_default':     'New caption for image 1',
                 'de-DE': {
-                    'RCW':      'Ein Kommentar von RCW',
+                    'RCW': (
+                        'Ein Kommentar von RCW',
+                        datetime.now().replace(microsecond = 0)
+                    ),
                 },
             },
         },

@@ -104,7 +104,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             return [
                 row.pid
                 for row in self._session.scalars(
-                    select(self.TagsTreeEntry).filter_by(id = self.id)
+                    select(self._container.TagsTreeEntry).filter_by(id = self.id)
                 )
                 if row.pid > 0
             ]
@@ -293,9 +293,9 @@ class Tags(DigikamTable):
                 id = Column(Integer, primary_key = True)
                 pid = Column(Integer, primary_key = True)
             
-            self.Class.TagsTreeEntry = TagsTreeEntry
+            self.TagsTreeEntry = TagsTreeEntry
         
-        self.Class.TagProperty = TagProperty
+        self.TagProperty = TagProperty
     
     def _before_insert(
         self,
@@ -461,7 +461,7 @@ class Tags(DigikamTable):
         
         options = {}
         if icon:
-            if isinstance(icon, self.digikam.image_class):
+            if isinstance(icon, self.digikam.images.Class):
                 options['icon'] = icon.id
             elif isinstance(icon, int):
                 options['icon'] = icon
@@ -525,7 +525,7 @@ class Tags(DigikamTable):
 
 def _tagproperty_class(dk: 'Digikam') -> type:              # noqa: F821
     """Defines the TagProperty class."""
-    return dk.tags.Class.TagProperty
+    return dk.tags.TagProperty
 
 
 class TagProperties(BasicProperties):

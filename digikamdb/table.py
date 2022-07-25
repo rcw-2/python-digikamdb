@@ -23,13 +23,23 @@ class DigikamTable:
     
     Parameters:
         digikam:     ``Digikam`` object
+        log_create:
     """
     
     _class_function = None
     _id_column = 'id'
     
-    def __init__(self, digikam: 'Digikam'):                 # noqa: F821
-        log.debug('Creating %s', self.__class__.__name__)
+    #: Raise an Exception when ``[]`` does not find a suitable column.
+    #: Otherwise, ``None`` is returned.
+    _raise_on_not_found = True
+    
+    def __init__(
+        self,
+        digikam: 'Digikam',                                 # noqa: F821
+        log_create: bool = True
+    ):
+        if log_create:
+            log.debug('Creating %s', self.__class__.__name__)
         self._digikam = digikam
         self._session = self.digikam.session
         self.is_mysql = self.digikam.is_mysql
@@ -37,6 +47,7 @@ class DigikamTable:
         self.Class._session = self._session
         self.Class.is_mysql = self.is_mysql
         self.Class._container = self
+        setattr(self, self.Class.__name__, self.Class)
     
     @property
     def digikam(self) -> 'Digikam':                         # noqa: F821
@@ -56,7 +67,10 @@ class DigikamTable:
     
     def __getitem__(self, key: Any) -> 'DigikamObject':     # noqa: F821
         kwargs = { self._id_column: key }
-        return self._select(**kwargs).one()
+        if self._raise_on_not_found:
+            return self._select(**kwargs).one()
+        else:
+            return self._select(**kwargs).one_or_none()
     
     def _select(
         self,
@@ -95,8 +109,9 @@ class DigikamTable:
             Select object that can be processed further.
         """
         log.debug(
-            'Selecting %s objects with %s and %s',
+            '%s: Selecting %s objects with %s and %s',
             self.__class__.__name__,
+            self.Class.__name__,
             where_clause,
             kwargs
         )
@@ -121,8 +136,9 @@ class DigikamTable:
             The generated object.
         """
         log.debug(
-            'Creating %s object with %s',
+            '%s: Creating %s object with %s',
             self.__class__.__name__,
+            self.Class.__name__,
             kwargs
         )
         new = self.Class(**kwargs)
@@ -147,8 +163,9 @@ class DigikamTable:
         .. todo:: Do we need the where clause?
         """
         log.debug(
-            'Deleting %s objects with %s and %s',
+            '%s: Deleting %s objects with %s and %s',
             self.__class__.__name__,
+            self.Class.__name__,
             where_clause,
             kwargs
         )

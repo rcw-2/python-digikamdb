@@ -15,18 +15,27 @@ The Image Class (mapped)
 .. autoclass:: _sqla.Image
    :members:
 
+.. module:: digikamdb.image_comments
+
 Comments
 -----------------
 
-.. autoclass:: Comment
+.. autoclass:: ImageComments
     :no-show-inheritance:
     :members:
 
-.. autoclass:: Title
+.. autoclass:: ImageTitles
     :members:
 
-.. autoclass:: Caption
+.. autoclass:: ImageCaptions
     :members:
+
+.. ifconfig::   include_private_content
+    
+    .. autoclass::  _sqla.ImageComment
+        :members:
+
+.. module:: digikamdb.image_helpers
 
 Image Properties
 -----------------
@@ -34,25 +43,27 @@ Image Properties
 .. autoclass:: ImageProperties
     :members:
 
+.. ifconfig::   include_private_content
+    
+    .. autoclass::  _sqla.ImageProperty
+        :members:
+
 Copyright
 ----------
 
-.. autoclass:: Copyright
+.. autoclass:: ImageCopyright
     :members:
+
+.. ifconfig::   include_private_content
+    
+    .. autoclass:: _sqla.ImageCopyrightEntry
+        :members:
 
 Other Metadata (mapped)
 ------------------------
 
 .. currentmodule::     _sqla
 
-.. ifconfig::   include_private_content
-    
-    .. autoclass::  ImageComment
-        :members:
-    
-    .. autoclass::  ImageCopyright
-        :members:
-    
 .. autoclass::  ImageHistory
     :members:
 

@@ -44,6 +44,10 @@ Digikam Settings
     :no-show-inheritance:
     :members:
 
+.. ifconfig::   include_private_content
+    
+    .. autoclass:: _sqla.Setting
+
 .. module:: digikamdb.exceptions
 
 Exceptions

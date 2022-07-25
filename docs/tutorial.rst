@@ -13,7 +13,6 @@ several ways to specify the Digikam database:
     .. code-block:: python
         
         import os
-        from sqlalchemy import create_engine
         from digikamdb import Digikam
         dk = Digikam('digikamrc')
     
@@ -44,8 +43,13 @@ several ways to specify the Digikam database:
         engine = create_engine('mysql+pymysql://user:passwd@mysql.mydomain.org/mydatabase')
         dk = Digikam(engine)
 
-The data stored in the database can be accessed through the Digikam object,
+The data stored in the database can be accessed through the Digikam class,
 as described in the following chapters.
+
+.. seealso::
+    
+    * `Digikam Database Settings <https://docs.kde.org/trunk5/en/digikam-doc/digikam/using-setup.html#using-setup-database>`_
+    * :class:`Digikam Class Reference <digikamdb.conn.Digikam>`
 
 Working with Images
 --------------------

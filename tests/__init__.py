@@ -24,6 +24,10 @@ from .mysql import (                                        # noqa: F401
 
 
 # Log with debug to test.log
-logging.basicConfig(filename = 'test.log', level = logging.DEBUG)
+logging.basicConfig(
+    filename = 'test.log',
+    level = logging.DEBUG,
+    format = '%(levelname)s %(name)s:%(lineno)d %(message)s',
+)
 log = logging.getLogger(__name__)
 

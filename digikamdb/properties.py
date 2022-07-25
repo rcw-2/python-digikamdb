@@ -1,7 +1,7 @@
 """Basic class for properties"""
 
 import logging
-from typing import Iterable, Optional
+from typing import Any, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
 
 from .table import DigikamTable
 
@@ -31,18 +31,38 @@ class BasicProperties(DigikamTable):
         parent:     Object the properties belong to.
     """
     
-    # Parent id column
+    #: Column specifying the parent's id
     _parent_id_col = None
     
-    # Key column
+    #: Relationship on the parent side
+    _relationship = None
+    
+    #: Key column(s)
+    #:
+    #: Can be str or a sequence of str if there are multiple columns.
+    #: Property keys passed as arguments to ``[]`` or ``in`` are
+    #: converted to tuples in the latter case.
     _key_col = None
     
-    # Value column
+    #: Value column(s)
+    #:
+    #: Can be str or a sequence of str if there are multiple columns.
+    #: 
+    #: Property values passed as arguments to ``[]`` or ``in`` are
+    #: converted to tuples in the latter case.
     _value_col = None
     
+    #: Remove item when set to ``None``?
+    _remove_on_set_none = False
+    
     def __init__(self, parent: 'DigikamObject'):            # noqa: F821
-        log.debug('Creating properties object for %d', parent.id)
-        super().__init__(parent._container.digikam)
+        log.debug(
+            'Creating %s object for %s %d',
+            self.__class__.__name__,
+            parent.__class__.__name__,
+            parent.id
+        )
+        super().__init__(parent._container.digikam, log_create = False)
         self._parent = parent
     
     @property
@@ -50,36 +70,75 @@ class BasicProperties(DigikamTable):
         """Returns the parent object."""
         return self._parent
     
-    def __contains__(self, prop: str) -> bool:
+    def __contains__(self, prop: Union[str, int, Sequence]) -> bool:
         """in operator"""
-        kwargs = { self._parent_id_col: self.parent.id, self._key_col: prop }
-        return self._select(**kwargs).one_or_none() is not None
+        return self._select(
+            **self._key_col_kwargs(prop)
+        ).one_or_none() is not None
     
-    def __getitem__(self, prop: str) -> str:                # noqa: F821
+    def __getitem__(self, prop: Union[str, int, Sequence]) -> str:  # noqa: F821
         """[] operator"""
-        kwargs = { self._parent_id_col: self._parent.id, self._key_col: prop }
-        return getattr(self._select(**kwargs).one(), self._value_col)
+        query = self._select(**self._key_col_kwargs(prop))
+        if self._raise_on_not_found:
+            ret = query.one()
+        else:
+            ret = query.one_or_none()
+            if ret is None:
+                log.debug('No record found, returning None')
+                return None
+        return self._post_process_value(ret)
     
-    def __setitem__(self, prop: str, value: Optional[str]):
+    def __setitem__(
+        self,
+        prop: Union[str, int, Sequence, None],
+        value: Union[str, int, Tuple, None]
+    ):
         """[] operator"""
         log.debug(
-            'Setting %s[%s] of %d to %s',
+            'Setting %s[%s] of %s(id=%d) to %s',
             self.__class__.__name__,
             prop,
+            self._parent.__class__.__name__,
             self._parent.id,
             value
         )
-        kwargs = { self._parent_id_col: self.parent.id, self._key_col: prop }
-        row = self._select(**kwargs).one_or_none()
+        
+        if value is None and self._remove_on_set_none:
+            log.debug(
+                'Removing %s[%s] as new value is None',
+                self.__class__.__name__, prop
+            )
+            self.remove(prop)
+            return
+        
+        row = self._select(
+            **self._key_col_kwargs(prop)
+        ).one_or_none()
+        
         if row:
-            setattr(row, self._value_col, value)
+            if isinstance(self._value_col, str):
+                setattr(row, self._value_col, value)
+            for k, v in zip(
+                self._value_col,
+                self._pre_process_value(value)
+            ):
+                setattr(row, k, v)
         else:
-            kwargs[self._value_col] = value
-            self._insert(**kwargs)
+            if isinstance(self._value_col, str):
+                self._insert(**self._key_col_kwargs(
+                    self._pre_process_key(prop),
+                    **{self._value_col: value}
+                ))
+            else:
+                self._insert(**self._key_col_kwargs(
+                    self._pre_process_key(prop),
+                    **dict(zip(self._value_col, self._pre_process_value(value)))
+                ))
     
     def __iter__(self) -> Iterable:
-        kwargs = { self._parent_id_col: self.parent.id }
-        for row in self._select(**kwargs):
+        for row in self._select(
+            **{ self._parent_id_col: self.parent.id }
+        ):
             yield getattr(row, self._value_col)
     
     def items(self) -> Iterable:
@@ -88,9 +147,19 @@ class BasicProperties(DigikamTable):
         """
         kwargs = { self._parent_id_col: self.parent.id }
         for row in self._select(**kwargs):
-            yield getattr(row, self._key_col), getattr(row, self._value_col)
+            yield (
+                (getattr(row, col) for col in self._key_col),
+                self._post_process_value(row)
+            )
     
-    def remove(self, prop: str):
+    def filter_by(self, **kwargs) -> Iterable['DigikamObject']:
+        """
+        Returns the result of ``filter_by`` on the parent's relationship
+        attribute.
+        """
+        return getattr(self.parent, self._relationship).filter_by(**kwargs)
+    
+    def remove(self, prop: Union[str, int, Iterable, None]):
         """
         Removes the given property.
         
@@ -103,6 +172,88 @@ class BasicProperties(DigikamTable):
             prop,
             self._parent.id,
         )
-        kwargs = { self._parent_id_col: self.parent.id, self._key_col: prop }
-        self._delete(**kwargs)
+        row = self._select(**self._key_col_kwargs(prop)).one_or_none()
+        if row is not None:
+            self._session.delete(row)
+    
+    def _key_col_kwargs(
+        self,
+        prop: Any,
+        add_parent_id: bool = True,
+        **kwargs
+    ) -> Mapping[str, Any]:
+        """
+        Returns kwargs suitable for filtering queries.
+        """
+        ret = {}
+        if add_parent_id:
+            ret = {self._parent_id_col: self._parent.id}
+        
+        if isinstance(self._key_col, str):
+            ret[self._key_col] = self._pre_process_key(prop)
+        else:
+            ret.update(dict(zip(
+                self._key_col,
+                self._pre_process_key(prop)
+            )))
+        ret.update(kwargs)
+        return ret
+    
+    def _pre_process_key(self, key: Union[str, int, Iterable, None]) -> Tuple:
+        """Preprocesses key for [] operations."""
+        # No preprocessing if parent id is a single column
+        if isinstance(self._key_col, str):
+            return key
+        
+        if key is None:
+            ret = []
+        elif isinstance(key, (str, int)):
+            ret = [key]
+        else:
+            # key must be iterable from here on
+            ret = list(key)
+            if len(ret) > len(self._key_col):
+                ret = ret[:len(self._key_col)]
+        
+        # make sure list is long enough
+        while len(ret) < len(self._key_col):
+            ret.append(None)
+        
+        return tuple(ret)
+    
+    def _pre_process_value(
+        self,
+        value: Union[str, int, Tuple, List, None]
+    ) -> Union[str, int, Tuple]:
+        """Preprocesses values for [] operations."""
+        if isinstance(self._value_col, str):
+            return value
+        
+        if value is None:
+            ret = []
+        elif isinstance(value, (str, int)):
+            ret = [value]
+        else:
+            # value must be iterable from here on
+            ret = list(value)
+            if len(ret) > len(self._value_col):
+                ret = ret[:len(self._value_col)]
+        
+        # make sure list is long enough
+        while len(ret) < len(self._value_col):
+            ret.append(None)
+        
+        return tuple(ret)
+    
+    def _post_process_value(
+        self,
+        obj: 'DigikamObject'                                # noqa: F821
+    ) -> Union[str, int, Tuple, None]:
+        """Postprocesses values from [] operations."""
+        # Return object property if there is only one value column:
+        if isinstance(self._value_col, str):
+            return getattr(obj, self._value_col)
+        
+        # Generate tuple for multiple columns:
+        return tuple(getattr(obj, attr) for attr in self._value_col)
 

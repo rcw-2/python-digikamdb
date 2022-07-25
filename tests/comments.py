@@ -16,40 +16,58 @@ class CheckComments:
         old_titles = {}
         for lang, newtitle in titles.items():
             if lang == '_default':
-                old_titles[lang] = img.title.get()
+                old_titles[lang] = img.title
                 img.title = newtitle
+                log.debug(
+                    'Image %d: title %s -> %s',
+                    img.id, old_titles[lang], newtitle
+                )
             else:
-                old_titles[lang] = img.title.get(lang)
-                img.title.set(newtitle, language = lang)
+                old_titles[lang] = img.titles[lang]
+                img.titles[lang] = newtitle
+                log.debug(
+                    'Image %d: titles[%s] %s -> %s',
+                    img.id, lang, old_titles[lang], newtitle
+                )
         return old_titles
     
     def _set_captions(self, img, captions):
         old_captions = {}
         for lang, newdata in captions.items():
             if lang == '_default':
-                old_captions[lang] = img.caption.get()
+                old_captions[lang] = img.caption
                 img.caption = newdata
+                log.debug(
+                    'Image %d: caption %s -> %s',
+                    img.id, old_captions[lang], newdata
+                )
             else:
                 old_captions[lang] = {}
                 for author, newcaption in newdata.items():
-                    old_captions[lang][author] = img.caption.get(lang, author)
-                    img.caption.set(newcaption, language = lang, author = author)
+                    old_captions[lang][author] = img.captions[(lang, author)]
+                    img.captions[(lang, author)] = newcaption
+                    if isinstance(newcaption, str):
+                        newdata[author] = (newcaption, None)
+                log.debug(
+                    'Image %d: captions[%s,%s] %s -> %s',
+                    img.id, lang, author, old_captions[lang][author], newdata[author]
+                )
         return old_captions
     
     def _check_titles(self, img, titles):
         for lang, newtitle in titles.items():
             if lang == '_default':
-                self.assertEqual(img.title.get(), newtitle)
+                self.assertEqual(img.title, newtitle)
             else:
-                self.assertEqual(img.title.get(lang), newtitle)
+                self.assertEqual(img.titles[lang], newtitle)
     
     def _check_captions(self, img, captions):
-        for lang, newdata in captions.items():
+        for lang, refdata in captions.items():
             if lang == '_default':
-                self.assertEqual(img.caption.get(), newdata)
+                self.assertEqual(img.caption, refdata)
             else:
-                for author, newcaption in newdata.items():
-                    self.assertEqual(img.caption.get(lang, author), newcaption)
+                for author, refcaption in refdata.items():
+                    self.assertEqual(img.captions[(lang, author)], refcaption)
     
     def test10_create_comments(self):
         # Set new values

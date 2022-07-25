@@ -16,7 +16,7 @@ class TestData:
         for data in self.test_data['albumroots']:
             with self.subTest(albumrootid = data['id']):
                 ar = self.dk.albumRoots[data['id']]
-                self.assertIsInstance(ar, self.dk.albumroot_class)
+                self.assertIsInstance(ar, self.dk.albumRoots.Class)
                 self.assertEqual(ar.label, data['label'])
                 self.assertEqual(
                     ar.mountpoint,

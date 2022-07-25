@@ -39,6 +39,7 @@ class SQLiteTestBase(DigikamTestBase):
             {
                 'id': 1,
                 'name': '20210806_165143.jpg',
+                'title': 'The Distillery',
             }
         ],
         'tags': [{'id': 22, 'pid': 0, 'name': 'France'}]

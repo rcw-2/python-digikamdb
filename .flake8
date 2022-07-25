@@ -29,8 +29,8 @@ extend-ignore =
     # blank line contains whitespace - OK when surrounding lines are indented
     W293,
     # blank line at end of file - oh shut up!
-    W391
+    W391,
     #
     # The following are ignored for development:
-    F401
+    E302, E303, E713, F401, W291
 

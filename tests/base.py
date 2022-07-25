@@ -14,6 +14,8 @@ log = logging.getLogger(__name__)
 class DigikamTestBase(TestCase):
     """Base Class"""
     
+    _do_cleanup = True
+    
     @classmethod
     def setUpClass(cls):
         log.info('Setting up %s', cls.__name__)
@@ -23,7 +25,10 @@ class DigikamTestBase(TestCase):
     @classmethod
     def tearDownClass(cls):
         log.info('Tearing down %s', cls.__name__)
-        rmtree(cls.mydir)
+        if cls._do_cleanup:
+            rmtree(cls.mydir)
+        else:
+            log.warning('Not removing temporary directory %s', cls.mydir)
 
     def setUp(self):
         # Log class and real test method name so we can see
@@ -33,10 +38,22 @@ class DigikamTestBase(TestCase):
             self.__class__.__name__,
             getattr(self, self._testMethodName).__name__
         )
+        if not self.__class__._do_cleanup:
+            log.warning('_do_cleanup is False')
     
     def tearDown(self):
+        log.info('Tearing down %s object', self.__class__.__name__)
         if hasattr(self, 'dk'):
             self.dk.destroy()
+        
+        result = self.defaultTestResult()
+        self._feedErrorsToResult(result, self._outcome.errors)
+        if all(test != self for test, text in result.errors + result.failures):
+            return
+
+        log.error('Test failed')
+        if self._outcome.result.failfast:
+            self.__class__._do_cleanup = False
     
     def replacepath(self, path):
         return path.replace('MYDIR', self.mydir)
