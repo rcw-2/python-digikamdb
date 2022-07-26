@@ -33,7 +33,6 @@ class ImageProperties(BasicProperties):
     Image Properties
     
     Args:
-        digikam:    The Digikam object
         parent:     The corresponding ``Image`` object.
     """
     
@@ -124,9 +123,7 @@ class ImageCopyright(BasicProperties):
     def items(self) -> Iterable:
         kwargs = { self._parent_id_col: self._parent.id }
         for prop, rows in groupby(
-            self._session.scalars(
-                self._select_raw(**kwargs).order_by(text('property'))
-            ),
+            self._select(**kwargs).order_by(text('property')),
             lambda x: x.property,
         ):
             value = [self._post_process_value(row) for row in rows]

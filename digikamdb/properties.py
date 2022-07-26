@@ -17,17 +17,16 @@ class BasicProperties(DigikamTable):
     named ``properties`` that points to the BasicProperties instance. The
     individual properties can be accessed as follows:
     
-    .. code:: python
+    .. code-block:: python
         
         obj.properties['myprop'] = 'myvalue'        # set a property
         if 'myprop' in obj.properties:              # check if a property exists
             opj.properties.remove('myprop')         # remove a property
     
     The class is iterable, yielding all property names, and has a method
-    :meth:`~BasicProperties.items` similar to that of :class:`python.dict`.
+    :meth:`~BasicProperties.items` similar to that of :meth:`dict <dict.items>`.
     
     Args:
-        digikam:    Digikam object.
         parent:     Object the properties belong to.
     """
     
@@ -69,6 +68,12 @@ class BasicProperties(DigikamTable):
     def parent(self) -> 'DigikamObject':                    # noqa: F821
         """Returns the parent object."""
         return self._parent
+    
+    def __len__(self) -> int:
+        """
+        Returns the number of rows containing properties for the parent.
+        """
+        return self._select_self().count()
     
     def __contains__(self, prop: Union[str, int, Sequence]) -> bool:
         """in operator"""
@@ -136,23 +141,26 @@ class BasicProperties(DigikamTable):
                 ))
     
     def __iter__(self) -> Iterable:
-        for row in self._select(
-            **{ self._parent_id_col: self.parent.id }
-        ):
-            yield getattr(row, self._value_col)
+        """Iterates over all properties of parent"""
+        yield from self._select_self()
     
     def items(self) -> Iterable:
         """
         Returns the properties as an iterable yielding (key, value) tuples.
         """
-        kwargs = { self._parent_id_col: self.parent.id }
-        for row in self._select(**kwargs):
-            yield (
-                (getattr(row, col) for col in self._key_col),
-                self._post_process_value(row)
-            )
+        for row in self._select_self():
+            if isinstance(self._key_col, str):
+                key = getattr(row, self._key_col)
+            else:
+                key = tuple(getattr(row, col) for col in self._key_col)
+            
+            yield key, self._post_process_value(row)
     
-    def filter_by(self, **kwargs) -> Iterable['DigikamObject']:     # noqa: F821
+    def _select_self(self) -> '~sqlalchemy.orm.Query':      # noqa: F821
+        """Selects all properties of the parent object."""
+        return self._select(**{ self._parent_id_col: self.parent.id })
+
+    def filter_by(self, **kwargs) -> Iterable['DigikamObject']:  # noqa: F821
         """
         Returns the result of ``filter_by`` on the parent's relationship
         attribute.

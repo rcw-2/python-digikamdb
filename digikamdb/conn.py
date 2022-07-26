@@ -84,7 +84,7 @@ class Digikam:
         else:
             raise TypeError('Database specification must be Engine or str')
         
-        self._session = Session(self.engine)
+        self._session = Session(self.engine, future = True)
 
         self._base = self._digikamobject_class(declarative_base())
         

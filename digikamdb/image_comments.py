@@ -54,6 +54,12 @@ class ImageComments(BasicProperties):
     def __repr__(self) -> str:
         return '<ImageComments object type=%d>' % self._type
     
+    def _select_self(self) -> '~sqlalchemy.orm.Query':      # noqa: F821
+        """
+        Selects all comments with the riqht type of the parent object.
+        """
+        return super()._select_self().filter_by(type = self._type)
+    
     def _pre_process_key(self, prop: Union[str, Iterable, None]) -> Tuple:
         """Preprocesses key for [] operations."""
         ret = list(super()._pre_process_key(prop))
@@ -77,7 +83,7 @@ class ImageTitles(ImageComments):
     language. The language can be given as ``None`` or as an empty string,
     both are replaced internally by **x-default**.
     
-    code-block:: python
+    .. code-block:: python
         
         c1 = img.titles['']             # Default language
         c2 = img.titles['es-ES']        # Spanish
@@ -115,7 +121,7 @@ class ImageCaptions(ImageComments):
     containing language and author. The language can be given as ``None`` or as
     an empty string, both are replaced internally by **x-default**.
     
-    code-block:: python
+    .. code-block:: python
         
         c1 = img.captions[('', 'Fred')]     # Default language, author Fred
         c2 = img.captions['es-ES']          # Spanish, no author

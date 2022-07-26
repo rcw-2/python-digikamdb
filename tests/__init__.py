@@ -1,5 +1,6 @@
 
 import logging
+import os
 
 # Run the digikamrc tests first
 from .digikamrc import (                                    # noqa: F401
@@ -30,4 +31,6 @@ logging.basicConfig(
     format = '%(levelname)s %(name)s:%(lineno)d %(message)s',
 )
 log = logging.getLogger(__name__)
+
+os.environ['SQLALCHEMY_WARN_20'] = 'true'
 

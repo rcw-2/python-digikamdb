@@ -17,7 +17,7 @@ The Image Class (mapped)
 
 .. module:: digikamdb.image_comments
 
-Comments
+Image Comments
 -----------------
 
 .. autoclass:: ImageComments

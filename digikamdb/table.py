@@ -74,57 +74,29 @@ class DigikamTable:
     
     def _select(
         self,
-        where_clause: Optional[str] = None,
         **kwargs
-    ) -> '~sqlalchemy.engine.ScalarResult':                 # noqa: F821
+    ) -> '~sqlalchemy.orm.Query':                           # noqa: F821
         """
         Returns a select result for the table.
         
         Args:
-            where_clause:   Contains a SQL WHERE clause, processed by
-                            :func:`~sqlalchemy.sql.expression.text` and
-                            :meth:`~sqlalchemy.orm.Query.where`.
-            kwargs:         Other keyword arguments are used as arguments for
+            kwargs:         Keyword arguments are used as arguments for
                             :meth:`~sqlalchemy.orm.Query.filter_by`.
         Returns:
             Iterable query result.
         """
-        return self._session.scalars(self._select_raw(where_clause, **kwargs))
-    
-    def _select_raw(
-        self,
-        where_clause: Optional[str] = None,
-        **kwargs
-    ) -> '~sqlalchemy.sql.expression.Select':               # noqa: F821
-        """
-        Returns a select for the table.
-        
-        Args:
-            where_clause:   Contains a SQL WHERE clause, processed by
-                            :func:`~sqlalchemy.sql.expression.text` and
-                            :meth:`~sqlalchemy.orm.Query.where`.
-            kwargs:         Other keyword arguments are used as arguments for
-                            :meth:`~sqlalchemy.orm.Query.filter_by`.
-        Returns:
-            Select object that can be processed further.
-        """
         log.debug(
-            '%s: Selecting %s objects with %s and %s',
+            '%s: Selecting %s objects with %s',
             self.__class__.__name__,
             self.Class.__name__,
-            where_clause,
             kwargs
         )
-        if where_clause:
-            if kwargs:
-                return select(self.Class).where(text(where_clause)).filter_by(**kwargs)
-            else:
-                return select(self.Class).where(text(where_clause))
-        else:
-            if kwargs:
-                return select(self.Class).filter_by(**kwargs)
-            else:
-                return select(self.Class)
+
+        query = self._session.query(self.Class)
+        if kwargs:
+            query = query.filter_by(**kwargs)
+        
+        return query
     
     def _insert(self, **kwargs) -> 'DigikamObject':          # noqa: F821
         """
