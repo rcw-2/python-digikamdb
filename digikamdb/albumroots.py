@@ -48,7 +48,8 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
         _albums = relationship(
             'Album',
             primaryjoin = 'foreign(Album.albumRoot) == AlbumRoot.id',
-            back_populates = '_root')
+            back_populates = '_root',
+            lazy = 'dynamic')
         
         # Relationship to Albums
         

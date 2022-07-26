@@ -41,11 +41,11 @@ class TestData:
                 for prop, value in data.items():
                     self.assertEqual(getattr(img, prop), value)
                 
-                img2 = self.dk.images.find(img.abspath)
+                img2 = self.dk.images.find(img.abspath)[0]
                 self.assertIs(img, img2)
         
         with self.subTest(file = 'not in DB'):
-            self.assertIsNone(self.dk.images.find('/does/not/exist'))
+            self.assertFalse(self.dk.images.find('/does/not/exist'))
     
     def test40_tags(self):
         for data in self.test_data['tags']:

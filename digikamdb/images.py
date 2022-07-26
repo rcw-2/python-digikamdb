@@ -395,8 +395,8 @@ class Images(DigikamTable):
     
     def find(
         self,
-        name: Union[str, bytes, os.PathLike]
-    ) -> Optional['Image']:                                 # noqa: F821
+        path: Union[str, bytes, os.PathLike]
+    ) -> List['Image']:                                 # noqa: F821
         """
         Finds an Image by name.
         
@@ -404,39 +404,30 @@ class Images(DigikamTable):
             name:   Path to image file. Can be given as any type that the
                     :mod:`os.path` functions understand.
         """
-        base = os.path.basename(name)
-        path = os.path.abspath(name)
+        log.debug(
+            'Images: searching for %s',
+            path,
+        )
+        abspath = os.path.abspath(path)
         
-        # Seleft images with correct name:
-        found = self._select(name = base)
+        albums = self.digikam.albums.find(abspath)
+        if albums:
+            ret = []
+            for al in albums:
+                log.debug('Adding images from album %s to result', al.abspath)
+                ret.extend(al.images.all())
+            return ret
         
-        # Look for image that is the same file as path:
-        if os.path.isfile(path):
-            for img in found:
-                # Return image if it is the same file
-                if (
-                    os.path.isfile(img.abspath) and
-                    os.path.samefile(img.abspath, path)
-                ):
-                    log.debug(
-                        '%s is the same file as image %d (%s)',
-                        path,
-                        img.id,
-                        img.name
-                    )
-                    return img
+        # There are no albums on path, so path must 
+        # be an image file if it exists.
+        base = os.path.basename(abspath)
+        dir_ = os.path.dirname(abspath)
         
-        # Look for path:
-        for img in found:
-            if (img.abspath == path):
-                log.debug(
-                    '%s found in database: %d (%s)',
-                    path,
-                    img.id,
-                    img.name
-                )
-                return img
+        album = self.digikam.albums.find(dir_, True)
+        if album:
+            log.debug('Returning images from album %s', album.abspath)
+            return album.images.filter_by(name = base).all()
         
-        # If nothing was found, return None
-        return None
+        log.debug('No files found')
+        return []
 

@@ -210,7 +210,7 @@ class NewData:
             638843,
             '54b4f8875a9885643582a31edf933822'
         )
-        img2 = self.dk.images.find(path)
+        img2 = self.dk.images.find(path)[0]
         self.assertEqual(img1.id, img2.id)
         self.assertIs(img1, img2)
     
