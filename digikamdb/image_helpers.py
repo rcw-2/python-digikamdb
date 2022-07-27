@@ -32,8 +32,16 @@ class ImageProperties(BasicProperties):
     """
     Image Properties
     
+    Objects of this type are normally accessed through an :class:`Image`
+    object, see :attr:`~Image.properties`. In general, it is not necessary
+    to call the constructor directly.
+    
+    Individual properties can be retrieved and set dict-like vie the ``[]``
+    operator. The method :meth:`~ImageProperties.items` iterates over all
+    properties and yields (key, value) tuples.
+    
     Args:
-        parent:     The corresponding ``Image`` object.
+        parent:     Image object the properties belong to.
     """
     
     # Funktion returning the table class
@@ -121,9 +129,8 @@ class ImageCopyright(BasicProperties):
             self._insert(**kwargs)
 
     def items(self) -> Iterable:
-        kwargs = { self._parent_id_col: self._parent.id }
         for prop, rows in groupby(
-            self._select(**kwargs).order_by(text('property')),
+            self._select_self().order_by(text('property')),
             lambda x: x.property,
         ):
             value = [self._post_process_value(row) for row in rows]

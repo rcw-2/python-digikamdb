@@ -77,17 +77,14 @@ class BasicProperties(DigikamTable):
     
     def __contains__(self, prop: Union[str, int, Sequence]) -> bool:
         """in operator"""
-        return self._select(
-            **self._key_col_kwargs(prop)
-        ).one_or_none() is not None
+        return self._select_prop(prop).one_or_none() is not None
     
     def __getitem__(self, prop: Union[str, int, Sequence]) -> str:  # noqa: F821
         """[] operator"""
-        query = self._select(**self._key_col_kwargs(prop))
         if self._raise_on_not_found:
-            ret = query.one()
+            ret = self._select_prop(prop).one()
         else:
-            ret = query.one_or_none()
+            ret = self._select_prop(prop).one_or_none()
             if ret is None:
                 log.debug('No record found, returning None')
                 return None
@@ -116,50 +113,78 @@ class BasicProperties(DigikamTable):
             self.remove(prop)
             return
         
-        row = self._select(
-            **self._key_col_kwargs(prop)
-        ).one_or_none()
-        
-        if row:
-            if isinstance(self._value_col, str):
-                setattr(row, self._value_col, value)
-            for k, v in zip(
+        if isinstance(self._value_col, str):
+            values = { self._value_col: value }
+        else:
+            values = dict(zip(
                 self._value_col,
                 self._pre_process_value(value)
-            ):
+            ))
+        
+        row = self._select_prop(prop).one_or_none()
+        if row:
+            for k, v in values.items():
                 setattr(row, k, v)
         else:
-            if isinstance(self._value_col, str):
-                self._insert(**self._key_col_kwargs(
-                    self._pre_process_key(prop),
-                    **{self._value_col: value}
-                ))
-            else:
-                self._insert(**self._key_col_kwargs(
-                    self._pre_process_key(prop),
-                    **dict(zip(self._value_col, self._pre_process_value(value)))
-                ))
+            attrs = self._prop_attributes(prop, **values)
+            log.debug(
+                '%s: creating %s object with %s', self.__class__.__name__,
+                self.Class.__name__,
+                attrs
+            )
+            self._session.add(self.Class(**attrs))
     
     def __iter__(self) -> Iterable:
         """Iterates over all properties of parent"""
+        log.debug('%s: iterating over objects', self.__class__.__name__)
         yield from self._select_self()
     
     def items(self) -> Iterable:
         """
         Returns the properties as an iterable yielding (key, value) tuples.
         """
+        log.debug('%s: iterating over items', self.__class__.__name__)
         for row in self._select_self():
             if isinstance(self._key_col, str):
                 key = getattr(row, self._key_col)
             else:
                 key = tuple(getattr(row, col) for col in self._key_col)
             
-            yield key, self._post_process_value(row)
+            yield self._post_process_key(key), self._post_process_value(row)
     
     def _select_self(self) -> '~sqlalchemy.orm.Query':      # noqa: F821
         """Selects all properties of the parent object."""
         return self._select(**{ self._parent_id_col: self.parent.id })
-
+    
+    def _select_prop(
+        self,
+        prop: Union[str, int, Iterable, None]
+    ) -> '~sqlalchemy.orm.Query':                           # noqa: F821
+        """Selects a specific property."""
+        kwargs = {}
+        if isinstance(self._key_col, str):
+            kwargs[self._key_col] = self._pre_process_key(prop)
+        else:
+            kwargs.update(dict(zip(
+                self._key_col,
+                self._pre_process_key(prop)
+            )))
+        
+        return self._select_self().filter_by(**kwargs)
+    
+    def _prop_attributes(self, prop: Union[str, int, Iterable, None], **values):
+        """Returns **all** attributes for a new property object."""
+        attrs = { self._parent_id_col: self.parent.id }
+        if isinstance(self._key_col, str):
+            attrs[self._key_col] = self._pre_process_key(prop)
+        else:
+            attrs.update(dict(zip(
+                self._key_col,
+                self._pre_process_key(prop)
+            )))
+        attrs.update(**values)
+        return attrs
+    
     def filter_by(self, **kwargs) -> Iterable['DigikamObject']:  # noqa: F821
         """
         Returns the result of ``filter_by`` on the parent's relationship
@@ -180,7 +205,7 @@ class BasicProperties(DigikamTable):
             prop,
             self._parent.id,
         )
-        row = self._select(**self._key_col_kwargs(prop)).one_or_none()
+        row = self._select_prop(prop).one_or_none()
         if row is not None:
             self._session.delete(row)
     
@@ -228,6 +253,10 @@ class BasicProperties(DigikamTable):
             ret.append(None)
         
         return tuple(ret)
+    
+    def _post_process_key(self, key: Union[str, Tuple]) -> Any:
+        """Postprocesses key from :meth:`~BasicProperties.items`"""
+        return key
     
     def _pre_process_value(
         self,

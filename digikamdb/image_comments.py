@@ -36,7 +36,7 @@ class ImageComments(BasicProperties):
     _parent_id_col = 'imageid'
     
     #: Key column
-    _key_col = ['language', 'author', 'type']
+    _key_col = ['language', 'author']
     
     #: Value column
     _value_col = ['comment', 'date']
@@ -60,13 +60,16 @@ class ImageComments(BasicProperties):
         """
         return super()._select_self().filter_by(type = self._type)
     
+    def _prop_attributes(self, prop: Union[str, int, Iterable, None], **values):
+        """Adds type to the standard properties."""
+        values['type'] = self._type
+        return super()._prop_attributes(prop, **values)
+    
     def _pre_process_key(self, prop: Union[str, Iterable, None]) -> Tuple:
         """Preprocesses key for [] operations."""
         ret = list(super()._pre_process_key(prop))
         if ret[0] is None or ret[0] == '':
             ret[0] = 'x-default'
-        if ret[2] is None:
-            ret[2] = self._type
         return tuple(ret)
 
 
@@ -101,6 +104,13 @@ class ImageTitles(ImageComments):
     
     def __repr__(self) -> str:
         return '<Titles for image %d>' % self._parent.id
+    
+    def _post_process_key(self, key: Union[str, Tuple]) -> str:
+        """Just remove"""
+        key = super()._post_process_key(key)
+        if isinstance(key, tuple):
+            return key[0]
+        return key
     
     def _post_process_value(self, value: 'DigikamObject') -> Tuple:  # noqa: F821
         """Preprocesses values for [] operations."""
@@ -141,4 +151,6 @@ class ImageCaptions(ImageComments):
         # set type=1
         super().__init__(parent, 1)
 
+    def __repr__(self) -> str:
+        return '<Captions for image %d>' % self._parent.id
 
