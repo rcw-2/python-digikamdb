@@ -148,9 +148,11 @@ jobs:
     - name: Aggregate Coverage Data
       run: |
         # Run coverage combine
+        cd coverage-data
         coverage combine
     - name: Coverage report
       run: |
         # Run coverage report
+        cd coverage-data
         coverage report -m
 
