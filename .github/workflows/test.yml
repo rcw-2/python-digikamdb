@@ -87,7 +87,7 @@ jobs:
         # There seems to be no easy way to install dependencies
         # from pyproject.toml, so we just install the package...
         pip install -e .[mysql]
-        pip install coverage
+        pip install coverage[toml]
     - name: Prepare database
       run: |
         # Prepare the MySQL database
@@ -142,7 +142,7 @@ jobs:
     - name: Install dependencies
       run: |
         # Install coverage
-        pip install coverage
+        pip install coverage[toml]
     - name: Load Coverage Data 
       uses: actions/download-artifact@v3
     - name: Aggregate Coverage Data
