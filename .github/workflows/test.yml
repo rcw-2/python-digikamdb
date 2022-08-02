@@ -55,7 +55,7 @@ jobs:
   build_and_test:
     
     needs:
-      - check
+    - check
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -75,7 +75,7 @@ jobs:
     - name: Set up MySQL ${{ matrix.mysql-version }}
       uses: shogo82148/actions-setup-mysql@v1
       with:
-        distribution:   ${{ matrix.mysql-flavor }}
+        #distribution:   ${{ matrix.mysql-flavor }}
         mysql-version:  ${{ matrix.mysql-version }}
         root-password:  ${{ secrets.MYSQL_ROOT_PW }}
     - name: Set up Python ${{ matrix.python-version }}
@@ -87,6 +87,7 @@ jobs:
         # There seems to be no easy way to install dependencies
         # from pyproject.toml, so we just install the package...
         pip install -e .[mysql]
+        pip install coverage
     - name: Prepare database
       run: |
         # Prepare the MySQL database
@@ -107,7 +108,12 @@ jobs:
     - name: Test with Python unittest
       run: |
         # Run Python test
-        python -m unittest -v
+        coverage run --parallel-mode -m unittest -v
+    - name: Save Coverage Data
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-data
+        path: .coverage.*
     - name: Test log
       if: ${{ always() }}
       run: |
@@ -124,4 +130,27 @@ jobs:
         ls -l /dev/disk/by-uuid
         echo "Mounted devices"
         cat /proc/mounts | grep ^/dev/
+  
+  coverage:
+    
+    needs:
+    - build_and_test
+    
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install dependencies
+      run: |
+        # Install coverage
+        pip install coverage
+    - name: Load Coverage Data 
+      uses: actions/download-artifact@v3
+    - name: Aggregate Coverage Data
+      run: |
+        # Run coverage combine
+        coverage combine
+    - name: Coverage report
+      run: |
+        # Run coverage report
+        coverage report -m
 

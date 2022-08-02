@@ -17,8 +17,8 @@ from digikamdb import DigikamDataIntegrityError
 log = logging.getLogger(__name__)
 
 
-class NewData:
-    """Mixin to test adding new objects"""
+class NewDataRoot:
+    """Mixin to test adding new album roots"""
     
     def test00_defines(self):
         basedir = mkdtemp()
@@ -101,6 +101,10 @@ class NewData:
                 self.assertEqual(root.specificPath, rootdata['specificPath'])
                 self.assertEqual(root.abspath, rootdata['path'])
                 self.assertTrue(os.path.isdir(root.abspath))
+
+
+class NewData(NewDataRoot):
+    """Mixin to test adding new objects"""
     
     def _add_album(
         self,

@@ -193,7 +193,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                 if self not in p:
                     raise DigikamDataIntegrityError(
                         'Tag table inconsistent: Tag id=%d is not in descendents ' +
-                        'of ancestor %d' % (self.id, p.id)
+                        'of ancestor %d' % (self.id, p.id)  # noqa: F507
                     )
                 if p.id == self.id:
                     raise DigikamDataIntegrityError(
