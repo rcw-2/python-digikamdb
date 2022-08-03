@@ -146,7 +146,7 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
                     if self.id in override['paths']:
                         log.debug('Overriding path')
                         return override['paths'][self.id]
-                    path = self.identifier + self.specificPath
+                    path = (self.identifier + self.specificPath).rstrip('/')
                     if path in override['paths']:
                         log.debug('Overriding path')
                         return override['paths'][path]
@@ -178,6 +178,8 @@ class AlbumRoots(DigikamTable):
     Parameters:
         digikam:    :class:`~digikamdb.conn.Digikam` object
         override:   Dict containing override information
+                    (:class:`~digikamdb.conn.Digikam` passes its parameter
+                    ``root_override`` here)
     
     See also:
         * Class :class:`~_sqla.AlbumRoot`
@@ -248,6 +250,10 @@ class AlbumRoots(DigikamTable):
             use_uuid:   Use UUID of filesystem as identifier.
         Returns:
             The newly created AlbumRoot object.
+        
+        .. warning::
+            The :class:`~digikamdb.conn.Digikam` parameter ``root_override``
+            is ignored by this method.
         """
         if check_dir:
             if not os.path.isdir(path):

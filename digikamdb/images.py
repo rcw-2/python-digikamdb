@@ -263,9 +263,8 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
             if pos is None:
                 if self._position:
                     self._session.execute(
-                        delete(self.ImagePosition)
+                        delete(self._container.ImagePosition)
                         .filter_by(imageid = self.id))
-#                    self._session.commit()
                 return
             
             lat = pos[0]
