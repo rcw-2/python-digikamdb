@@ -160,7 +160,9 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                 return self.name
             
             if self.is_mysql:
-                return '/'.join([t.name for t in self._ancestors if t.id > 0])
+                return '/'.join(
+                    [t.name for t in self._ancestors if t.id > 0]
+                ) + '/' + self.name
             
             if self.parent:
                 return self.parent.hierarchicalname() + '/' + self.name

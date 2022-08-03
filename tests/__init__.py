@@ -1,6 +1,9 @@
 
 import logging
 import os
+from unittest import TestCase, skip     # noqa: F401
+
+from digikamdb import Digikam
 
 # Run the digikamrc tests first
 from .digikamrc import (                                    # noqa: F401
@@ -39,4 +42,11 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 os.environ['SQLALCHEMY_WARN_20'] = 'true'
+
+
+class aBasicTests(TestCase):
+    
+    def test_10_constructor(self):
+        with self.assertRaises(TypeError):
+            self.dk = Digikam(1)
 

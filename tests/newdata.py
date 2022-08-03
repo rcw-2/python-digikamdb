@@ -418,8 +418,31 @@ class NewData(NewDataRoot):
             tag2,
             self.dk.images[imgid]
         )
+        tag5 = self._add_tag(                               # noqa: F841
+            new_data['tags'],
+            'New Tag 5',
+            0,
+        )
     
-    def test41_change_tags(self):
+    def test41_tag_hierarchical_names(self):
+        self.assertEqual(
+            self.dk.tags['New Tag 1'].hierarchicalname(),
+            'New Tag 1'
+        )
+        self.assertEqual(
+            self.dk.tags['New Tag 2'].hierarchicalname(),
+            'New Tag 1/New Tag 2'
+        )
+        self.assertEqual(
+            self.dk.tags['New Tag 3'].hierarchicalname(),
+            'New Tag 1/New Tag 2/New Tag 3'
+        )
+        self.assertEqual(
+            self.dk.tags['New Tag 4'].hierarchicalname(),
+            'New Tag 1/New Tag 2/New Tag 4'
+        )
+    
+    def test42_change_tags(self):
         new_data = self.__class__.new_data
         tagdata = new_data['tags'][0]
         tag = self.dk.tags[tagdata['id']]
@@ -428,7 +451,7 @@ class NewData(NewDataRoot):
         self.dk.session.commit()
         tagdata['name'] += 'a'
     
-    def test42_tag_properties(self):
+    def test43_tag_properties(self):
         new_data = self.__class__.new_data
         tagdata = new_data['tags'][0]
         tag = self.dk.tags[tagdata['id']]
@@ -438,7 +461,7 @@ class NewData(NewDataRoot):
             'tagKeyboardShortcut':  'Alt+Shift+S'
         }
     
-    def test43_change_tag_properties(self):
+    def test44_change_tag_properties(self):
         new_data = self.__class__.new_data
         tagdata = new_data['tags'][0]
         tag = self.dk.tags[tagdata['id']]
@@ -448,6 +471,22 @@ class NewData(NewDataRoot):
         self.dk.session.commit()
         tagdata['properties']['tagKeyboardShortcut'] = 'Alt+Shift+A'
     
+    def test45_remove_tag(self):
+        new_data = self.__class__.new_data
+        tagdata = new_data['tags'][4]
+        name = tagdata['name']
+        tag = self.dk.tags[tagdata['id']]
+        self.dk.tags.remove(tag)
+        self.dk.session.commit()
+    
+    def test46_verify_remove_tag(self):
+        new_data = self.__class__.new_data
+        tagdata = new_data['tags'][4]
+        name = tagdata['name']
+        with self.assertRaises(Exception):
+            _ = self.dk.tags[name]
+        del new_data['tags'][4]
+        
     def test48_verify_tags(self):
         with self.subTest(msg = 'data integrity check'):
             try:

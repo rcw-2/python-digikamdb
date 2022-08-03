@@ -6,7 +6,9 @@ from tempfile import mkdtemp
 
 from sqlalchemy.exc import NoResultFound    # noqa: F401
 
-from digikamdb import Digikam, DigikamDataIntegrityError    # noqa: F401
+from digikamdb import (
+    Digikam, DigikamConfigError, DigikamDataIntegrityError    # noqa: F401
+)
 
 from .base import DigikamTestBase
 
@@ -36,6 +38,10 @@ class DigikamRCTest(DigikamTestBase):
     def tearDown(self):
         rmtree(os.environ['HOME'])
         super().tearDown()
+    
+    def test_rc_nofile(self):
+        with self.assertRaises(DigikamConfigError):
+            self.dk = Digikam('digikamrc')
     
     def test_rc_sqlite(self):
         unpack_archive(
