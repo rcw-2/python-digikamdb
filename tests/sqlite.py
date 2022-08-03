@@ -133,6 +133,6 @@ class SQLite_05_RootOverride_02(SQLiteTestBase, NewDataRoot):
 class SQLite_05_RootOverride_03(SQLiteTestBase, NewDataRootOverride):
     
     # Use empty database without root_override
-    test_db_dump = 'empty.tar.xz'
+    test_db = 'empty.tar.xz'
     root_override = None
 
