@@ -202,6 +202,7 @@ class AlbumRoots(DigikamTable):
         if hasattr(cls, '_mountpoints'):
             return cls._mountpoints
         
+        log.debug('Reading mountpoints')
         mountpoints = {}
         with open('/proc/mounts', 'r') as mt:
             for line in mt.readlines():
@@ -220,6 +221,7 @@ class AlbumRoots(DigikamTable):
         if hasattr(cls, '_uuids'):
             return cls._uuids
         
+        log.debug('Reading disk UUIDs')
         uuids = {}
         for f in os.scandir('/dev/disk/by-uuid'):
             if f.is_symlink():
@@ -255,11 +257,14 @@ class AlbumRoots(DigikamTable):
             The :class:`~digikamdb.conn.Digikam` parameter ``root_override``
             is ignored by this method.
         """
+        log.debug('Adding album root for dir %s (%s)', path, label)
+        
         if check_dir:
             if not os.path.isdir(path):
                 raise DigikamFileError('Directory %s not found' % path)
             
             for r in self:
+                log.debug('Checking overlap with root %d (%s)', r.id, r.label)
                 if os.path.commonpath([path, r.abspath]) == r.abspath:
                     raise DigikamFileError(
                         '%s is a subdir of %s (albumroot %s)' % (
@@ -280,6 +285,7 @@ class AlbumRoots(DigikamTable):
             mpt = os.path.realpath(path)
             while True:
                 while not os.path.ismount(mpt):
+                    log.debug('%s is not a mountpoint', mpt)
                     mpt = os.path.dirname(mpt)
                 if mpt in mountpoints:
                     dev = mountpoints[mpt]
@@ -294,6 +300,7 @@ class AlbumRoots(DigikamTable):
             ident = 'volumeid:?path=' + path
             spath = '/'
         
+        log.debug('Creating mountpoint with ident=%s and spath=%s', ident, spath)
         return self._insert(
             label = label,
             status = 0,
