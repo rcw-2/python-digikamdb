@@ -41,22 +41,23 @@ class NewDataRoot:
         use_uuid: bool = True,
     ) -> 'AlbumRoot':                                       # noqa: F821
         """Add albumroot"""
-        new_root = self.dk.albumRoots.add(
-            basedir,
-            label,
-            check_dir = check_dir,
-            use_uuid = use_uuid,
-        )
-        self.dk.session.commit()
-        data.append({
-            '_idx':         len(data),
-            'id':           new_root.id,
-            'label':        label,
-            'identifier':   new_root.identifier,
-            'specificPath': new_root.specificPath,
-            'path':         basedir,
-        })
-        return new_root
+        with self.subTest(albumroot = label):
+            new_root = self.dk.albumRoots.add(
+                basedir,
+                label,
+                check_dir = check_dir,
+                use_uuid = use_uuid,
+            )
+            self.dk.session.commit()
+            data.append({
+                '_idx':         len(data),
+                'id':           new_root.id,
+                'label':        label,
+                'identifier':   new_root.identifier,
+                'specificPath': new_root.specificPath,
+                'path':         basedir,
+            })
+            return new_root
             
     def test10_add_roots(self):
         new_data = self.__class__.new_data
