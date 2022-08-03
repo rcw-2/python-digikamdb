@@ -108,7 +108,7 @@ jobs:
     - name: Test with Python unittest
       run: |
         # Run Python test
-        coverage run --parallel-mode -m unittest -v
+        coverage run -m unittest -v
     - name: Save Coverage Data
       uses: actions/upload-artifact@v3
       with:
