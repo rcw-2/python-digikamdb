@@ -10,9 +10,10 @@ __pycache__
 *.kate-swp
 DEADJOE
 
-# Logs
+# Logs and status files
 *.log
 .coverage
+.coverage.*
 
 # Generated package and documentation:
 digikamdb/_version.py
