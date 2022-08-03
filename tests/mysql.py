@@ -12,7 +12,7 @@ from .base import DigikamTestBase
 from .sanity import SanityCheck
 from .data import TestData
 from .comments import CheckComments
-from .newdata import NewDataRoot, NewData
+from .newdata import NewDataRoot, NewDataRootOverride, NewData
 
 
 log = logging.getLogger(__name__)
@@ -43,6 +43,7 @@ class MySQLTestBase(DigikamTestBase):
                 'id': 1,
                 'name': '20210806_165143.jpg',
                 'title': 'The distillery',
+                'position': None,
             },
             {
                 'id':       5,
@@ -169,15 +170,21 @@ class MySQL_04_NewData(MySQLTestBase, NewData):
 
 class MySQL_05_RootOverride_01(MySQLTestBase, NewDataRoot):
     
-    # Use empty database without root_override
+    # Use empty database with empty root_override
     test_db_dump = 'empty.sql.xz'
     root_override = {}
 
 
 class MySQL_05_RootOverride_02(MySQLTestBase, NewDataRoot):
     
-    # Use empty database without root_override
+    # Use empty database with root_override containing empty sub-dicts
     test_db_dump = 'empty.sql.xz'
     root_override = { 'ids': {}, 'paths': {} }
 
+
+class MySQL_05_RootOverride_03(MySQLTestBase, NewDataRootOverride):
+    
+    # Use empty database without root_override
+    test_db_dump = 'empty.sql.xz'
+    root_override = None
 

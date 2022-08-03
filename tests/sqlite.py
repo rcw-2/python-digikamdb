@@ -11,7 +11,7 @@ from .base import DigikamTestBase
 from .sanity import SanityCheck
 from .data import TestData
 from .comments import CheckComments
-from .newdata import NewDataRoot, NewData
+from .newdata import NewDataRoot, NewDataRootOverride, NewData
 
 
 log = logging.getLogger(__name__)
@@ -40,6 +40,7 @@ class SQLiteTestBase(DigikamTestBase):
                 'id': 1,
                 'name': '20210806_165143.jpg',
                 'title': 'The Distillery',
+                'position': None,
             }
         ],
         'tags': [{'id': 22, 'pid': 0, 'name': 'France'}]
@@ -127,3 +128,11 @@ class SQLite_05_RootOverride_02(SQLiteTestBase, NewDataRoot):
     # Use empty database without root_override
     test_db = 'empty.tar.xz'
     root_override = { 'ids': {}, 'paths': {} }
+
+
+class SQLite_05_RootOverride_03(SQLiteTestBase, NewDataRootOverride):
+    
+    # Use empty database without root_override
+    test_db_dump = 'empty.tar.xz'
+    root_override = None
+

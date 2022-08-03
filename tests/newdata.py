@@ -11,7 +11,7 @@ from typing import Any, List, Optional
 
 from sqlalchemy.exc import NoResultFound
 
-from digikamdb import DigikamDataIntegrityError
+from digikamdb import DigikamDataIntegrityError, DigikamFileError
 
 
 log = logging.getLogger(__name__)
@@ -71,21 +71,10 @@ class NewDataRoot:
             'Album Root 1',
             use_uuid = False
         )
-    
-    def test11_change_roots(self):
-        new_data = self.__class__.new_data
-        rootdata = new_data['albumroots'][0]
-        root = self.dk.albumRoots[rootdata['id']]
-        self.assertEqual(root.id, rootdata['id'])
-        self.assertEqual(root.identifier, rootdata['identifier'])
-        self.assertEqual(root.specificPath, rootdata['specificPath'])
-        self.assertEqual(root.abspath, rootdata['path'])
-        root.identifier = 'volumeid:?path=' + rootdata['path']
-        root.specificPath = '/'
-        self.dk.session.commit()
-        rootdata.update(
-            identifier = 'volumeid:?path=' + rootdata['path'],
-            specificPath = '/',
+        self._add_root(
+            new_data['albumroots'],
+            mkdtemp(),
+            'Album Root 2'
         )
     
     def test15_verify_roots(self):
@@ -103,8 +92,49 @@ class NewDataRoot:
                 self.assertTrue(os.path.isdir(root.abspath))
 
 
+class NewDataRootOverride(NewDataRoot):
+    """Mixin for path override"""
+    
+    def test11_override(self):
+        new_data = self.__class__.new_data
+        rootdata = new_data['albumroots'][2]
+        self.__class__.root_override = {
+            'paths': {
+                (rootdata['identifier'] + rootdata['specificPath']).rstrip('/'):
+                    rootdata['path']
+            }
+        }
+
+
 class NewData(NewDataRoot):
     """Mixin to test adding new objects"""
+    
+    def test11_change_roots(self):
+        new_data = self.__class__.new_data
+        rootdata = new_data['albumroots'][0]
+        root = self.dk.albumRoots[rootdata['id']]
+        self.assertEqual(root.id, rootdata['id'])
+        self.assertEqual(root.label, rootdata['label'])
+        self.assertEqual(root.identifier, rootdata['identifier'])
+        self.assertEqual(root.specificPath, rootdata['specificPath'])
+        self.assertEqual(root.abspath, rootdata['path'])
+        root.identifier = 'volumeid:?path=' + rootdata['path']
+        root.specificPath = '/'
+        self.dk.session.commit()
+        rootdata.update(
+            identifier = 'volumeid:?path=' + rootdata['path'],
+            specificPath = '/',
+        )
+    
+    def test12_nested_roots(self):
+        new_data = self.__class__.new_data
+        path = new_data['albumroots'][0]['path']
+        with self.assertRaises(DigikamFileError):
+            _ = self.dk.albumRoots.add(path)
+        with self.assertRaises(DigikamFileError):
+            _ = self.dk.albumRoots.add(os.path.join(path, 'test'))
+        with self.assertRaises(DigikamFileError):
+            _ = self.dk.albumRoots.add(os.path.dirname(path))
     
     def _add_album(
         self,
@@ -152,7 +182,7 @@ class NewData(NewDataRoot):
         self._add_album(new_data['albums'], root1.id, '/New_Album', today)
         self._add_album(new_data['albums'], root2.id, '/', today)
     
-    def test25_verify_albums(self):
+    def test28_verify_albums(self):
         new_data = self.__class__.new_data
         for albumdata in new_data['albums']:
             with self.subTest(album = albumdata['_idx']):
@@ -197,8 +227,27 @@ class NewData(NewDataRoot):
                 'modificationDate': modificationDate,
                 'fileSize':         fileSize,
                 'uniqueHash':       uniqueHash,
+                'position':         None,
             })
         return new_image
+    
+    def _check_image(self, imgdata):
+        img = self.dk.images[imgdata['id']]
+        self.assertEqual(img.id, imgdata['id'])
+        self.assertEqual(img.name, imgdata['name'])
+        self.assertEqual(img.album, imgdata['album'])
+        self.assertEqual(img.status, imgdata['status'])
+        self.assertEqual(img.category, imgdata['category'])
+        self.assertEqual(img.modificationDate, imgdata['modificationDate'])
+        self.assertEqual(img.fileSize, imgdata['fileSize'])
+        self.assertEqual(img.uniqueHash, imgdata['uniqueHash'])
+        if 'position' in imgdata:
+            self.assertEqual(img.position, imgdata['position'])
+        if 'copyright' in imgdata:
+            for k, v in imgdata['copyright'].items():
+                self.assertEqual(img.copyright[k], v)
+            for k, v in img.copyright.items():
+                self.assertEqual(imgdata['copyright'][k], v)
     
     def test30_add_images(self):
         new_data = self.__class__.new_data
@@ -214,32 +263,67 @@ class NewData(NewDataRoot):
             638843,
             '54b4f8875a9885643582a31edf933822'
         )
-        img2 = self.dk.images.find(path)[0]
-        self.assertEqual(img1.id, img2.id)
-        self.assertIs(img1, img2)
+        img1a = self.dk.images.find(path)[0]
+        self.assertEqual(img1.id, img1a.id)
+        self.assertIs(img1, img1a)
+        _ = self._add_image(
+            new_data['images'],
+            album.id,
+            'new_image2.jpg',
+            now,
+            618645,
+            '64d4a2295ab3f19e02dd7921ab642561'
+        )
     
+    def _set_image_position(self, imgdata, pos, datapos=None):
+        self._check_image(imgdata)
+        img = self.dk.images[imgdata['id']]
+        img.position = pos
+        self.dk.session.commit()
+        if datapos is None:
+            datapos = pos
+        if isinstance(pos, tuple) and len(pos) == 2:
+            datapos = (datapos[0], datapos[1], None)
+        imgdata['position'] = datapos
+        
     def test31_image_position(self):
         new_data = self.__class__.new_data
-        imgdata = new_data['images'][0]
-        img = self.dk.images[imgdata['id']]
-        img.position = (50.10961004586001, 8.702938349511566)
-        self.dk.session.commit()
-        imgdata['position'] = (50.10961004586001, 8.702938349511566, None)
+        with self.subTest(image = 0):
+            imgdata = new_data['images'][0]
+            self._set_image_position(
+                imgdata,
+                (50.10961004586001, 8.702938349511566)
+            )
+        with self.subTest(image = 1):
+            imgdata = new_data['images'][1]
+            self._set_image_position(
+                imgdata,
+                (50.10961004586001, 8.702938349511566, 612)
+            )
     
     def test32_change_image_position(self):
         new_data = self.__class__.new_data
         imgdata = new_data['images'][0]
-        img = self.dk.images[imgdata['id']]
         self.assertEqual(
             imgdata['position'],
             (50.10961004586001, 8.702938349511566, None)
         )
-        self.assertEqual(img.position, imgdata['position'])
-        img.position = (50.11088572429458, 8.668430363718421)
-        self.dk.session.commit()
-        imgdata['position'] = (50.11088572429458, 8.668430363718421, None)
+        self._set_image_position(
+            imgdata,
+            ("50.11088572429458N", "8.668430363718421E", 721),
+            (50.11088572429458, 8.668430363718421, 721)
+        )
     
-    def test33_image_copyright(self):
+    def test33_remove_image_position(self):
+        new_data = self.__class__.new_data
+        imgdata = new_data['images'][0]
+        self.assertEqual(
+            imgdata['position'],
+            (50.11088572429458, 8.668430363718421, 721)
+        )
+        self._set_image_position(imgdata, None)
+    
+    def test34_image_copyright(self):
         new_data = self.__class__.new_data
         imgdata = new_data['images'][0]
         img = self.dk.images[imgdata['id']]
@@ -252,40 +336,24 @@ class NewData(NewDataRoot):
             'creator':          'RCW',
             'copyrightNotice':  ('(c) 2022 RCW', 'x-default'),
         }
-        pass
     
-    def test35_verify_images(self):
+    def test35_find_images(self):
+        new_data = self.__class__.new_data
+        album = self.dk.albums[new_data['albums'][1]['id']]
+        images = self.dk.images.find(album.abspath)
+        self.assertEqual(len(images), 2)
+        for i in images:
+            self.assertIsInstance(i, self.dk.images.Class)
+        ids = [i.id for i in images]
+        for idx in [0, 1]:
+            id_ = new_data['images'][idx]['id']
+            self.assertIn(id_, ids)
+    
+    def test38_verify_images(self):
         new_data = self.__class__.new_data
         for imgdata in new_data['images']:
             with self.subTest(image = imgdata['_idx']):
-                img = self.dk.images[imgdata['id']]
-                self.assertEqual(img.id, imgdata['id'])
-                self.assertEqual(img.name, imgdata['name'])
-                self.assertEqual(img.album, imgdata['album'])
-                self.assertEqual(img.status, imgdata['status'])
-                self.assertEqual(img.category, imgdata['category'])
-                self.assertEqual(img.modificationDate, imgdata['modificationDate'])
-                self.assertEqual(img.fileSize, imgdata['fileSize'])
-                self.assertEqual(img.uniqueHash, imgdata['uniqueHash'])
-    
-    def test36_verify_image_position(self):
-        new_data = self.__class__.new_data
-        for imgdata in new_data['images']:
-            if 'position' in imgdata:
-                with self.subTest(image = imgdata['_idx']):
-                    img = self.dk.images[imgdata['id']]
-                    self.assertEqual(img.position, imgdata['position'])
-    
-    def test38_verify_image_copyright(self):
-        new_data = self.__class__.new_data
-        for imgdata in new_data['images']:
-            if 'copyright' in imgdata:
-                with self.subTest(image = imgdata['_idx']):
-                    img = self.dk.images[imgdata['id']]
-                    for k, v in imgdata['copyright'].items():
-                        self.assertEqual(img.copyright[k], v)
-                    for k, v in img.copyright.items():
-                        self.assertEqual(imgdata['copyright'][k], v)
+                self._check_image(imgdata)
     
     def _add_tag(
         self,
@@ -379,7 +447,7 @@ class NewData(NewDataRoot):
         self.dk.session.commit()
         tagdata['properties']['tagKeyboardShortcut'] = 'Alt+Shift+A'
     
-    def test45_verify_tags(self):
+    def test48_verify_tags(self):
         with self.subTest(msg = 'data integrity check'):
             try:
                 self.dk.tags.check()
@@ -395,7 +463,7 @@ class NewData(NewDataRoot):
                 self.assertEqual(tag.icon, tagdata['icon'])
                 self.assertEqual(tag.iconkde, tagdata['iconkde'])
     
-    def test46_verify_tag_properties(self):
+    def test49_verify_tag_properties(self):
         new_data = self.__class__.new_data
         for tagdata in new_data['tags']:
             if 'properties' in tagdata:
@@ -422,7 +490,7 @@ class NewData(NewDataRoot):
         self.dk.session.commit()
         setdata['value'] += ';-xcf'
     
-    def test55_verify_settings(self):
+    def test58_verify_settings(self):
         new_data = self.__class__.new_data
         for setdata in new_data['settings']:
             self.assertEqual(self.dk.settings[setdata['keyword']], setdata['value'])
