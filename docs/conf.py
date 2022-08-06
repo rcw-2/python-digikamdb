@@ -55,8 +55,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.ifconfig',
     'sphinx.ext.extlinks',
-#    'apidoc_run',
-#    'apidoc_clean',
+    'sphinx.ext.intersphinx',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -88,9 +87,13 @@ pygments_style = None
 
 # Insert version in .rst files
 rst_epilog = """
+.. |Project| replace:: %s
+.. |Description| replace:: %s
+.. |Author| replace:: %s
 .. |Version| replace:: %s
 .. |Release| replace:: %s
-""" % (version, release)
+.. |Home| replace:: %s
+""" % (project, description, author, version, release, meta['urls']['homepage'])
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -246,6 +249,12 @@ extlinks = {
     'source':   (meta['urls']['homepage'] + '/%s', 'Digikam-DB on Girhub: %s'),
 }
 
+# -- Options for InterSphinx extension ---------------------------------------
+
+intersphinx_mapping = {
+    'sqla': ('https://docs.sqlalchemy.org/en/14', None),
+}
+
 # -- Local overrides ---------------------------------------------------------
 
 if (os.path.isfile('/etc/.0acb81c396') or
@@ -272,11 +281,9 @@ if (os.path.isfile('/etc/.0acb81c396') or
     todo_link_only = True
     
     # InterSphinx
-    extensions.append('sphinx.ext.intersphinx')
-    intersphinx_mapping = {
+    intersphinx_mapping.update({
         'python':   ('https://docs.python.org/3', None),
-        'sqla': ('https://docs.sqlalchemy.org/en/14', None),
-    }
+    })
 else:
     extensions.append('sphinx.ext.todo')
     todo_include_todos = False

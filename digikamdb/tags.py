@@ -265,8 +265,8 @@ class Tags(DigikamTable):
         mytag2 = dk.tags[42]                # access by id
         newtag = dk.tags.add('New Tag', 0)  # creates new tag with name 'New Tag'
     
-    Access via ``[]`` returns ``None`` if the name or id cannot be found.
-    If there are multiple matches, an exception is raised.
+    Access via ``[]`` raises an exception if the name or id cannot be found,
+    or if there are multiple matches.
     
     Parameters:
         digikam:     Digikam object for access to database and other classes.

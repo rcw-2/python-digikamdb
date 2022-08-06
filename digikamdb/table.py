@@ -83,7 +83,7 @@ class DigikamTable:
             kwargs:         Keyword arguments are used as arguments for
                             :meth:`~sqlalchemy.orm.Query.filter_by`.
         Returns:
-            Iterable query result.
+            Iterable query.
         """
         log.debug(
             '%s: Selecting %s objects with %s',
@@ -117,45 +117,24 @@ class DigikamTable:
         self._session.add(new)
         return new
     
-    def _delete(
-        self,
-        where_clause: Optional[str] = None,
-        **kwargs
-    ) -> None:
+    def _delete(self, **kwargs) -> None:
         """
         Deletes rows from the table.
         
         Args:
-            where_clause:   Contains a SQL WHERE clause, processed by
-                            :func:`~sqlalchemy.sql.expression.text` and
-                            :meth:`~sqlalchemy.orm.Query.where`.
-            kwargs:         Other keyword arguments are used as arguments for
+            kwargs:         Keyword arguments are used as arguments for
                             :meth:`~sqlalchemy.orm.Query.filter_by`.
-        
-        .. todo:: Do we need the where clause?
         """
         log.debug(
-            '%s: Deleting %s objects with %s and %s',
+            '%s: Deleting %s objects with  %s',
             self.__class__.__name__,
             self.Class.__name__,
-            where_clause,
             kwargs
         )
-        if where_clause:
-            if kwargs:
-                self._session.execute(
-                    delete(self.Class)
-                    .where(text(where_clause))
-                    .filter_by(**kwargs))
-            else:
-                self._session.execute(
-                    delete(self.Class)
-                    .where(text(where_clause)))
-        else:
-            if kwargs:
-                self._session.execute(
-                    delete(self.Class)
-                    .filter_by(**kwargs))
-            else:
-                raise ValueError('Objects to delete must be specified')
+        if not kwargs:
+            raise ValueError('Objects to delete must be specified')
+
+        self._session.execute(
+            delete(self.Class)
+            .filter_by(**kwargs))
 

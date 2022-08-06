@@ -1,7 +1,5 @@
-Digikam-DB |Version| Documentation
+|Project| |Version| Documentation
 ===================================
-
-:Version: |Release|
 
 Contents
 ------------------------
@@ -15,20 +13,12 @@ Contents
     api_images
     api_albums
     api_tags
+    meta
 
-    
+
 Indices and tables
 -------------------
 
 * :ref:`genindex`
 * :ref:`search`
-
-.. ifconfig::   include_private_content
-    
-    TODO
-    ------
-    
-    .. todo:: Fix header level
-    
-    .. todolist::
 
