@@ -553,23 +553,27 @@ class NewData(NewDataRoot):
     
     def test90_remove_new_data(self):
         new_data = self.__class__.new_data
-        for tag in new_data['tags']:
+        for tag in reversed(new_data['tags']):
             with self.subTest(tag = tag['_idx']):
                 self.dk.tags.remove(tag['id'])
+                self.dk.session.commit()
         for img in new_data['images']:
             with self.subTest(image = img['_idx']):
                 self.dk.images._delete(id = img['id'])
+                self.dk.session.commit()
         for alb in new_data['albums']:
             with self.subTest(album = alb['_idx']):
                 self.dk.albums._delete(id = alb['id'])
+                self.dk.session.commit()
         for ar in new_data['albumroots']:
             with self.subTest(albumroot = ar['_idx']):
                 rmtree(self.dk.albumRoots[ar['id']].abspath)
                 self.dk.albumRoots._delete(id = ar['id'])
+                self.dk.session.commit()
         for st in new_data['settings']:
             with self.subTest(setting = st['keyword']):
                 self.dk.settings._delete(keyword = st['keyword'])
-        self.dk.session.commit()
+                self.dk.session.commit()
     
     def test95_verify_removal(self):
         new_data = self.__class__.new_data

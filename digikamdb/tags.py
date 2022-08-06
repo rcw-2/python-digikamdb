@@ -325,29 +325,34 @@ class Tags(DigikamTable):
             return
 
         if instance.pid < 0:
-            raise ValueError('Parent must be specified')
+            raise ValueError('Parent must be >= 0')
         
         log.debug('Reordering nested sets for tags before insert')
         tags = mapper.persist_selectable
-        right_most_sibling = connection.scalar(
-            select(tags.c.rgt).where(
-                tags.c.id == instance.pid))
+        if instance.pid == 0:
+            new_position = connection.scalar(
+                select(tags.c.lft).where(
+                    tags.c.name == '_Digikam_Internal_Tags_'))
+        else:
+            new_position = connection.scalar(
+                select(tags.c.rgt).where(
+                    tags.c.id == instance.pid))
 
         connection.execute(
-            tags.update(tags.c.rgt >= right_most_sibling).values(
+            tags.update(tags.c.rgt >= new_position).values(
                 lft = case(
                     [(
-                        tags.c.lft > right_most_sibling,
+                        tags.c.lft >= new_position,
                         tags.c.lft + 2, )],
                     else_ = tags.c.lft),
                 rgt = case(
                     [(
-                        tags.c.rgt >= right_most_sibling,
+                        tags.c.rgt >= new_position,
                         tags.c.rgt + 2, )],
                     else_ = tags.c.rgt)))
         
-        instance.lft = right_most_sibling
-        instance.rgt = right_most_sibling + 1
+        instance.lft = new_position
+        instance.rgt = new_position + 1
 
     # before_update() would be needed to support moving of nodes
     def _before_update(
@@ -494,12 +499,14 @@ class Tags(DigikamTable):
             tag:    the tag to delete. Can be a :class:`Tag` object or an id.
         """
         
-        if isinstance(tag, self.Class):
-            tag = tag.id
-        elif not isinstance(tag, int):
+        if isinstance(tag, int):
+            tag = self[tag]
+        elif not isinstance(tag, self.Class):
             raise TypeError('Tag must be int or ' + self.Class.__name__)
         
-        self._delete(id = tag)
+        for p in tag.properties._select_self().all():
+            self._session.delete(p)
+        self._session.delete(tag)
     
     def check(self):
         """

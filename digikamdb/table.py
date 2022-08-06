@@ -157,6 +157,5 @@ class DigikamTable:
                     delete(self.Class)
                     .filter_by(**kwargs))
             else:
-                self._session.execute(
-                    delete(self.Class))
+                raise ValueError('Objects to delete must be specified')
 
