@@ -423,6 +423,19 @@ class NewData(NewDataRoot):
             'New Tag 5',
             0,
         )
+        with self.assertRaises(TypeError):
+            _ = self._add_tag(
+                new_data['tags'],
+                'New Tag XXX',
+                'New Tag 3',
+            )
+        with self.assertRaises(TypeError):
+            _ = self._add_tag(
+                new_data['tags'],
+                'New Tag YYY',
+                0,
+                {}
+            )
     
     def test41_tag_hierarchical_names(self):
         self.assertEqual(
@@ -476,8 +489,11 @@ class NewData(NewDataRoot):
         tagdata = new_data['tags'][4]
         name = tagdata['name']
         tag = self.dk.tags[tagdata['id']]
+        self.assertEqual(tag.name, name)
         self.dk.tags.remove(tag)
         self.dk.session.commit()
+        with self.assertRaises(TypeError):
+            self.dk.tags.remove('New Tag XXX')
     
     def test46_verify_remove_tag(self):
         new_data = self.__class__.new_data

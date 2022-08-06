@@ -69,6 +69,9 @@ class SanityCheck:
                         hname
                     )
                 self.assertIn(tag, self.dk.tags.find(tag.name))
+                self.assertRegex(str(tag), '<Digikam Tag (.*)>')
+                with self.assertRaises(TypeError):
+                    'tag name' in tag
     
     def test41_tags_check(self):
         try:

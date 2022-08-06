@@ -217,11 +217,14 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                         self.id, self.lft, self.rgt
                     )
                 )
-            for ch in self.children:
+            pos = self.lft
+            for ch in self.children.order_by(self.__class__.lft):
                 if not (self.lft < ch.lft and self.rgt > ch.rgt):
                     raise DigikamDataIntegrityError(
                         'Tag table inconsistent: parent %d (%d,%d), child %d (%d,%d)' % (
-                            self.id, self.lft, self.rgt, ch.id, ch.lft, ch.rgt))
+                            self.id, self.lft, self.rgt, ch.id, ch.lft, ch.rgt
+                        )
+                    )
                 for ch2 in self.children:
                     if ch == ch2:
                         continue
@@ -230,7 +233,16 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                     raise DigikamDataIntegrityError(
                         'Tag table has ' +
                         'overlapping siblings %d (%d,%d), %d (%d,%d)' % (
-                            ch.id, ch.lft, ch.rgt, ch2.id, ch2.lft, ch2.rgt))
+                            ch.id, ch.lft, ch.rgt, ch2.id, ch2.lft, ch2.rgt
+                        )
+                    )
+                if ch.lft > pos + 1:
+                    raise DigikamDataIntegrityError(
+                        'Tag table inconsistent: gap before %d (%d), last pos %d' % (
+                            ch.id, ch.lft, pos
+                        )
+                    )
+                pos = ch.rgt
                 ch._check_nested_sets()
     
     return Tag
@@ -462,7 +474,7 @@ class Tags(DigikamTable):
             raise TypeError('Parent must be int or Tag')
         
         options = {}
-        if icon:
+        if icon is not None:
             if isinstance(icon, self.digikam.images.Class):
                 options['icon'] = icon.id
             elif isinstance(icon, int):
