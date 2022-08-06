@@ -343,13 +343,13 @@ class Tags(DigikamTable):
                 lft = case(
                     [(
                         tags.c.lft >= new_position,
-                        tags.c.lft + 2, )],
-                    else_ = tags.c.lft),
-                rgt = case(
-                    [(
-                        tags.c.rgt >= new_position,
-                        tags.c.rgt + 2, )],
-                    else_ = tags.c.rgt)))
+                        tags.c.lft + 2,
+                    )],
+                    else_ = tags.c.lft
+                ),
+                rgt = tags.c.rgt + 2,
+            )
+        )
         
         instance.lft = new_position
         instance.rgt = new_position + 1
@@ -375,7 +375,7 @@ class Tags(DigikamTable):
                 attrs.lft.history.has_changes() or
                 attrs.rgt.history.has_changes()
             ):
-                raise NotImplementedError('Moving tags is not implemlemented')
+                raise NotImplementedError('Moving tags is not implemented')
     
     # after_delete() would be needed to support removal of nodes.
     def _after_delete(
@@ -404,13 +404,13 @@ class Tags(DigikamTable):
                 lft = case(
                     [(
                         tags.c.lft > right,
-                        tags.c.lft - 2, )],
-                    else_ = tags.c.lft),
-                rgt = case(
-                    [(
-                        tags.c.rgt > right,
-                        tags.c.rgt - 2, )],
-                    else_ = tags.c.rgt)))
+                        tags.c.lft - 2,
+                    )],
+                    else_ = tags.c.lft
+                ),
+                rgt = tags.c.rgt - 2
+            )
+        )
 
     def setup(self):
         """
