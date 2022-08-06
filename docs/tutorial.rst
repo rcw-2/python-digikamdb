@@ -77,16 +77,37 @@ With the exception of ``settings``, these properties behave alike:
 
 * The properties are iterable, yielding objects of the respective type
   (:class:`~_sqla.Image`, :class:`~_sqla.Album`, :class:`_sqla.AlbumRoot`
-  or :`~_sqla.Tag`). These classes are mapped to the respective database
+  or :class:`~_sqla.Tag`). These classes are mapped to the respective database
   tabley by SQLAlchemy.
-* Individual objects can be accessed by their id via the ``[]`` operator.
+* Individual objects can be accessed by their id via the ``[]`` operator. Some
+  classes allow additional values for ``[]`` or offer methods to find objects
+  with certain values.
 * Related objects can be accessed through properties of the original object,
   e.g. an image's tags are stored in ``image.tags``. These properties are
-  lists or SQLAlchemy :class:`~sqlalchemy.orm.Query` objects.
+  lists or SQLAlchemy :class:`~sqlalchemy.orm.Query` objects. The latter are
+  iterable, but can be further refined (see below).
 * If you need access to the mapped class for an object type, it is stored in
   the ``property.Class`` of the appropriate ``Digikam`` property.
 
 See the API documentation for details.
+
+SQLAlchemy Query Objects
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+SQLAlchemy :class:`~sqlalchemy.orm.Query` objects contain a database query
+that has not yet been executed, so the query can be modified by adding method
+calls to adjust the result to require less post-processing by code. The
+available methods include:
+
+:`~sqlalchemy.orm.Query.filter`:meth::      Sets a ``WHERE`` clause
+:`~sqlalchemy.orm.Query.filter_by`:meth::   Filters by attributes
+:`~sqlalchemy.orm.Query.order_by`:meth::    Sorts the result
+:`~sqlalchemy.orm.Query.first`:meth::       Returns the first result
+:`~sqlalchemy.orm.Query.one`:meth::         Returns exactly one object
+:`~sqlalchemy.orm.Query.one_or_none`:meth:: Returns one object, or ``None``
+:`~sqlalchemy.orm.Query.all`:meth::         Returns the whole result as a list.
+
+See the :class:`~sqlalchemy.orm.Query` documentation for more information.
 
 
 Working with Images
