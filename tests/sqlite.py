@@ -5,7 +5,12 @@ from shutil import unpack_archive
 from sqlalchemy import create_engine
 from sqlalchemy.exc import NoResultFound
 
-from digikamdb import Digikam, DigikamDataIntegrityError    # noqa: F401
+from digikamdb import (    # noqa: F401
+    Digikam,
+    DigikamObjectNotFound,
+    DigikamMultipleObjectsFound,
+    DigikamDataIntegrityError
+)
 
 from .base import DigikamTestBase
 from .sanity import SanityCheck
@@ -95,9 +100,9 @@ class SQLite_01_SanityCheck(SQLiteTestBase, SanityCheck):
         self.assertFalse(self.dk.is_mysql)
     
     def test45_root_tag(self):
-        with self.assertRaises(NoResultFound):
+        with self.assertRaises(DigikamObjectNotFound):
             _ = self.dk.tags._root
-        with self.assertRaises(NoResultFound):
+        with self.assertRaises(DigikamObjectNotFound):
             _ = self.dk.tags[0]
 
 

@@ -14,19 +14,37 @@ class DigikamError(Exception):
 
 class DigikamConfigError(DigikamError):
     """
-    Error in Digikam Digikam configuration
+    Error in Digikam Digikam configuration.
     """
     pass
 
 
 class DigikamFileError(DigikamError):
     """
-    Error accessing an image file or album directory
+    Error accessing an image file or album directory.
     """
     pass
 
+class DigikamQueryError(DigikamError):
+    """
+    Error executing database query, or invalid result.
+    """
+    pass
+
+class DigikamObjectNotFound(DigikamQueryError):
+    """
+    No matching object was not found.
+    """
+    pass
+
+class DigikamMultipleObjectsFound(DigikamQueryError):
+    """
+    Multiple objects were found when at most one was expected.
+    """
 
 class DigikamDataIntegrityError(DigikamError):
     """
     The database is in an inconsistent state.
     """
+    pass
+

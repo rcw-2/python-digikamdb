@@ -147,12 +147,15 @@ see above):
     
     .. code-block:: python
         
-        tag = dk.tags[23]           # by id
-        tag = dk.tags['My Tag']     # by name
+        tag = dk.tags[23]               # by id
+        tag = dk.tags['My Tag']         # by name
+        tag = dk.tags['parent/child']   # by hierarchical name
     
     To access a tag by name this way, the name has to be unique, or an
     exception is raised. To access tags by a non-unique name, use the
     ``find`` method.
+    
+    If no matching tag is found, an Exception is raised.
 
 #. Via the :meth:`~digikamdb.tags.Tags.find` method:
     

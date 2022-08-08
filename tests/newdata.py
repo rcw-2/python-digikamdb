@@ -11,7 +11,11 @@ from typing import Any, List, Optional
 
 from sqlalchemy.exc import NoResultFound
 
-from digikamdb import DigikamDataIntegrityError, DigikamFileError
+from digikamdb import (
+    DigikamObjectNotFound,
+    DigikamDataIntegrityError,
+    DigikamFileError
+)
 
 
 log = logging.getLogger(__name__)
@@ -579,28 +583,28 @@ class NewData(NewDataRoot):
         new_data = self.__class__.new_data
         for tag in new_data['tags']:
             with self.subTest(tag = tag['_idx']):
-                with self.assertRaises(NoResultFound):
+                with self.assertRaises(DigikamObjectNotFound):
                     _ = self.dk.tags[tag['id']]
                 self.assertFalse(self.dk.tags._select(id = tag['id']).all())
         with self.subTest(msg = 'tags sanity check'):
             self.dk.tags.check()
         for img in new_data['images']:
             with self.subTest(image = img['_idx']):
-                with self.assertRaises(NoResultFound):
+                with self.assertRaises(DigikamObjectNotFound):
                     _ = self.dk.images[img['id']]
                 self.assertFalse(self.dk.images._select(id = img['id']).all())
         for alb in new_data['albums']:
             with self.subTest(album = alb['_idx']):
-                with self.assertRaises(NoResultFound):
+                with self.assertRaises(DigikamObjectNotFound):
                     _ = self.dk.albums[alb['id']]
                 self.assertFalse(self.dk.albums._select(id = alb['id']).all())
         for ar in new_data['albumroots']:
             with self.subTest(albumroot = ar['_idx']):
-                with self.assertRaises(NoResultFound):
+                with self.assertRaises(DigikamObjectNotFound):
                     _ = self.dk.albumRoots[ar['id']]
                 self.assertFalse(self.dk.albumRoots._select(id = ar['id']).all())
         for st in new_data['settings']:
             with self.subTest(setting = st['keyword']):
-                with self.assertRaises(NoResultFound):
+                with self.assertRaises(DigikamObjectNotFound):
                     _ = self.dk.settings[st['keyword']]
 

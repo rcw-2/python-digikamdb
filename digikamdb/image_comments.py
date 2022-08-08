@@ -106,7 +106,7 @@ class ImageTitles(ImageComments):
         return '<Titles for image %d>' % self._parent.id
     
     def _post_process_key(self, key: Union[str, Tuple]) -> str:
-        """Just remove"""
+        """Just remove author"""
         key = super()._post_process_key(key)
         if isinstance(key, tuple):
             return key[0]

@@ -13,6 +13,7 @@ from sqlalchemy.orm import relationship, validates
 
 from .table import DigikamTable
 from .properties import BasicProperties
+from .exceptions import DigikamQueryError
 
 
 log = logging.getLogger(__name__)
@@ -87,14 +88,19 @@ class ImageCopyright(BasicProperties):
     #: Value columns
     _value_col = ('value', 'extraValue')
     
+    #: Return ``None`` when select does not find a row
+    _raise_on_not_found = False
+    
+    #: Remove item when set to ``None``
+    _remove_on_set_none = True
+    
     def __getitem__(
         self,
-        prop: Union[str, int, Iterable, None]
+        prop: Union[str, int, Iterable]
     ) -> Union[str, List, Tuple, None]:
-        ret = []
         ret = [
             self._post_process_value(entry)
-            for entry in self._select(**self._key_col_kwargs(prop))
+            for entry in self._select_prop(prop)
         ]
         if len(ret) == 0:
             return None
@@ -102,17 +108,21 @@ class ImageCopyright(BasicProperties):
             return ret[0]
         return ret
     
-    def __setitem__(self, key: Any, value: Optional[Union[str, Sequence[Tuple]]]):
+    def __setitem__(
+        self,
+        prop: Union[str, int, Iterable],
+        value: Union[str, Tuple, Sequence[Tuple], None]
+    ):
         log.debug(
             'Setting copyright info %s of image %d (%s)',
-            key,
+            prop,
             self._parent.id,
             self._parent.name
         )
-        self.remove(key)
+        self.remove(prop)
         
         if value is None:
-            log.debug('Setting None')
+            log.debug('Setting to None - removing values')
             return
         
         log.debug('Setting values:')
@@ -120,12 +130,12 @@ class ImageCopyright(BasicProperties):
             value = [(value, None)]
         elif isinstance(value, tuple):
             value = [value]
+        
+        kwargs = self._key_kwargs(prop)
+        kwargs.update({self._parent_id_col: self._parent.id})
         for v, ev in value:
-            kwargs = self._key_col_kwargs(
-                key,
-                **{'value': v, 'extraValue': ev},
-            )
             log.debug('- Setting value %s, %s', v, ev)
+            kwargs.update(value = v, extraValue = ev)
             self._insert(**kwargs)
 
     def items(self) -> Iterable:
@@ -142,19 +152,43 @@ class ImageCopyright(BasicProperties):
                     value = value[0]
             yield prop, value
     
-    def _key_col_kwargs(self, prop: Any, **kwargs) -> Mapping[str, Any]:
-        # Strip NULL values
-        ret = {}
-        for k, v in super()._key_col_kwargs(prop).items():
+    def remove(self, prop: Union[str, int, Iterable]):
+        """
+        Removes the given property.
+        
+        Args:
+            prop:   Property to remove.
+        """
+        log.debug(
+            'Removing %s[%s] from %d',
+            self.__class__.__name__,
+            prop,
+            self._parent.id,
+        )
+        for row in self._select_prop(prop):
+            self._session.delete(row)
+    
+    def _key_kwargs(self, prop: Union[str, int, Iterable]):
+        """Prepare kwargs for key"""
+        kwargs = {}
+        for k, v in dict(zip(self._key_col, self._pre_process_key(prop))).items():
             if v is None:
                 log.debug('Discarding key %s', k)
             else:
-                ret[k] = v
-        ret.update(kwargs)
-        if not 'property' in ret:
-            raise KeyError('Search term must contain `property`')
-        return ret
-    
+                kwargs[k] = v
+        
+        if not 'property' in kwargs:
+            raise DigikamQueryError('Search term must contain `property`')
+        
+        return kwargs
+        
+    def _select_prop(
+        self,
+        prop: Union[str, int, Iterable, None]
+    ) -> '~sqlalchemy.orm.Query':                           # noqa: F821
+        """Selects a specific property."""
+        return self._select_self().filter_by(**self._key_kwargs(prop))
+
     def _post_process_value(
         self,
         obj: 'DigikamObject'                                # noqa: F821

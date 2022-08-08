@@ -6,7 +6,14 @@ import logging
 from typing import Any, Iterable, Optional, Union
 
 from sqlalchemy import delete, select, text
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
+from .exceptions import (
+    DigikamError,
+    DigikamObjectNotFound,
+    DigikamMultipleObjectsFound,
+    DigikamDataIntegrityError
+)
 
 log = logging.getLogger(__name__)
 
@@ -39,7 +46,7 @@ class DigikamTable:
         log_create: bool = True
     ):
         if log_create:
-            log.debug('Creating %s', self.__class__.__name__)
+            log.debug('Creating %s object', self.__class__.__name__)
         self._digikam = digikam
         self._session = self.digikam.session
         self.is_mysql = self.digikam.is_mysql
@@ -52,9 +59,7 @@ class DigikamTable:
     @property
     def digikam(self) -> 'Digikam':                         # noqa: F821
         """
-        Returns digikam object.
-        
-        For Prope
+        Returns the Digikam object.
         """
         return self._digikam
     
@@ -67,10 +72,19 @@ class DigikamTable:
     
     def __getitem__(self, key: Any) -> 'DigikamObject':     # noqa: F821
         kwargs = { self._id_column: key }
-        if self._raise_on_not_found:
-            return self._select(**kwargs).one()
-        else:
-            return self._select(**kwargs).one_or_none()
+        try:
+            if self._raise_on_not_found:
+                return self._select(**kwargs).one()
+            else:
+                return self._select(**kwargs).one_or_none()
+        except NoResultFound:
+            raise DigikamObjectNotFound('No %s object for %s=%s' % (
+                self.Class.__name__, self._id_column, key
+            ))
+        except MultipleResultsFound:
+            raise DigikamMultipleObjectsFound('Multiple %s objects for %s=%s' % (
+                self.Class.__name__, self._id_column, key
+            ))
     
     def _select(
         self,

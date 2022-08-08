@@ -3,6 +3,8 @@
 import logging
 from typing import Any, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
 
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+
 from .table import DigikamTable
 
 
@@ -77,17 +79,31 @@ class BasicProperties(DigikamTable):
     
     def __contains__(self, prop: Union[str, int, Sequence]) -> bool:
         """in operator"""
-        return self._select_prop(prop).one_or_none() is not None
+        try:
+            return self._select_prop(prop).one_or_none() is not None
+        except MultipleResultsFound:
+            raise DigikamMultipleObjectsFound('Multiple %s objects for %s=%s' % (
+                self.Class.__name__, self._id_column, key
+            ))
     
     def __getitem__(self, prop: Union[str, int, Sequence]) -> str:  # noqa: F821
         """[] operator"""
-        if self._raise_on_not_found:
-            ret = self._select_prop(prop).one()
-        else:
-            ret = self._select_prop(prop).one_or_none()
-            if ret is None:
-                log.debug('No record found, returning None')
-                return None
+        try:
+            if self._raise_on_not_found:
+                ret = self._select_prop(prop).one()
+            else:
+                ret = self._select_prop(prop).one_or_none()
+                if ret is None:
+                    log.debug('No record found, returning None')
+                    return None
+        except NoResultFound:
+            raise DigikamObjectNotFound('No %s object for %s=%s' % (
+                self.Class.__name__, self._id_column, key
+            ))
+        except MultipleResultsFound:
+            raise DigikamMultipleObjectsFound('Multiple %s objects for %s=%s' % (
+                self.Class.__name__, self._id_column, key
+            ))
         return self._post_process_value(ret)
     
     def __setitem__(
@@ -121,7 +137,12 @@ class BasicProperties(DigikamTable):
                 self._pre_process_value(value)
             ))
         
-        row = self._select_prop(prop).one_or_none()
+        try:
+            row = self._select_prop(prop).one_or_none()
+        except MultipleResultsFound:
+            raise DigikamMultipleObjectsFound('Multiple %s objects for %s=%s' % (
+                self.Class.__name__, self._id_column, key
+            ))
         if row:
             for k, v in values.items():
                 setattr(row, k, v)
@@ -205,32 +226,14 @@ class BasicProperties(DigikamTable):
             prop,
             self._parent.id,
         )
-        row = self._select_prop(prop).one_or_none()
+        try:
+            row = self._select_prop(prop).one_or_none()
+        except MultipleResultsFound:
+            raise DigikamMultipleObjectsFound('Multiple %s objects for %s=%s' % (
+                self.Class.__name__, self._id_column, key
+            ))
         if row is not None:
             self._session.delete(row)
-    
-    def _key_col_kwargs(
-        self,
-        prop: Any,
-        add_parent_id: bool = True,
-        **kwargs
-    ) -> Mapping[str, Any]:
-        """
-        Returns kwargs suitable for filtering queries.
-        """
-        ret = {}
-        if add_parent_id:
-            ret = {self._parent_id_col: self._parent.id}
-        
-        if isinstance(self._key_col, str):
-            ret[self._key_col] = self._pre_process_key(prop)
-        else:
-            ret.update(dict(zip(
-                self._key_col,
-                self._pre_process_key(prop)
-            )))
-        ret.update(kwargs)
-        return ret
     
     def _pre_process_key(self, key: Union[str, int, Iterable, None]) -> Tuple:
         """Preprocesses key for [] operations."""

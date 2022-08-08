@@ -10,10 +10,16 @@ from sqlalchemy import (
     case, event, inspect, select, text,
 )
 from sqlalchemy.orm import object_session, relationship
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from .table import DigikamTable
 from .properties import BasicProperties
-from .exceptions import DigikamError, DigikamDataIntegrityError
+from .exceptions import (
+    DigikamError,
+    DigikamObjectNotFound,
+    DigikamMultipleObjectsFound,
+    DigikamDataIntegrityError
+)
 
 
 log = logging.getLogger(__name__)
@@ -262,7 +268,8 @@ class Tags(DigikamTable):
         
         dk = Digikam(...)
         mytag = dk.tags['My Tag']           # access by name
-        mytag2 = dk.tags[42]                # access by id
+        mytag2 = dk.tags['parent/child']    # access by hierarchical name
+        mytag3 = dk.tags[42]                # access by id
         newtag = dk.tags.add('New Tag', 0)  # creates new tag with name 'New Tag'
     
     Access via ``[]`` raises an exception if the name or id cannot be found,
@@ -270,6 +277,10 @@ class Tags(DigikamTable):
     
     Parameters:
         digikam:     Digikam object for access to database and other classes.
+    Raises:
+        DigikamObjectNotFound:          No matching tag was found.
+        DigikamMultipleObjectsFound:    Multiple tags where found when one
+                                        was expected.
     
     See also:
         * Class :class:`~_sqla.Tag`
@@ -435,10 +446,35 @@ class Tags(DigikamTable):
     
     def __getitem__(self, key):
         if isinstance(key, str):
-            return self._select(name = key).one()
-        
+            if '/' in key:
+                name = key.split('/')[-1]
+            else:
+                name = key
+            
+            q = self._select(name = name)
+            num = q.count()
+            if num == 0:
+                raise DigikamObjectNotFound('No Tag for name=' + key)
+            
+            if num == 1:
+                tag = q.one()
+                if '/' not in key:
+                    return tag
+                if tag.hierarchicalname() == key:
+                    return tag
+                raise DigikamObjectNotFound('No Tag for name=' + key)
+            
+            for tag in q:
+                if tag.hierarchicalname() == key:
+                    return tag
+            
+            if '/' in key:
+                raise DigikamObjectNotFound('No Tag for name=' + key)
+            else:
+                raise DigikamMultipleObjectsFound('Multiple tags for name=' + key)
+
         return super().__getitem__(key)
-    
+
     @property
     def _root(self) -> 'Tag':                               # noqa: F821
         """
@@ -446,7 +482,10 @@ class Tags(DigikamTable):
         
         Raises :exc:`~sqlalchemy.exc.NoResultError` in SQLite.
         """
-        return self._select(pid = -1).one()
+        try:
+            return self._select(pid = -1).one()
+        except NoResultFound:
+            raise DigikamObjectNotFound('No tag for pid=-1')
     
     def add(
         self,
