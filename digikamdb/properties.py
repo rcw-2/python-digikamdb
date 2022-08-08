@@ -6,6 +6,7 @@ from typing import Any, Iterable, List, Mapping, Optional, Sequence, Tuple, Unio
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from .table import DigikamTable
+from .exceptions import DigikamObjectNotFound, DigikamMultipleObjectsFound
 
 
 log = logging.getLogger(__name__)
@@ -83,7 +84,7 @@ class BasicProperties(DigikamTable):
             return self._select_prop(prop).one_or_none() is not None
         except MultipleResultsFound:
             raise DigikamMultipleObjectsFound('Multiple %s objects for %s=%s' % (
-                self.Class.__name__, self._id_column, key
+                self.Class.__name__, self._id_column, prop
             ))
     
     def __getitem__(self, prop: Union[str, int, Sequence]) -> str:  # noqa: F821
@@ -98,11 +99,11 @@ class BasicProperties(DigikamTable):
                     return None
         except NoResultFound:
             raise DigikamObjectNotFound('No %s object for %s=%s' % (
-                self.Class.__name__, self._id_column, key
+                self.Class.__name__, self._id_column, prop
             ))
         except MultipleResultsFound:
             raise DigikamMultipleObjectsFound('Multiple %s objects for %s=%s' % (
-                self.Class.__name__, self._id_column, key
+                self.Class.__name__, self._id_column, prop
             ))
         return self._post_process_value(ret)
     
@@ -141,7 +142,7 @@ class BasicProperties(DigikamTable):
             row = self._select_prop(prop).one_or_none()
         except MultipleResultsFound:
             raise DigikamMultipleObjectsFound('Multiple %s objects for %s=%s' % (
-                self.Class.__name__, self._id_column, key
+                self.Class.__name__, self._id_column, prop
             ))
         if row:
             for k, v in values.items():
@@ -230,7 +231,7 @@ class BasicProperties(DigikamTable):
             row = self._select_prop(prop).one_or_none()
         except MultipleResultsFound:
             raise DigikamMultipleObjectsFound('Multiple %s objects for %s=%s' % (
-                self.Class.__name__, self._id_column, key
+                self.Class.__name__, self._id_column, prop
             ))
         if row is not None:
             self._session.delete(row)
