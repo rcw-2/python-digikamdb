@@ -37,6 +37,7 @@ Image Comments
 
 .. module:: digikamdb.image_helpers
 
+
 Image Properties
 -----------------
 
@@ -48,6 +49,7 @@ Image Properties
     .. autoclass::  _sqla.ImageProperty
         :members:
 
+
 Copyright
 ----------
 
@@ -58,6 +60,7 @@ Copyright
     
     .. autoclass:: _sqla.ImageCopyrightEntry
         :members:
+
 
 Other Metadata (mapped)
 ------------------------
@@ -80,5 +83,51 @@ Other Metadata (mapped)
 
 .. autoclass::  VideoMetadata
     :members:
+
+
+Types of special properties
+----------------------------
+
+.. currentmodule::  digikamdb.images
+
+.. autoclass::  Category
+    :members:
+    :member-order:  bysource
+
+.. autoclass::  Status
+    :members:
+    :member-order:  bysource
+
+.. currentmodule::  digikamdb.image_helpers
+
+.. autoclass::  ExposureMode
+    :members:
+    :member-order:  bysource
+
+.. autoclass::  ExposureProgram
+    :members:
+    :member-order:  bysource
+
+.. autoclass::  Flash
+    :members:
+    :member-order:  bysource
+
+.. autoclass::  FlashMode
+    :members:
+    :member-order:  bysource
+
+.. autoclass::  FlashReturn
+    :members:
+    :member-order:  bysource
+
+.. autoclass::  Orientation
+    :members:
+    :member-order:  bysource
+
+.. autoclass::  WhiteBalance
+    :members:
+    :member-order:  bysource
+
+
 
 

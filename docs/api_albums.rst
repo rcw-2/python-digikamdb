@@ -7,13 +7,13 @@ The Albums Class
 -----------------
 
 .. autoclass:: Albums
-   :members:
+    :members:
 
 The Album Class (mapped)
 -------------------------
 
 .. autoclass:: _sqla.Album
-   :members:
+    :members:
 
 .. module:: digikamdb.albumroots
 
@@ -21,11 +21,22 @@ The AlbumRoots Class
 ----------------------
 
 .. autoclass:: AlbumRoots
-   :members:
+    :members:
 
 The AlbumRoot Class (mapped)
 ------------------------------
 
 .. autoclass:: _sqla.AlbumRoot
-   :members:
+    :members:
+
+Types of special properties
+----------------------------
+
+.. autoclass::  Status
+    :members:
+    :member-order:  bysource
+
+.. autoclass::  Type
+    :members:
+    :member-order:  bysource
 

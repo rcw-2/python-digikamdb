@@ -49,21 +49,21 @@ class Settings(DigikamTable):
     """
     
     _class_function = _settings_class
-    _id_column = 'keyword'
+    _id_column = '_keyword'
     
     def __iter__(self) -> Iterable:
         for s in super().__iter__:
-            yield s.keyword
+            yield s._keyword
     
     def __getitem__(self, key: str) -> str:
-        return super().__getitem__(key).value
+        return super().__getitem__(key)._value
     
     def __setitem__(self, key: str, value: str):
         row = self._select(keyword = key).one_or_none()
         if row:
-            row.value = value
+            row._value = value
         else:
-            self._insert(keyword = key, value = value)
+            self._insert(_keyword = key, _value = value)
     
     def items(self) -> Iterable[Tuple[str, str]]:
         """
@@ -73,7 +73,7 @@ class Settings(DigikamTable):
             The settings (key, value) pairs.
         """
         for row in self._select():
-            yield row.keyword, row.value
+            yield row._keyword, row._value
 
 
 

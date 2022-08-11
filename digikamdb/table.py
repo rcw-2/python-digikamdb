@@ -34,7 +34,7 @@ class DigikamTable:
     """
     
     _class_function = None
-    _id_column = 'id'
+    _id_column = '_id'
     
     #: Raise an Exception when ``[]`` does not find a suitable column.
     #: Otherwise, ``None`` is returned.
@@ -86,6 +86,15 @@ class DigikamTable:
                 self.Class.__name__, self._id_column, key
             ))
     
+    @staticmethod
+    def _underscore_kwargs(kwargs):
+        ret = {}
+        for k, v in kwargs.items():
+            if not k.startswith('_'):
+                k = '_' + k
+            ret[k] = v
+        return ret
+    
     def _select(
         self,
         **kwargs
@@ -99,6 +108,7 @@ class DigikamTable:
         Returns:
             Iterable query.
         """
+        kwargs = self._underscore_kwargs(kwargs)
         log.debug(
             '%s: Selecting %s objects with %s',
             self.__class__.__name__,
@@ -121,6 +131,7 @@ class DigikamTable:
         Returns:
             The generated object.
         """
+        kwargs = self._underscore_kwargs(kwargs)
         log.debug(
             '%s: Creating %s object with %s',
             self.__class__.__name__,
@@ -139,6 +150,7 @@ class DigikamTable:
             kwargs:         Keyword arguments are used as arguments for
                             :meth:`~sqlalchemy.orm.Query.filter_by`.
         """
+        kwargs = self._underscore_kwargs(kwargs)
         log.debug(
             '%s: Deleting %s objects with  %s',
             self.__class__.__name__,

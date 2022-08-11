@@ -6,6 +6,7 @@ import logging
 import os
 import re
 import stat
+from enum import IntEnum
 from typing import List, Mapping, Optional
 
 from sqlalchemy.orm import relationship, validates
@@ -17,6 +18,21 @@ from .exceptions import DigikamFileError
 log = logging.getLogger(__name__)
 
 
+class Status(IntEnum):
+    """Class for :attr:`~_sqla.AlbumRoot.status`"""
+    LocationAvailable   = 0
+    LocationUnavailable = 2
+    LocationHidden      = 1
+
+
+class Type(IntEnum):
+    """Class for :attr:`~_sqla.AlbumRoot.type`"""
+    UndefinedType   = 0
+    VolumeHardWired = 1
+    VolumeRemovable = 2
+    Network         = 3
+
+
 def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
     """
     Defines the :class:`~digikamdb._sqla.AlbumRoot` class
@@ -26,19 +42,7 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
         """
         Digikam Album Root
         
-        The following column-related properties can be directly accessed:
-        
-        * **id** (*int*)
-        * **label** (*str*) - Label specified in Digikam
-        * **status** (*int*)
-        * **type** (*int*)
-        * **identifier** (*str*) - Identifies the file system where the root
-          is located
-        * **specificPath** (*str*) - Relative directory, starts with a :file:`/`
-        
         The location can be accessed with :attr:`abspath`.
-        
-        .. todo:: What do the status and type columns mean?
         
         See also:
             * Class :class:`~digikamdb.albumroots.AlbumRoots`
@@ -47,7 +51,7 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
         __tablename__ = 'AlbumRoots'
         _albums = relationship(
             'Album',
-            primaryjoin = 'foreign(Album.albumRoot) == AlbumRoot.id',
+            primaryjoin = 'foreign(Album._albumRoot) == AlbumRoot._id',
             back_populates = '_root',
             lazy = 'dynamic')
         
@@ -58,14 +62,71 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
             """Returns the albums belonging to this root."""
             return self._albums
         
-        # Other properties and methods
+        # column properties
         
-        @validates('identifier')
+        @property
+        def id(self) -> int:
+            """The album root's id (read-only)"""
+            return self._id
+        
+        @property
+        def label(self) -> str:
+            """The album root's label"""
+            return self._label
+        
+        @label.setter
+        def label(self, value):
+            self._label = value
+        
+        @property
+        def status(self) -> Status:
+            """The album root's status (read-only)"""
+            return Status(self._status)
+        
+        @property
+        def type(self) -> Type:
+            """The album root's type"""
+            return Type(self._type)
+        
+        @type.setter
+        def type(self, value):
+            self._type = value
+        
+        @validates('_status', '_type')
+        def _convert_to_int(self, key, value):
+            return int(value)
+        
+        @property
+        def identifier(self) -> str:
+            """
+            The album root's identifier
+            
+            This often contains the UUID of the file system that containst the
+            album root.
+            """
+            return self._identifier
+        
+        @identifier.setter
+        def identifier(self, value):
+            self._identifier = value
+        
+        @validates('_identifier')
         def _val_identifier(self, key: str, value: str):
             """Deletes cached mountpoint."""
             if hasattr(self, '_mountpoint'):
                 delattr(self, '_mountpoint')
             return value
+
+        @property
+        def specificPath(self) -> str:
+            """The album root's path from ``identifier``"""
+            return self._specificPath
+        
+        @specificPath.setter
+        def specificPath(self, value):
+            self._specificPath = value
+        
+        # Other properties and methods
         
         @property
         def mountpoint(self) -> str:
@@ -302,11 +363,11 @@ class AlbumRoots(DigikamTable):
         
         log.debug('Creating mountpoint with ident=%s and spath=%s', ident, spath)
         return self._insert(
-            label = label,
-            status = 0,
-            type = 1,
-            identifier = ident,
-            specificPath = spath
+            _label = label,
+            _status = Status.LocationAvailable,
+            _type = 1,
+            _identifier = ident,
+            _specificPath = spath
         )
             
 

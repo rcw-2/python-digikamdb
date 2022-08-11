@@ -25,11 +25,20 @@ class DigikamFileError(DigikamError):
     """
     pass
 
+
+class DigikamAssignmentError(DigikamError):
+    """
+    A value cannot be assigned to a Digikam object.
+    """
+    pass
+
+
 class DigikamQueryError(DigikamError):
     """
     Error executing database query, or invalid result.
     """
     pass
+
 
 class DigikamObjectNotFound(DigikamQueryError):
     """
@@ -37,10 +46,12 @@ class DigikamObjectNotFound(DigikamQueryError):
     """
     pass
 
+
 class DigikamMultipleObjectsFound(DigikamQueryError):
     """
     Multiple objects were found when at most one was expected.
     """
+
 
 class DigikamDataIntegrityError(DigikamError):
     """

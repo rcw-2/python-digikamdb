@@ -32,7 +32,7 @@ class SanityCheck:
         for al in self.dk.albums:
             with self.subTest(albumid = al.id):
                 self.assertIsInstance(al, self.dk.albums.Class)
-                self.assertEqual(al.albumRoot, al.root.id)
+                self.assertEqual(al._albumRoot, al.root.id)
                 self.assertIn(al, al.root.albums)
                 self.assertEqual(
                     os.path.commonpath([self.mydir, al.abspath]),
@@ -42,16 +42,16 @@ class SanityCheck:
         for img in self.dk.images:
             with self.subTest(imageid = img.id):
                 self.assertIsInstance(img, self.dk.images.Class)
-                self.assertEqual(img.album, img.albumObj.id)
-                self.assertIn(img, img.albumObj.images)
-                self.assertEqual(img.id, img.information.imageid)
+                self.assertEqual(img._album, img.album.id)
+                self.assertIn(img, img.album.images)
+                self.assertEqual(img.id, img.information._imageid)
                 if img.category == 1:
-                    self.assertEqual(img.id, img.imagemeta.imageid)
+                    self.assertEqual(img.id, img.imagemeta._imageid)
                 if img.category == 2:
-                    self.assertEqual(img.id, img.videometa.imageid)
+                    self.assertEqual(img.id, img.videometa._imageid)
                 self.assertEqual(
                     img.abspath,
-                    os.path.join(img.albumObj.abspath, img.name))
+                    os.path.join(img.album.abspath, img.name))
     
     def test40_tags(self):
         for tag in self.dk.tags:

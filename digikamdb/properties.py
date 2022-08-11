@@ -212,6 +212,7 @@ class BasicProperties(DigikamTable):
         Returns the result of ``filter_by`` on the parent's relationship
         attribute.
         """
+        kwargs = self._underscore_kwargs(kwargs)
         return getattr(self.parent, self._relationship).filter_by(**kwargs)
     
     def remove(self, prop: Union[str, int, Iterable, None]):

@@ -16,6 +16,7 @@ from .table import DigikamTable
 from .properties import BasicProperties
 from .exceptions import (
     DigikamError,
+    DigikamAssignmentError,
     DigikamObjectNotFound,
     DigikamMultipleObjectsFound,
     DigikamDataIntegrityError
@@ -33,14 +34,6 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
     class Tag(dk.base):
         """
         Digikam tag.
-        
-        The following column-related properties can be directly accessed:
-        
-        * **id** (*int*)
-        * **pid** (*int*) - The parent tag's id.
-        * **name** (*str*) - The tag's name.
-        * **icon** (*int*)
-        * **iconkde** (*str*)
         
         Tags in Digikam are hierarchical. ``Tag`` reflects this by providing:
         
@@ -65,14 +58,20 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
         """
         
         __tablename__ = 'Tags'
-        __mapper_args__ = {
+        __mapper_args__ = dk.base.__mapper_args__.copy()
+        __mapper_args__.update({
             "batch": False  # allows extension to fire for each
                             # instance before going to the next.
-        }
+        })
         _properties = relationship(
             'TagProperty',
-            primaryjoin = 'foreign(TagProperty.tagid) == Tag.id',
+            primaryjoin = 'foreign(TagProperty._tagid) == Tag._id',
             lazy = 'dynamic')
+        _iconObj = relationship(
+            'Image',
+            primaryjoin = 'foreign(Image._id) == Tag._icon',
+            passive_deletes = True,
+            uselist = False)
         
         # Special functions
         
@@ -83,9 +82,62 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             if not isinstance(obj, Tag):
                 raise TypeError('A tag can only contain other tags')
             if Tag.is_mysql:
-                return self.lft < obj.lft and self.rgt > obj.rgt
+                return self._lft < obj._lft and self._rgt > obj._rgt
             else:
                 return self.id in obj._ancestors
+        
+        @property
+        def id(self) -> int:
+            """The tag's id (read-only)"""
+            return self._id
+        
+        @property
+        def pid(self) -> int:
+            """The parent tag's id (read-only)"""
+            return self._pid
+        
+        @property
+        def name(self) -> str:
+            """The tag's name"""
+            return self._name
+        
+        @name.setter
+        def name(self, value: str):
+            self._name = value
+        
+        @property
+        def icon(self) -> Union['Image', str, None]:        # noqa: F821
+            """
+            Returns the tag's icon.
+            
+            Possible types are:
+            
+            :`~_sqla.Image`:class:: The icon is an image from the Digikam
+                                    collection. When setting, you can also
+                                    specify the image's id.
+            :`str`:class::          The icon is a KDE icon string
+            :``None``:              No icon is set
+            """
+            if self._icon is not None:
+                return self._iconObj
+            return self._iconkde
+        
+        @icon.setter
+        def icon(self, value: Union['Image', str, int, None]):  # noqa: F821
+            dk = self._container.digikam
+            if isinstance(value, int):
+                value = dk.images[value]
+            if value is None:
+                self._iconObj = None
+                self._iconkde = None
+            elif isinstance(value, dk.images.Class):
+                self._iconObj = value
+                self._iconkde = None
+            elif isinstance(value, str):
+                self._iconObj = None
+                self._iconkde = value
+            else:
+                raise DigikamAssignmentError('Tag.icon must be Image, str, or None')
         
         @property
         def _ancestors(self) -> List:
@@ -102,17 +154,17 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                 # MySQL
                 return self._session.scalars(
                     select(Tag)
-                    .where(Tag.lft < self.lft, Tag.rgt > self.rgt)
-                    .order_by(Tag.lft)
+                    .where(Tag._lft < self._lft, Tag._rgt > self._rgt)
+                    .order_by(Tag._lft)
                 ).all()
             
             # We're on SQLite
             return [
-                row.pid
+                row._pid
                 for row in self._session.scalars(
-                    select(self._container.TagsTreeEntry).filter_by(id = self.id)
+                    select(self._container.TagsTreeEntry).filter_by(_id = self.id)
                 )
-                if row.pid > 0
+                if row._pid > 0
             ]
             
         # Other properties and methods
@@ -134,14 +186,14 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                 if self.pid <= 0:
                     return None
 
-            return self._container._select(id = self.pid).one()
+            return self._container._select(_id = self.pid).one()
         
         @property
         def children(self) -> Iterable['Tag']:              # noqa: F821
             """
             Returns the tag's children.
             """
-            return self._container._select(pid = self.id)
+            return self._container._select(_pid = self.id)
         
         @property
         def properties(self) -> TagProperties:
@@ -216,39 +268,39 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             Raises:
                 DigikamDataIntegrityError
             """
-            d = self.rgt - self.lft
+            d = self._rgt - self._lft
             if d <= 0 or d % 2 == 0:
                 raise DigikamDataIntegrityError(
                     'Tag table: inconsistent lft, rgt in id=%d (%d,%d)' % (
                         self.id, self.lft, self.rgt
                     )
                 )
-            pos = self.lft
-            for ch in self.children.order_by(self.__class__.lft):
-                if not (self.lft < ch.lft and self.rgt > ch.rgt):
+            pos = self._lft
+            for ch in self.children.order_by(self.__class__._lft):
+                if not (self._lft < ch._lft and self._rgt > ch._rgt):
                     raise DigikamDataIntegrityError(
                         'Tag table inconsistent: parent %d (%d,%d), child %d (%d,%d)' % (
-                            self.id, self.lft, self.rgt, ch.id, ch.lft, ch.rgt
+                            self.id, self._lft, self._rgt, ch.id, ch._lft, ch._rgt
                         )
                     )
                 for ch2 in self.children:
                     if ch == ch2:
                         continue
-                    if ch.rgt < ch2.lft or ch.lft > ch2.rgt:
+                    if ch._rgt < ch2._lft or ch._lft > ch2._rgt:
                         continue
                     raise DigikamDataIntegrityError(
                         'Tag table has ' +
                         'overlapping siblings %d (%d,%d), %d (%d,%d)' % (
-                            ch.id, ch.lft, ch.rgt, ch2.id, ch2.lft, ch2.rgt
+                            ch.id, ch._lft, ch._rgt, ch2.id, ch2._lft, ch2._rgt
                         )
                     )
-                if ch.lft > pos + 1:
+                if ch._lft > pos + 1:
                     raise DigikamDataIntegrityError(
                         'Tag table inconsistent: gap before %d (%d), last pos %d' % (
-                            ch.id, ch.lft, pos
+                            ch.id, ch._lft, pos
                         )
                     )
-                pos = ch.rgt
+                pos = ch._rgt
                 ch._check_nested_sets()
     
     return Tag
@@ -307,16 +359,16 @@ class Tags(DigikamTable):
             """
             __tablename__ = 'TagProperties'
             
-            tagid = Column(Integer, primary_key = True)
-            property = Column(String, primary_key = True)
+            _tagid = Column('tagid', Integer, primary_key = True)
+            _property = Column('property', String, primary_key = True)
         
         if not self.is_mysql:
             class TagsTreeEntry(self.digikam.base):
                 """Class for the tags tree"""
                 __tablename__ = 'TagsTree'
                 
-                id = Column(Integer, primary_key = True)
-                pid = Column(Integer, primary_key = True)
+                _id = Column('id', Integer, primary_key = True)
+                _pid = Column('pid', Integer, primary_key = True)
             
             self.TagsTreeEntry = TagsTreeEntry
         
@@ -362,8 +414,8 @@ class Tags(DigikamTable):
             )
         )
         
-        instance.lft = new_position
-        instance.rgt = new_position + 1
+        instance._lft = new_position
+        instance._rgt = new_position + 1
 
     # before_update() would be needed to support moving of nodes
     def _before_update(
@@ -382,9 +434,9 @@ class Tags(DigikamTable):
         ):
             attrs = inspect(instance).attrs
             if (
-                attrs.pid.history.has_changes() or
-                attrs.lft.history.has_changes() or
-                attrs.rgt.history.has_changes()
+                attrs._pid.history.has_changes() or
+                attrs._lft.history.has_changes() or
+                attrs._rgt.history.has_changes()
             ):
                 raise NotImplementedError('Moving tags is not implemented')
     
@@ -402,13 +454,13 @@ class Tags(DigikamTable):
         if not self._do_after_delete:
             return
         
-        if instance.rgt - instance.lft > 1:
+        if instance._rgt - instance._lft > 1:
             raise DigikamError('Cannot delete tag with sub-tags')
 
         log.debug('Reordering nested sets for tags after delete')
         
         tags = mapper.persist_selectable
-        right = instance.rgt
+        right = instance._rgt
         
         connection.execute(
             tags.update(tags.c.rgt > right).values(
@@ -451,7 +503,7 @@ class Tags(DigikamTable):
             else:
                 name = key
             
-            q = self._select(name = name)
+            q = self._select(_name = name)
             num = q.count()
             if num == 0:
                 raise DigikamObjectNotFound('No Tag for name=' + key)
@@ -483,7 +535,7 @@ class Tags(DigikamTable):
         Raises :exc:`~sqlalchemy.exc.NoResultError` in SQLite.
         """
         try:
-            return self._select(pid = -1).one()
+            return self._select(_pid = -1).one()
         except NoResultFound:
             raise DigikamObjectNotFound('No tag for pid=-1')
     
@@ -580,7 +632,7 @@ class Tags(DigikamTable):
         Returns:
             List containing the found tags
         """
-        return self._select(name = name).all()
+        return self._select(_name = name).all()
 
 
 def _tagproperty_class(dk: 'Digikam') -> type:              # noqa: F821
@@ -601,15 +653,15 @@ class TagProperties(BasicProperties):
     _class_function = _tagproperty_class
     
     # Parent id column
-    _parent_id_col = 'tagid'
+    _parent_id_col = '_tagid'
     
     # Key column
-    _key_col = 'property'
+    _key_col = '_property'
     
     # Value column
-    _value_col = 'value'
+    _value_col = '_value'
     
-    tagid = Column(Integer, primary_key = True)
-    property = Column(String, primary_key = True)
+    _tagid = Column('tagid', Integer, primary_key = True)
+    _property = Column('tagid', String, primary_key = True)
     
 

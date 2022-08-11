@@ -58,7 +58,7 @@ several ways to specify the Digikam database:
 .. seealso::
     
     * `Digikam Database Settings <https://docs.kde.org/trunk5/en/digikam-doc/digikam/using-setup.html#using-setup-database>`_
-    * :class:`Digikam Class Reference <digikamdb.conn.Digikam>`
+    * :class:`~digikamdb.conn.Digikam` Class Reference
 
 
 General API Structure
@@ -210,11 +210,12 @@ refine it further:
 .. seealso::
     
     * `Digikam: Managing Tags <https://docs.kde.org/trunk5/en/digikam-doc/digikam/using-digikam.html#using-mainwindow-tagsview>`_
-    * :class:`Tags Class Reference <digikamdb.tags.Tags>`
-    * :class:`Tag (mapped table) Class Reference <_sqla.Tag>`
+    * :class:`~digikamdb.tags.Tags` Class Reference
+    * :class:`~_sqla.Tag` (mapped table) Class Reference
 
 
 Managing Settings
 ------------------
 
+.. todo:: Settings tutorial
 

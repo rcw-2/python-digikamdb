@@ -33,13 +33,13 @@ class ImageComments(BasicProperties):
     _class_function = _imageproperty_class
     
     #: Parent id column
-    _parent_id_col = 'imageid'
+    _parent_id_col = '_imageid'
     
     #: Key column
-    _key_col = ['language', 'author']
+    _key_col = ['_language', '_author']
     
     #: Value column
-    _value_col = ['comment', 'date']
+    _value_col = ['_comment', '_date']
     
     #: Return ``None`` when select does not find a row
     _raise_on_not_found = False
@@ -58,11 +58,11 @@ class ImageComments(BasicProperties):
         """
         Selects all comments with the riqht type of the parent object.
         """
-        return super()._select_self().filter_by(type = self._type)
+        return super()._select_self().filter_by(_type = self._type)
     
     def _prop_attributes(self, prop: Union[str, int, Iterable, None], **values):
         """Adds type to the standard properties."""
-        values['type'] = self._type
+        values['_type'] = self._type
         return super()._prop_attributes(prop, **values)
     
     def _pre_process_key(self, prop: Union[str, Iterable, None]) -> Tuple:

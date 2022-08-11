@@ -193,14 +193,14 @@ class NewData(NewDataRoot):
             with self.subTest(album = albumdata['_idx']):
                 album = self.dk.albums[albumdata['id']]
                 self.assertEqual(album.id, albumdata['id'])
-                self.assertEqual(album.albumRoot, albumdata['albumRoot'])
+                self.assertEqual(album._albumRoot, albumdata['albumRoot'])
                 self.assertEqual(album.relativePath, albumdata['relativePath'])
                 self.assertEqual(album.date, albumdata['date'])
                 self.assertEqual(album.caption, albumdata['caption'])
                 self.assertEqual(album.collection, albumdata['collection'])
                 self.assertEqual(album.icon, albumdata['icon'])
                 self.assertEqual(album.abspath, albumdata['path'])
-                self.assertIsNone(album.iconImage)
+                self.assertIsNone(album._icon)
     
     def _add_image(
         self,
@@ -240,7 +240,7 @@ class NewData(NewDataRoot):
         img = self.dk.images[imgdata['id']]
         self.assertEqual(img.id, imgdata['id'])
         self.assertEqual(img.name, imgdata['name'])
-        self.assertEqual(img.album, imgdata['album'])
+        self.assertEqual(img._album, imgdata['album'])
         self.assertEqual(img.status, imgdata['status'])
         self.assertEqual(img.category, imgdata['category'])
         self.assertEqual(img.modificationDate, imgdata['modificationDate'])
@@ -520,8 +520,8 @@ class NewData(NewDataRoot):
                 self.assertEqual(tag.id, tagdata['id'])
                 self.assertEqual(tag.pid, tagdata['pid'])
                 self.assertEqual(tag.name, tagdata['name'])
-                self.assertEqual(tag.icon, tagdata['icon'])
-                self.assertEqual(tag.iconkde, tagdata['iconkde'])
+                self.assertEqual(tag._icon, tagdata['icon'])
+                self.assertEqual(tag._iconkde, tagdata['iconkde'])
     
     def test49_verify_tag_properties(self):
         new_data = self.__class__.new_data

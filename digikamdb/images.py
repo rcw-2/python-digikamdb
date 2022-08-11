@@ -8,6 +8,7 @@ Digikam images can be accessed via the ``Digikam`` property
 import logging
 import os
 from datetime import datetime
+from enum import IntEnum
 from itertools import groupby
 from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
@@ -23,6 +24,24 @@ from .image_helpers import ImageCopyright, ImageProperties, define_image_helper_
 log = logging.getLogger(__name__)
 
 
+class Category(IntEnum):
+    """Image Category"""
+    UndefinedCategory   = 0
+    Image               = 1
+    Video               = 2
+    Audio               = 3
+    Other               = 4
+
+
+class Status(IntEnum):
+    """Image Status"""
+    UndefinedStatus = 0
+    Visible         = 1
+    Hidden          = 2
+    Trashed         = 3
+    Obsolete        = 4
+
+
 def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
     """
     Returns the Image class.
@@ -34,18 +53,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         """
         Represents a row in the table ``Images``.
         
-        The following column-related properties can be directly accessed:
-        
-        * **id** (*int*)
-        * **name** (*str*) - The image's file name.
-        * **status** (*int*)
-        * **category** (*int*)
-        * **modificationDate** (*datetime*)
-        * **fileSize** (*int*)
-        * **uniqueHash** (*str*)
-        * **manualOrder** (*int*)
-        
-        The image's album can be accessed by :attr:`albumObj`.
+        The image's album can be accessed by :attr:`album`.
         
         Digikam splits metadata (Exif and own) in several tables. `Image`
         has the corresponding properties:
@@ -66,50 +74,53 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         __tablename__ = 'Images'
         
         if not dk.is_mysql:
-            modificationDate = Column(sqlite.DATETIME(
-                storage_format = '%(year)04d-%(month)02d-%(day)02dT%(hour)02d:%(minute)02d:%(second)02d',   # noqa: E501
-                regexp = r'(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)'))
+            _modificationDate = Column(
+                'modificationDate',
+                sqlite.DATETIME(
+                    storage_format = '%(year)04d-%(month)02d-%(day)02dT%(hour)02d:%(minute)02d:%(second)02d',   # noqa: E501
+                    regexp = r'(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)')
+            )
         
-        _album = relationship(
+        _albumObj = relationship(
             'Album',
-            primaryjoin = 'foreign(Image.album) == Album.id',
+            primaryjoin = 'foreign(Image._album) == Album._id',
             back_populates = '_images')
         _comments = relationship(
             'ImageComment',
-            primaryjoin = 'foreign(ImageComment.imageid) == Image.id',
+            primaryjoin = 'foreign(ImageComment._imageid) == Image._id',
             lazy = 'dynamic')
         _copyright = relationship(
             'ImageCopyrightEntry',
-            primaryjoin = 'foreign(ImageCopyrightEntry.imageid) == Image.id',
+            primaryjoin = 'foreign(ImageCopyrightEntry._imageid) == Image._id',
             lazy = 'dynamic')
         _history = relationship(
             'ImageHistory',
-            primaryjoin = 'foreign(ImageHistory.imageid) == Image.id',
+            primaryjoin = 'foreign(ImageHistory._imageid) == Image._id',
             uselist = False)
         _information = relationship(
             'ImageInformation',
-            primaryjoin = 'foreign(ImageInformation.imageid) == Image.id',
+            primaryjoin = 'foreign(ImageInformation._imageid) == Image._id',
             uselist = False)
         _metadata = relationship(
             'ImageMetadata',
-            primaryjoin = 'foreign(ImageMetadata.imageid) == Image.id',
+            primaryjoin = 'foreign(ImageMetadata._imageid) == Image._id',
             uselist = False)
         _position = relationship(
             'ImagePosition',
-            primaryjoin = 'foreign(ImagePosition.imageid) == Image.id',
+            primaryjoin = 'foreign(ImagePosition._imageid) == Image._id',
             uselist = False)
         _properties = relationship(
             'ImageProperty',
-            primaryjoin = 'foreign(ImageProperty.imageid) == Image.id',
+            primaryjoin = 'foreign(ImageProperty._imageid) == Image._id',
             lazy = 'dynamic')
         _tags = relationship(
             'Tag',
-            primaryjoin = 'foreign(ImageTags.c.imageid) == Image.id',
-            secondaryjoin = 'foreign(ImageTags.c.tagid) == Tag.id',
+            primaryjoin = 'foreign(ImageTags.c.imageid) == Image._id',
+            secondaryjoin = 'foreign(ImageTags.c.tagid) == Tag._id',
             secondary = 'ImageTags')
         _videometadata = relationship(
             'VideoMetadata',
-            primaryjoin = 'foreign(VideoMetadata.imageid) == Image.id',
+            primaryjoin = 'foreign(VideoMetadata._imageid) == Image._id',
             uselist = False)
         
         # -- Relationship properties -----------------------------------------
@@ -117,14 +128,11 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         # Relationship to Albums
         
         @property
-        def albumObj(self) -> 'Album':                      # noqa: F821
+        def album(self) -> 'Album':                      # noqa: F821
             """
             Returns the album (directory) to which the image belongs.
-            
-            This cannot be named "album" as this is the column containing
-            the image's album id.
             """
-            return self._album
+            return self._albumObj
         
         # Relationship to ImageComments
         
@@ -247,9 +255,9 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
             
             if self._position:
                 return (
-                    self._position.latitudeNumber,
-                    self._position.longitudeNumber,
-                    self._position.altitude)
+                    self._position._latitudeNumber,
+                    self._position._longitudeNumber,
+                    self._position._altitude)
             return None
         
         @position.setter
@@ -264,7 +272,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
                 if self._position:
                     self._session.execute(
                         delete(self._container.ImagePosition)
-                        .filter_by(imageid = self.id))
+                        .filter_by(_imageid = self.id))
                 return
             
             lat = pos[0]
@@ -298,23 +306,23 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
                 lngstr = '%d,%.8fE' % (int(lng), (lng-int(lng))*60)
             
             if self._position:
-                self._position.latitude = latstr
-                self._position.longitude = lngstr
-                self._position.latitudeNumber = lat
-                self._position.longitudeNumber = lng
+                self._position._latitude = latstr
+                self._position._longitude = lngstr
+                self._position._latitudeNumber = lat
+                self._position._longitudeNumber = lng
                 if len(pos) > 2:
-                    self._position.altitude = pos[2]
+                    self._position._altitude = pos[2]
             else:
                 alt = None
                 if len(pos) > 2:
                     alt = pos[2]
                 newpos = self._container.ImagePosition(
-                    imageid = self.id,
-                    latitude = latstr,
-                    longitude = lngstr,
-                    latitudeNumber = lat,
-                    longitudeNumber = lng,
-                    altitude = alt)
+                    _imageid = self.id,
+                    _latitude = latstr,
+                    _longitude = lngstr,
+                    _latitudeNumber = lat,
+                    _longitudeNumber = lng,
+                    _altitude = alt)
                 self._session.add(newpos)
 #            self._session.commit()
         
@@ -344,6 +352,46 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
             """Returns the metadata for video files"""
             return self._videometadata
         
+        # Column properties:
+        
+        @property
+        def id(self) -> int:
+            """The image's id (read-only)"""
+            return self._id
+        
+        @property
+        def name(self) -> str:
+            """The image's file name (read-only)"""
+            return self._name
+        
+        @property
+        def status(self) -> Status:
+            return Status(self._status)
+        
+        @property
+        def category(self) -> Category:
+            return Category(self._category)
+        
+        @validates('_status', '_category')
+        def _convert_to_int(self, key, value):
+            return int(value)
+        
+        @property
+        def modificationDate(self) -> datetime:
+            return self._modificationDate
+        
+        @property
+        def fileSize(self) -> int:
+            return self._fileSize
+        
+        @property
+        def uniqueHash(self) -> str:
+            return self._uniqueHash
+        
+        @property
+        def manualOrder(self) -> int:
+            return self._manualOrder
+        
         # Other properties and members
         
         @property
@@ -352,8 +400,8 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
             Returns the absolute path of the image file.
             """
             return os.path.abspath(os.path.join(
-                self.albumObj.abspath,
-                self.name))
+                self.album.abspath,
+                self._name))
         
     return Image
         
@@ -425,7 +473,7 @@ class Images(DigikamTable):
         album = self.digikam.albums.find(dir_, True)
         if album:
             log.debug('Returning images from album %s', album.abspath)
-            return album.images.filter_by(name = base).all()
+            return album.images.filter_by(_name = base).all()
         
         log.debug('No files found')
         return []

@@ -149,7 +149,7 @@ class MySQL_01_SanityCheck(MySQLTestBase, SanityCheck):
     def test46_tags_move(self):
         with self.assertRaises(NotImplementedError):
             tag = self.dk.tags[5]
-            tag.pid = 0
+            tag._pid = 0
             self.dk.session.commit()
     
 

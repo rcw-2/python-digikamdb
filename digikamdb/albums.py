@@ -4,6 +4,7 @@ Digikam Albums
 
 import logging
 import os
+from datetime import datetime
 from typing import List, Union
 
 from sqlalchemy.orm import relationship
@@ -42,15 +43,16 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
         
         _root = relationship(
             'AlbumRoot',
-            primaryjoin = 'foreign(Album.albumRoot) == AlbumRoot.id',
+            primaryjoin = 'foreign(Album._albumRoot) == AlbumRoot._id',
             back_populates = '_albums')
-        _icon = relationship(
+        _iconObj = relationship(
             'Image',
-            primaryjoin = 'foreign(Album.icon) == Image.id')
+            primaryjoin = 'foreign(Album._icon) == Image._id',
+            uselist = False)
         _images = relationship(
             'Image',
-            primaryjoin = 'foreign(Image.album) == Album.id',
-            back_populates = '_album',
+            primaryjoin = 'foreign(Image._album) == Album._id',
+            back_populates = '_albumObj',
             lazy = 'dynamic')
         
         # Relationship to AlbumRoot
@@ -63,20 +65,57 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
         # Relationships to Images
         
         @property
-        def iconImage(self) -> 'Image':                     # noqa: F821
+        def icon(self) -> 'Image':                          # noqa: F821
             """Returns the album's icon"""
-            return self._icon
+            return self._iconObj
         
         @property
         def images(self) -> List['Image']:                  # noqa: F821
             """Returns the album's images"""
             return self._images
         
+        # column properties
+        
+        @property
+        def id(self) -> int:
+            """The album's id (read-only)"""
+            return self._id
+        
+        @property
+        def relativePath(self) -> str:
+            """The album's path relative to the root (read-only)"""
+            return self._relativePath
+        
+        @property
+        def date(self) -> datetime:
+            """The album's date (read-only)"""
+            return self._date
+        
+        @property
+        def caption(self) -> str:
+            """The album's caption"""
+            return self._caption
+        
+        @caption.setter
+        def caption(self, value):
+            self._caption = value
+        
+        @property
+        def collection(self) -> str:
+            """The album's collection"""
+            return self._collection
+        
+        @collection.setter
+        def collection(self, value):
+            self._collection = value
+        
         # Other properties and methods
         
         @property
         def abspath(self) -> str:
             """Returns the album folder's absolute path"""
+            if self.relativePath == '/':
+                return self.root.abspath
             return os.path.abspath(os.path.join(
                 self.root.abspath,
                 self.relativePath.lstrip('/')))
@@ -168,7 +207,7 @@ class Albums(DigikamTable):
             if exact:
                 try:
                     log.debug('Looging for album %s in root %d', rpath, root.id)
-                    return root.albums.filter_by(relativePath = rpath).one_or_none()
+                    return root.albums.filter_by(_relativePath = rpath).one_or_none()
                 # Multiple results should not occur...
                 except MultipleResultsFound:
                     raise DigikamDataIntegrityError(
@@ -177,8 +216,8 @@ class Albums(DigikamTable):
             
             # Look for matching directories:
             log.debug('Searching for %s in root %d', rpath+'%', root.id)
-            for al in self._select(albumRoot = root.id).where(
-                self.Class.relativePath.like(rpath + '%')
+            for al in self._select(_albumRoot = root.id).where(
+                self.Class._relativePath.like(rpath + '%')
             ):
                 if os.path.commonpath([al.abspath, abspath]) == abspath:
                     res.append(al)

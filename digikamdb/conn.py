@@ -286,6 +286,9 @@ class Digikam:
             and :func:`~sqlalchemy.orm.declarative_base`.
             """
             __abstract__ = True
+            __mapper_args__ = {
+                'column_prefix':    '_',
+            }
         
         return DigikamObject
 

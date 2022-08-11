@@ -75,6 +75,7 @@ Limitations
 ------------
 
 * Adding or deleting albumroots, albums and images is not supported.
+* Digikam-DB will probably not run under Windows or MacOS
 * The only tables implemented are:
   
   * AlbumRoots
