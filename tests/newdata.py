@@ -16,6 +16,11 @@ from digikamdb import (
     DigikamDataIntegrityError,
     DigikamFileError
 )
+from digikamdb.types import (
+    ExifExposureProgram as ExposureProgram,
+    ExifFlash as Flash, ExifFlashMode as FlashMode,
+    ExifOrientation as Orientation,
+)
 
 
 log = logging.getLogger(__name__)
@@ -253,6 +258,12 @@ class NewData(NewDataRoot):
                 self.assertEqual(img.copyright[k], v)
             for k, v in img.copyright.items():
                 self.assertEqual(imgdata['copyright'][k], v)
+        if 'imageinformation' in imgdata:
+            for k, v in imgdata['imageinformation'].items():
+                self.assertEqual(getattr(img.information, k), v)
+        if 'imagemetadata' in imgdata:
+            for k, v in imgdata['imagemetadata'].items():
+                self.assertEqual(getattr(img.imagemeta, k), v)
     
     def test30_add_images(self):
         new_data = self.__class__.new_data
@@ -354,7 +365,53 @@ class NewData(NewDataRoot):
             id_ = new_data['images'][idx]['id']
             self.assertIn(id_, ids)
     
-    def test38_verify_images(self):
+    def test36_image_meta(self):
+        new_data = self.__class__.new_data
+        imgdata = new_data['images'][0]
+        img = self.dk.images[imgdata['id']]
+        
+        info = self.dk.images.ImageInformation(
+            _imageid = img.id,
+            _creationDate = img.modificationDate,
+            _digitizationDate = img.modificationDate,
+            _orientation = Orientation.TOP_LEFT,
+            _width = 5184,
+            _height = 3456,
+        )
+        self.dk.session.add(info)
+        
+        meta = self.dk.images.ImageMetadata(
+            _imageid = img.id,
+            _aperture = 11,
+            _exposureTime = 0.01,
+            _exposureProgram = ExposureProgram.APERTURE_PRIORITY,
+            _flash = Flash(dict(
+                flash_fired = False,
+                flash_mode = FlashMode.COMPULSORY_FLASH_SUPPRESSION,
+            )),
+            _focalLength = 24,
+            _focalLength35 = 38.4,
+        )
+        self.dk.session.add(meta)
+        
+        self.dk.session.commit()
+        imgdata['imageinformation'] = {
+            'creationDate':     img.modificationDate,
+            'digitizationDate': img.modificationDate,
+            'orientation':      1,
+            'width':            5184,
+            'height':           3456,
+        }
+        imgdata['imagemetadata'] = {
+            'aperture':         11,
+            'exposureTime':     0.01,
+            'exposureProgram':  3,
+            'flash':            16,
+            'focalLength':      24,
+            'focalLength35':    38.4,
+        }
+    
+    def test48_verify_images(self):
         new_data = self.__class__.new_data
         for imgdata in new_data['images']:
             with self.subTest(image = imgdata['_idx']):
@@ -396,7 +453,7 @@ class NewData(NewDataRoot):
         
         return tag
     
-    def test40_add_tags(self):
+    def test50_add_tags(self):
         new_data = self.__class__.new_data
         tag1 = self._add_tag(
             new_data['tags'],
@@ -441,7 +498,7 @@ class NewData(NewDataRoot):
                 {}
             )
     
-    def test41_tag_hierarchical_names(self):
+    def test51_tag_hierarchical_names(self):
         self.assertEqual(
             self.dk.tags['New Tag 1'].hierarchicalname(),
             'New Tag 1'
@@ -459,7 +516,7 @@ class NewData(NewDataRoot):
             'New Tag 1/New Tag 2/New Tag 4'
         )
     
-    def test42_change_tags(self):
+    def test52_change_tags(self):
         new_data = self.__class__.new_data
         tagdata = new_data['tags'][0]
         tag = self.dk.tags[tagdata['id']]
@@ -468,7 +525,7 @@ class NewData(NewDataRoot):
         self.dk.session.commit()
         tagdata['name'] += 'a'
     
-    def test43_tag_properties(self):
+    def test53_tag_properties(self):
         new_data = self.__class__.new_data
         tagdata = new_data['tags'][0]
         tag = self.dk.tags[tagdata['id']]
@@ -478,7 +535,7 @@ class NewData(NewDataRoot):
             'tagKeyboardShortcut':  'Alt+Shift+S'
         }
     
-    def test44_change_tag_properties(self):
+    def test54_change_tag_properties(self):
         new_data = self.__class__.new_data
         tagdata = new_data['tags'][0]
         tag = self.dk.tags[tagdata['id']]
@@ -488,7 +545,7 @@ class NewData(NewDataRoot):
         self.dk.session.commit()
         tagdata['properties']['tagKeyboardShortcut'] = 'Alt+Shift+A'
     
-    def test45_remove_tag(self):
+    def test55_remove_tag(self):
         new_data = self.__class__.new_data
         tagdata = new_data['tags'][4]
         name = tagdata['name']
@@ -499,15 +556,46 @@ class NewData(NewDataRoot):
         with self.assertRaises(TypeError):
             self.dk.tags.remove('New Tag XXX')
     
-    def test46_verify_remove_tag(self):
+    def test56_verify_remove_tag(self):
         new_data = self.__class__.new_data
         tagdata = new_data['tags'][4]
         name = tagdata['name']
         with self.assertRaises(Exception):
             _ = self.dk.tags[name]
         del new_data['tags'][4]
-        
-    def test48_verify_tags(self):
+    
+    def test57_tag_icon1(self):
+        new_data = self.__class__.new_data
+        tagdata = new_data['tags'][1]
+        img = self.dk.images[new_data['images'][1]['id']]
+        self.dk.tags[tagdata['id']].icon = img
+        self.dk.session.commit()
+        tagdata['icon'] = img.id
+        tagdata['iconkde'] = None
+    
+    def test58_tag_icon2(self):
+        new_data = self.__class__.new_data
+        tagdata = new_data['tags'][1]
+        tag = self.dk.tags[tagdata['id']]
+        self.assertEqual(tag._icon, tagdata['icon'])
+        self.assertEqual(tag._iconkde, tagdata['iconkde'])
+        tag.icon = new_data['images'][0]['id']
+        self.dk.session.commit()
+        tagdata['icon'] = new_data['images'][0]['id']
+        tagdata['iconkde'] = None
+    
+    def test59_tag_icon3(self):
+        new_data = self.__class__.new_data
+        tagdata = new_data['tags'][1]
+        tag = self.dk.tags[tagdata['id']]
+        self.assertEqual(tag._icon, tagdata['icon'])
+        self.assertEqual(tag._iconkde, tagdata['iconkde'])
+        tag.icon = 'edit-cut'
+        self.dk.session.commit()
+        tagdata['icon'] = None
+        tagdata['iconkde'] = 'edit-cut'
+    
+    def test68_verify_tags(self):
         with self.subTest(msg = 'data integrity check'):
             try:
                 self.dk.tags.check()
@@ -523,7 +611,7 @@ class NewData(NewDataRoot):
                 self.assertEqual(tag._icon, tagdata['icon'])
                 self.assertEqual(tag._iconkde, tagdata['iconkde'])
     
-    def test49_verify_tag_properties(self):
+    def test69_verify_tag_properties(self):
         new_data = self.__class__.new_data
         for tagdata in new_data['tags']:
             if 'properties' in tagdata:
@@ -532,7 +620,7 @@ class NewData(NewDataRoot):
                     for prop, value in tagdata['properties'].items():
                         self.assertEqual(tag.properties[prop], value)
     
-    def test50_add_settings(self):
+    def test70_add_settings(self):
         new_data = self.__class__.new_data
         self.assertTrue('databaseUserImageFormats' not in self.dk.settings)
         self.dk.settings['databaseUserImageFormats'] = '-cr2'
@@ -542,7 +630,7 @@ class NewData(NewDataRoot):
             'value':    '-cr2',
         })
     
-    def test51_change_settings(self):
+    def test71_change_settings(self):
         new_data = self.__class__.new_data
         setdata = new_data['settings'][0]
         self.assertEqual(self.dk.settings[setdata['keyword']], setdata['value'])
@@ -550,7 +638,7 @@ class NewData(NewDataRoot):
         self.dk.session.commit()
         setdata['value'] += ';-xcf'
     
-    def test58_verify_settings(self):
+    def test78_verify_settings(self):
         new_data = self.__class__.new_data
         for setdata in new_data['settings']:
             self.assertEqual(self.dk.settings[setdata['keyword']], setdata['value'])

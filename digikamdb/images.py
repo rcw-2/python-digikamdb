@@ -8,7 +8,6 @@ Digikam images can be accessed via the ``Digikam`` property
 import logging
 import os
 from datetime import datetime
-from enum import IntEnum
 from itertools import groupby
 from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
@@ -19,27 +18,10 @@ from .table import DigikamTable
 from .properties import BasicProperties
 from .image_comments import ImageCaptions, ImageTitles
 from .image_helpers import ImageCopyright, ImageProperties, define_image_helper_tables
+from .types import ImageCategory as Category, ImageStatus as Status
 
 
 log = logging.getLogger(__name__)
-
-
-class Category(IntEnum):
-    """Image Category"""
-    UndefinedCategory   = 0
-    Image               = 1
-    Video               = 2
-    Audio               = 3
-    Other               = 4
-
-
-class Status(IntEnum):
-    """Image Status"""
-    UndefinedStatus = 0
-    Visible         = 1
-    Hidden          = 2
-    Trashed         = 3
-    Obsolete        = 4
 
 
 def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901

@@ -6,7 +6,7 @@ import logging
 from typing import Iterable, List, Optional, Union
 
 from sqlalchemy import (
-    Column, Integer, String, Table,
+    Column, Integer, ForeignKey, String, Table,
     case, event, inspect, select, text,
 )
 from sqlalchemy.orm import object_session, relationship
@@ -70,7 +70,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
         _iconObj = relationship(
             'Image',
             primaryjoin = 'foreign(Image._id) == Tag._icon',
-            passive_deletes = True,
+            viewonly = True,
             uselist = False)
         
         # Special functions
@@ -125,16 +125,21 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
         @icon.setter
         def icon(self, value: Union['Image', str, int, None]):  # noqa: F821
             dk = self._container.digikam
-            if isinstance(value, int):
-                value = dk.images[value]
+#            if isinstance(value, int):
+#                value = dk.images[value]
+            if isinstance(value, dk.images.Class):
+                value = value.id
             if value is None:
-                self._iconObj = None
+                self._icon = None
                 self._iconkde = None
-            elif isinstance(value, dk.images.Class):
-                self._iconObj = value
+#            elif isinstance(value, dk.images.Class):
+#                self._iconObj = value
+#                self._iconkde = None
+            elif isinstance(value, int):
+                self._icon = value
                 self._iconkde = None
             elif isinstance(value, str):
-                self._iconObj = None
+                self._icon = None
                 self._iconkde = value
             else:
                 raise DigikamAssignmentError('Tag.icon must be Image, str, or None')

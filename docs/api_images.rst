@@ -88,43 +88,45 @@ Other Metadata (mapped)
 Types of special properties
 ----------------------------
 
-.. currentmodule::  digikamdb.images
+.. currentmodule::  digikamdb.types
 
-.. autoclass::  Category
+.. autoclass::  ImageCategory
     :members:
     :member-order:  bysource
 
-.. autoclass::  Status
+.. autoclass::  ImageStatus
     :members:
     :member-order:  bysource
 
-.. currentmodule::  digikamdb.image_helpers
-
-.. autoclass::  ExposureMode
+.. autoclass::  ImageColorModel
     :members:
     :member-order:  bysource
 
-.. autoclass::  ExposureProgram
+.. autoclass::  ExifExposureMode
     :members:
     :member-order:  bysource
 
-.. autoclass::  Flash
+.. autoclass::  ExifExposureProgram
     :members:
     :member-order:  bysource
 
-.. autoclass::  FlashMode
+.. autoclass::  ExifFlash
     :members:
     :member-order:  bysource
 
-.. autoclass::  FlashReturn
+.. autoclass::  ExifFlashMode
     :members:
     :member-order:  bysource
 
-.. autoclass::  Orientation
+.. autoclass::  ExifFlashReturn
     :members:
     :member-order:  bysource
 
-.. autoclass::  WhiteBalance
+.. autoclass::  ExifOrientation
+    :members:
+    :member-order:  bysource
+
+.. autoclass::  ExifWhiteBalance
     :members:
     :member-order:  bysource
 

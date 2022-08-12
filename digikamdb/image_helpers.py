@@ -15,160 +15,19 @@ from sqlalchemy.orm import relationship, validates
 from .table import DigikamTable
 from .properties import BasicProperties
 from .exceptions import DigikamQueryError, DigikamAssignmentError
+from .types import (
+    ExifExposureMode as ExposureMode,
+    ExifExposureProgram as ExposureProgram,
+    ExifFlash as Flash,
+    ExifMeteringMode as MeteringMode,
+    ExifOrientation as Orientation,
+    ExifWhiteBalance as WhiteBalance,
+    ImageColorModel as ColorModel
+)
+    
 
 
 log = logging.getLogger(__name__)
-
-
-class Orientation(IntEnum):
-    """
-    Exif ImageOrientation Tag
-    
-    The constants describe the position of row 0 and column 0 in the visual
-    image, as specified in the Exif documentation. The mirrored orientations
-    will usually not show up in digital photos.
-    """
-    #: Landscape, camera held upright
-    TOP_LEFT        = 1
-    #: 1 mirrored
-    TOP_RIGHT       = 2
-    #: Landscape, camera held upside down
-    BOTTOM_RIGHT    = 3
-    #: 3 mirrored
-    BOTTOM_LEFT     = 4
-    #: 6 mirrored
-    LEFT_TOP        = 5
-    #: Portrait, camera turned right
-    RIGHT_TOP       = 6
-    #: 8 mirrored
-    RIGHT_BOTTOM    = 7
-    #: Portrait, camera turned left
-    LEFT_BOTTOM     = 8
-
-
-class ColorModel(IntEnum):
-    """Digikam Color Model"""
-    COLORMODELUNKNOWN   = 0
-    RGB                 = 1
-    GRAYSCALE           = 2
-    MONOCHROME          = 3
-    INDEXED             = 4
-    YCBCR               = 5
-    CMYK                = 6
-    CIELAB              = 7
-    COLORMODELRAW       = 8
-
-
-class ExposureMode(IntEnum):
-    """Exif ExposureMode Tag"""
-    AUTO_EXPOSURE   = 0
-    MANUAL_EXPOSURE = 1
-    AUTO_BRACKET    = 2
-
-
-class ExposureProgram(IntEnum):
-    """Exif ExposureProgram Tag"""
-    NOT_DEFINED         = 0
-    MANUAL              = 1
-    NORMAL_PROGRAM      = 2
-    APERTURE_PRIORITY   = 3
-    SHUTTER_PRIORITY    = 4
-    CREATIVE_PROGRAM    = 5
-    ACTION_PROGRAM      = 6
-    PORTRAIT_MODE       = 7
-    LANDSCAPE_MODE      = 8
-
-
-class WhiteBalance(IntEnum):
-    """Exif WhiteBalance Tag"""
-    AUTO    = 0
-    MANUAL  = 1
-
-
-class MeteringMode(IntEnum):
-    """Exif MeteringMode Tag"""
-    UNKNOWN                 = 0
-    AVERAGE                 = 1
-    CENTER_WEIGHTET_AVERAGE = 2
-    SPOT                    = 3
-    MULTI_SPOT              = 4
-    PATTERN                 = 5
-    PARTIAL                 = 6
-    OTHER                   = 255
-
-
-class FlashReturn(IntEnum):
-    """Exif Flash Return part of Flash Tag"""
-    NO_STROBE_RETURN_DETECTION_FUNCTION = 0
-    RESERVED                            = 1
-    STROBE_RETURN_LIGHT_DETECTED        = 2
-    STROBE_RETURN_LIGHT_NOT_DETECTED    = 3
-
-
-class FlashMode(IntEnum):
-    """Exif Flash Mode part of Flash Tag"""
-    UNKNOWN                         = 0
-    COMPULSORY_FLASH_FIRING         = 1
-    COMPULSORY_FLASH_SUPPRESSION    = 2
-    AUTO_MODE                       = 3
-
-
-class Flash:
-    """
-    Exif Flash Tag
-    
-    Args:
-        value:  The :class:`int` value of flash tag, or a :class:`dict`
-                containing the flash information.
-    """
-    def __init__(
-        self,
-        value: Union[int, Mapping]
-    ):
-        if isinstance(value, int):
-            self._value = value
-        elif isinstance(value, dict):
-            self._value = 0
-            if 'flash_fired' in value and value['flash_fired']:
-                self._value |= 1
-            if 'flash_return' in value and value['flash_return']:
-                self._value |= (value['flash_return'] << 1)
-            if 'flash_mode' in value and value['flash_mode']:
-                self._value |= (value['flash_mode'] << 3)
-            if 'flash_function' in value and not value['flash_function']:
-                self._value |= 32
-            if 'red_eye_reduction' in value and value['red_eye_reduction']:
-                self._value |= 64
-        else:
-            raise TypeError('Flash constructor Argument must be int or dict')
-    
-    def __int__(self):
-        return self._value
-    
-    @property
-    def flash_fired(self) -> bool:
-        """Indicates if the flash fired."""
-        return bool(self._value & 1)
-    
-    @property
-    def flash_return(self) -> FlashReturn:
-        """Status of returned light"""
-        return FlashReturn((self._value >> 1) & 3)
-    
-    @property
-    def flash_mode(self) -> FlashMode:
-        """Flash mode"""
-        return FlashMode((self._value >> 3) & 3)
-    
-    @property
-    def flash_function(self) -> bool:
-        """Flash function supported?"""
-        return not bool((self._value >> 5) & 1)
-    
-    @property
-    def red_eye_reduction(self) -> bool:
-        """Red eye reduction supported?"""
-        return bool((self._value >> 6) & 1)
 
 
 def _imagecopyrightentry_class(dk: 'Digikam') -> type:      # noqa: F821

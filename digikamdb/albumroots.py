@@ -6,31 +6,16 @@ import logging
 import os
 import re
 import stat
-from enum import IntEnum
 from typing import List, Mapping, Optional
 
 from sqlalchemy.orm import relationship, validates
 
 from .table import DigikamTable
 from .exceptions import DigikamFileError
+from .types import AlbumRootStatus as Status, AlbumRootType as Type
 
 
 log = logging.getLogger(__name__)
-
-
-class Status(IntEnum):
-    """Class for :attr:`~_sqla.AlbumRoot.status`"""
-    LocationAvailable   = 0
-    LocationUnavailable = 2
-    LocationHidden      = 1
-
-
-class Type(IntEnum):
-    """Class for :attr:`~_sqla.AlbumRoot.type`"""
-    UndefinedType   = 0
-    VolumeHardWired = 1
-    VolumeRemovable = 2
-    Network         = 3
 
 
 def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901

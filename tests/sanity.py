@@ -52,6 +52,9 @@ class SanityCheck:
                 self.assertEqual(
                     img.abspath,
                     os.path.join(img.album.abspath, img.name))
+                for k, v in img.titles.items():
+                    self.assertIsInstance(k, str)
+                    self.assertIsInstance(v, str)
     
     def test40_tags(self):
         for tag in self.dk.tags:
@@ -72,6 +75,10 @@ class SanityCheck:
                 self.assertRegex(str(tag), '<Digikam Tag (.*)>')
                 with self.assertRaises(TypeError):
                     'tag name' in tag
+                for k, v in tag.properties.items():
+                    self.assertIsInstance(k, str)
+                    if v is not None:
+                        self.assertIsInstance(v, str)
     
     def test41_tags_check(self):
         try:

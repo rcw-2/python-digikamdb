@@ -32,11 +32,13 @@ The AlbumRoot Class (mapped)
 Types of special properties
 ----------------------------
 
-.. autoclass::  Status
+.. currentmodule:: digikamdb.types
+
+.. autoclass::  AlbumRootStatus
     :members:
     :member-order:  bysource
 
-.. autoclass::  Type
+.. autoclass::  AlbumRootType
     :members:
     :member-order:  bysource
 
