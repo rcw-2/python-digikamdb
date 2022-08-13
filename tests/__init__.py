@@ -1,5 +1,6 @@
 
 import logging
+import logging.handlers
 import os
 from unittest import TestCase, skip     # noqa: F401
 
@@ -34,11 +35,13 @@ from .mysql import (                                        # noqa: F401
 
 
 # Log with debug to test.log
+handler = logging.handlers.RotatingFileHandler('test.log', backupCount = 7)
 logging.basicConfig(
-    filename = 'test.log',
+    handlers = [handler],
     level = logging.DEBUG,
     format = '%(levelname)s %(name)s:%(lineno)d %(message)s',
 )
+handler.doRollover()
 log = logging.getLogger(__name__)
 
 os.environ['SQLALCHEMY_WARN_20'] = 'true'

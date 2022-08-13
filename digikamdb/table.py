@@ -3,9 +3,10 @@ Basic Digikam Table Class
 """
 
 import logging
-from typing import Any, Iterable, Optional, Union
+import re
+from typing import Any, Iterable, Mapping, Optional, Union
 
-from sqlalchemy import delete, select, text
+from sqlalchemy import delete, inspect, text
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from .exceptions import (
@@ -86,8 +87,30 @@ class DigikamTable:
                 self.Class.__name__, self._id_column, key
             ))
     
+    def select(
+        self,
+        *args,
+        **kwargs
+    ) -> '~sqlalchemy.orm.Query':                           # noqa: F821
+        """
+        Returns the result of ``filter_by`` on a global select.
+        
+        Args:
+            args:   Each positional argument must be a string containing
+                    a valid ``WHERE`` clause (without ``WHERE``). These
+                    clauses are combined with ``AND``.
+            kwargs: Arguments for the :meth:`~sqlalchemy.orm.Query.filter_by`
+                    method of SQLAlchemy query objects.
+        """
+        query = self._select(**kwargs)
+        for arg in args:
+            txt = arg.strip()
+            log.debug(' adding WHERE %s', txt)
+            query = query.where(text(txt))
+        return query
+    
     @staticmethod
-    def _underscore_kwargs(kwargs):
+    def _underscore_kwargs(kwargs: Mapping) -> Mapping:
         ret = {}
         for k, v in kwargs.items():
             if not k.startswith('_'):

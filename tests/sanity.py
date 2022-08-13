@@ -71,7 +71,8 @@ class SanityCheck:
                         self.parent.hierarchicalname() + '/' + self.name,
                         hname
                     )
-                self.assertIn(tag, self.dk.tags.find(tag.name))
+                    self.assertIs(tag, self.dk.tags[hname])
+                self.assertIn(tag, self.dk.tags.select(name = tag.name))
                 self.assertRegex(str(tag), '<Digikam Tag (.*)>')
                 with self.assertRaises(TypeError):
                     'tag name' in tag

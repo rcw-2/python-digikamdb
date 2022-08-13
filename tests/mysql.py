@@ -51,7 +51,11 @@ class MySQLTestBase(DigikamTestBase):
                 'position': (49.875974899927776, 8.66468980047438, 529),
             },
         ],
-        'tags': [{'id': 22, 'pid': 0, 'name': 'Normandy'}]
+        'tags': [{'id': 22, 'pid': 0, 'name': 'Normandy'}],
+        'image_queries': [{
+            'where':    ['modificationDate >= "2022-07-20 00:00:00"'],
+            'result':   [4, 5, 6],
+        }],
     }
     
     # Test data for comment changes

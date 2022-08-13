@@ -46,6 +46,15 @@ class TestData:
         
         with self.subTest(file = 'not in DB'):
             self.assertFalse(self.dk.images.find('/does/not/exist'))
+        
+        if 'image_queries' in self.test_data:
+            for data in self.test_data['image_queries']:
+                with self.subTest(select = data['where']):
+                    num = 0
+                    for img in self.dk.images.select(*data['where']):
+                        num = num + 1
+                        self.assertIn(img.id, data['result'])
+                    self.assertEqual(num, len(data['result']))
     
     def test40_tags(self):
         for data in self.test_data['tags']:

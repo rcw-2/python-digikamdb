@@ -624,20 +624,6 @@ class Tags(DigikamTable):
             tag._check()
         if self.Class.is_mysql:
             self._root._check_nested_sets()
-    
-    def find(self, name: str) -> List['Tag']:               # noqa: F821
-        """
-        Finds all tags with a certain name.
-        
-        Since tags are hierarchical, it is possible that more than one tag
-        have the same name. This funcion returns a list with all of them.
-        
-        Args:
-            name:   Tag name to find.
-        Returns:
-            List containing the found tags
-        """
-        return self._select(_name = name).all()
 
 
 def _tagproperty_class(dk: 'Digikam') -> type:              # noqa: F821

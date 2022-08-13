@@ -207,14 +207,6 @@ class BasicProperties(DigikamTable):
         attrs.update(**values)
         return attrs
     
-    def filter_by(self, **kwargs) -> Iterable['DigikamObject']:  # noqa: F821
-        """
-        Returns the result of ``filter_by`` on the parent's relationship
-        attribute.
-        """
-        kwargs = self._underscore_kwargs(kwargs)
-        return getattr(self.parent, self._relationship).filter_by(**kwargs)
-    
     def remove(self, prop: Union[str, int, Iterable, None]):
         """
         Removes the given property.

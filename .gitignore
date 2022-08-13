@@ -12,6 +12,7 @@ DEADJOE
 
 # Logs and status files
 *.log
+test.log.*
 .coverage
 .coverage.*
 

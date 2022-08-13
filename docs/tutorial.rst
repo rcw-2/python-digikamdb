@@ -113,11 +113,79 @@ See the :class:`~sqlalchemy.orm.Query` documentation for more information.
 Working with Images
 --------------------
 
-.. todo:: Images Tutorial
+.. note::
+    Digikam-DB does not directly support creating new images, or deleting
+    existing ones.
+
+Retrieving Images
+~~~~~~~~~~~~~~~~~~
+
+Images can be accessed through the :attr:`~digikamdb.conn.Digikam.images`
+property of the ``Digikam`` class in different ways (``dk`` is a ``Digikam``
+object, see above):
+
+#. Iterating over all images:
+    
+    .. code-block:: python
+        
+        for image in dk.images:
+            print(image.id, image.name, image.abspath)
+
+#. Via the ``[]`` operator:
+    
+    .. code-block:: python
+        
+        image = dk.images[23]               # id == 23
+    
+    To access images by name, use the ``find`` method.
+
+#. Via the :meth:`~digikamdb.tags.Images.find` method:
+    
+    .. code-block:: python
+        
+        for image in dk.images.find('/path/to/dir/with/images'):
+            print(image.id, image.name, image.abspath)
+    
+    ``find`` searches a path (which can be a directory or a file) and returns
+    a list of all matching images.
+
+#. Via a the :meth:`~digikamdb.images.images.select` method:
+    
+    .. code-block:: python
+        
+        # Find all images named 'my_image.jpg'
+        imglist = dk.images.select(name = 'my_image.jpg')
+        
+        # Find all images larger than 3MB:
+        imglist = dk.images.select('fileSize > 3000000')
+        
+        # Find all images modified in 2020 or later:
+        imglist = dk.images.select("modificationDate >= '2020-01-01 00:00:00'")
+    
+    :meth:`~digikamdb.images.images.select` supports the following attributes:
+    
+    * :attr:`~_sqla.Image.id`
+    * :attr:`~_sqla.Image.album` (numeric field containing the album id)
+    * :attr:`~_sqla.Image.name`
+    * :attr:`~_sqla.Image.status`
+    * :attr:`~_sqla.Image.category`
+    * :attr:`~_sqla.Image.modificationDate`
+    * :attr:`~_sqla.Image.fileSize`
+    * :attr:`~_sqla.Image.uniqueHash`
+    * :attr:`~_sqla.Image.manualOrder`
+
+.. todo:: Describe modifying images
 
 
 Working with Albums
 ---------------------
+
+Albums in Digikam are actually directories in the file system. They are shown
+as a tree in digikam, but the database does not reflect that.
+
+.. note::
+    Digikam-DB does not directly support creating new albums, or deleting
+    existing ones.
 
 .. todo:: Albums Tutorial
 
@@ -157,15 +225,12 @@ see above):
     
     If no matching tag is found, an Exception is raised.
 
-#. Via the :meth:`~digikamdb.tags.Tags.find` method:
+#. Via a SELECT with certain attributes:
     
     .. code-block:: python
         
-        for tag in dk.tags.find('My Tag'):
+        for tag in dk.tags.select(name = 'My Tag'):
             print(tag.hierarchicalname())
-    
-    ``find`` searches a tag by name and returns a list of all matching
-    objects.
 
 New tags can be created with the :meth:`~digikamdb.tags.Tags.add` method:
 
@@ -193,8 +258,8 @@ The tags of an image are stored in its :attr:`~_sqla.Image.tags` property
     for tag in img.tags:
         print(tag.name)
 
-The ``tags`` property is actually a :class:`~sqlalchemy.orm.Query`, so you can
-refine it further:
+The ``tags`` property is actually a :class:`~sqlalchemy.orm.Query` object, so
+you can refine it further:
 
 .. code-block:: python
     
@@ -203,7 +268,16 @@ refine it further:
         print('Tag', tag.name, 'has icon <tag-people>')
     
     # Get the tag with id 42, or None if the image has no such tag
-    forty_two = img.tags.filter_by(id = 42).one_or_none()
+    forty_two = img.tags.filter_by(_id = 42).one_or_none()
+
+A :class:`~_sqla.Tag` object also has an :attr:`~_sqla.Tag.images` property
+containing all Images that have the tag set:
+
+.. code-block:: python
+    
+    #
+    for img in dk.tags['My Tag'].images.filter_by(_album = 42):
+        print('Image', img.name, 'has tag <My Tag>')
 
 .. todo:: Describe modifying tags
 
