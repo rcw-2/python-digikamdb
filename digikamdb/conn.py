@@ -155,16 +155,11 @@ class Digikam:
         except Exception as e:
             raise DigikamConfigError('Error reading config file: ' + str(e))
         
-        if 'db_type' not in config:
-            raise DigikamConfigError('Database Type not found')
-        if config['db_type'] not in ['QMYSQL', 'QSQLITE']:
-            raise DigikamConfigError('Unknown Database Type ' + config['db_type'])
-        
-        if 'db_internal' in config and config['db_internal'].lower() != 'false':
-            raise DigikamConfigError('Internal Database Server is not supported')
-        
-        if config['db_type'] == 'QMYSQL':
-            try:
+        try:
+            if config['db_type'] == 'QMYSQL':
+                if 'db_internal' in config and config['db_internal'].lower() != 'false':
+                    raise DigikamConfigError('Internal Database Server is not supported')
+                
                 if 'db_port' in config:
                     config['db_host'] = '%s:%s' % (
                         config['db_host'],
@@ -181,19 +176,8 @@ class Digikam:
                     db_str.replace(config['db_pass'], 'XXX')
                 )
                 return create_engine(db_str, future = True, echo = sql_echo)
-            
-            except DigikamError:
-                raise
-            except KeyError as e:
-                if e.args[0] in cls._db_config_keys:
-                    raise DigikamConfigError(
-                        'Configuration not found: ' + cls._db_config_keys[e.args[0]]
-                    )
-                else:
-                    raise
                 
-        if config['db_type'] == 'QSQLITE':
-            try:
+            if config['db_type'] == 'QSQLITE':
                 log.debug('Using SQLite database in %s', config['db_name'])
                 return create_engine(
                     'sqlite:///%s' % (
@@ -201,17 +185,18 @@ class Digikam:
                     ),
                     future = True,
                     echo = sql_echo)
-            except DigikamError:
+
+        except DigikamError:
+            raise
+        except KeyError as e:
+            if e.args[0] in cls._db_config_keys:
+                raise DigikamConfigError(
+                    'Configuration not found: ' + cls._db_config_keys[e.args[0]]
+                )
+            else:
                 raise
-            except KeyError as e:
-                if e.args[0] in cls._db_config_keys:
-                    raise DigikamConfigError(
-                        'Configuration not found: ' + cls._db_config_keys[e.args[0]]
-                    )
-                else:
-                    raise
         
-        raise RuntimeError('This line should never be reached')
+        raise DigikamConfigError('Unknown Database Type ' + config['db_type'])
     
     def destroy(self):
         """

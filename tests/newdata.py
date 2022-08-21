@@ -14,7 +14,8 @@ from sqlalchemy.exc import NoResultFound
 from digikamdb import (
     DigikamObjectNotFound,
     DigikamDataIntegrityError,
-    DigikamFileError
+    DigikamFileError,
+    DigikamAssignmentError,
 )
 from digikamdb.types import (
     ExifExposureProgram as ExposureProgram,
@@ -595,6 +596,26 @@ class NewData(NewDataRoot):
         tagdata['icon'] = None
         tagdata['iconkde'] = 'edit-cut'
     
+    def test59_tag_icon4(self):
+        new_data = self.__class__.new_data
+        tagdata = new_data['tags'][1]
+        tag = self.dk.tags[tagdata['id']]
+        self.assertEqual(tag._icon, tagdata['icon'])
+        self.assertEqual(tag._iconkde, tagdata['iconkde'])
+        tag.icon = None
+        self.dk.session.commit()
+        tagdata['icon'] = None
+        tagdata['iconkde'] = None
+    
+    def test60_tag_icon5(self):
+        new_data = self.__class__.new_data
+        tagdata = new_data['tags'][1]
+        tag = self.dk.tags[tagdata['id']]
+        self.assertEqual(tag._icon, tagdata['icon'])
+        self.assertEqual(tag._iconkde, tagdata['iconkde'])
+        with self.assertRaises(DigikamAssignmentError):
+            tag.icon = {}
+    
     def test68_verify_tags(self):
         with self.subTest(msg = 'data integrity check'):
             try:
@@ -610,6 +631,10 @@ class NewData(NewDataRoot):
                 self.assertEqual(tag.name, tagdata['name'])
                 self.assertEqual(tag._icon, tagdata['icon'])
                 self.assertEqual(tag._iconkde, tagdata['iconkde'])
+                if tagdata['icon'] is not None:
+                    self.assertIs(tag.icon, self.dk.images[tagdata['icon']])
+                # Additional sanity check:
+                self.assertIs(tag, self.dk.tags[tag.hierarchicalname()])
     
     def test69_verify_tag_properties(self):
         new_data = self.__class__.new_data

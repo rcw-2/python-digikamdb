@@ -1,14 +1,16 @@
-# Test base
+# Image data
 
 import logging
 
 from sqlalchemy.exc import NoResultFound                    # noqa: F401
 
+from digikamdb import DigikamAssignmentError
+
 
 log = logging.getLogger(__name__)
 
 
-class CheckComments:
+class CheckImageData:
     """Mixin with tests for comments"""
     
     # Title helper methods
@@ -92,23 +94,23 @@ class CheckComments:
         self.dk.session.commit()
         self.__class__.old_image_comments = old_comments
     
-    def test20_verify_comments(self):
+    def test11_verify_comments(self):
         # Check new values
-        for data in self.test_data['images']:
-            if 'comments' in data:
-                with self.subTest(imageid = data['id']):
-                    img = self.dk.images[data['id']]
+        for data in self.test_comments:
+            with self.subTest(imageid = data['id']):
+                img = self.dk.images[data['id']]
+                if 'title' in data:
                     self._check_titles(
                             img,
-                            data['comments']['title']
+                            data['title']
                         )
-                    if 'caption' in data['comments']:
-                        self._check_captions(
-                            img,
-                            data['comments']['caption']
-                        )
+                if 'caption' in data:
+                    self._check_captions(
+                        img,
+                        data['caption']
+                    )
     
-    def test30_restore_comments(self):
+    def test18_restore_comments(self):
         # Restore old values
         old_comments = self.__class__.old_image_comments
         for id_, comments in old_comments.items():
@@ -121,7 +123,7 @@ class CheckComments:
                     self._set_captions(img, comments['caption'])
         self.dk.session.commit()
     
-    def test40_verify_restored_comments(self):
+    def test19_verify_restored_comments(self):
         # Check old values
         old_comments = self.__class__.old_image_comments
         for id_, comments in old_comments.items():
@@ -133,4 +135,44 @@ class CheckComments:
                 if 'caption' in comments:
                     self._check_captions(img, comments['caption'])
 
+    def _set_info(self, img, new_info):
+        old_info = {}
+        if 'rating' in new_info:
+            old_info['rating'] = img.information.rating
+            img.information.rating = new_info['rating']
+        return old_info
 
+    def _check_info(self, img, info):
+        if 'rating' in info:
+            self.assertEqual(img.information.rating, info['rating'])
+
+    def test20_set_info(self):
+        old_info = {}
+        for id_, info in self.test_info.items():
+            with self.subTest(imageid = id_):
+                old_info[id_] = self._set_info(self.dk.images[id_], info)
+        self.__class__.old_image_info = old_info
+    
+    def test21_verify_info(self):
+        for id_, info in self.test_info.items():
+            with self.subTest(imageid = id_):
+                self._check_info(self.dk.images[id_], info)
+    
+    def test22_illegal_info(self):
+        for id_, info in self.test_info.items():
+            with self.subTest(imageid = id_):
+                with self.assertRaises(DigikamAssignmentError):
+                    self.dk.images[id_].information.rating = -2
+    
+    def test28_restore_info(self):
+        for id_, info in self.__class__.old_image_info.items():
+            with self.subTest(imageid = id_):
+                self._set_info(self.dk.images[id_], info)
+    
+    def test29_verify_restored_info(self):
+        for id_, info in self.__class__.old_image_info.items():
+            with self.subTest(imageid = id_):
+                self._check_info(self.dk.images[id_], info)
+                
+ 
+            

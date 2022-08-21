@@ -15,7 +15,7 @@ from digikamdb import (    # noqa: F401
 from .base import DigikamTestBase
 from .sanity import SanityCheck
 from .data import TestData
-from .comments import CheckComments
+from .imagedata import CheckImageData
 from .newdata import NewDataRoot, NewDataRootOverride, NewData
 
 
@@ -110,7 +110,7 @@ class SQLite_02_TestData(SQLiteTestBase, TestData):
     pass
 
 
-class SQLite_03_CheckComments(SQLiteTestBase, CheckComments):
+class SQLite_03_CheckImageData(SQLiteTestBase, CheckImageData):
     pass
 
 

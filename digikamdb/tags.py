@@ -125,16 +125,11 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
         @icon.setter
         def icon(self, value: Union['Image', str, int, None]):  # noqa: F821
             dk = self._container.digikam
-#            if isinstance(value, int):
-#                value = dk.images[value]
             if isinstance(value, dk.images.Class):
                 value = value.id
             if value is None:
                 self._icon = None
                 self._iconkde = None
-#            elif isinstance(value, dk.images.Class):
-#                self._iconObj = value
-#                self._iconkde = None
             elif isinstance(value, int):
                 self._icon = value
                 self._iconkde = None
@@ -227,13 +222,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                     [t.name for t in self._ancestors if t.id > 0]
                 ) + '/' + self.name
             
-            if self.parent:
-                return self.parent.hierarchicalname() + '/' + self.name
-            
-            raise DigikamDataIntegrityError(
-                'Unable to generate hierarchical name for tag %d (%s)',
-                self.id, self.name,
-            )
+            return self.parent.hierarchicalname() + '/' + self.name
         
         def _check(self):
             """
@@ -433,17 +422,13 @@ class Tags(DigikamTable):
             return
         
         log.debug('Reordering nested sets for tags before update')
-        if object_session(instance).is_modified(
-            instance,
-            include_collections = False
+        attrs = inspect(instance).attrs
+        if (
+            attrs._pid.history.has_changes() or
+            attrs._lft.history.has_changes() or
+            attrs._rgt.history.has_changes()
         ):
-            attrs = inspect(instance).attrs
-            if (
-                attrs._pid.history.has_changes() or
-                attrs._lft.history.has_changes() or
-                attrs._rgt.history.has_changes()
-            ):
-                raise NotImplementedError('Moving tags is not implemented')
+            raise NotImplementedError('Moving tags is not implemented')
     
     # after_delete() would be needed to support removal of nodes.
     def _after_delete(

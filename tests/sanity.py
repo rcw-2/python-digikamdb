@@ -7,6 +7,7 @@ from unittest import TestCase, skip     # noqa: F401
 from sqlalchemy.exc import NoResultFound    # noqa: F401
 
 from digikamdb import DigikamDataIntegrityError
+from digikamdb.types import ImageCategory
 
 
 log = logging.getLogger(__name__)
@@ -45,14 +46,17 @@ class SanityCheck:
                 self.assertEqual(img._album, img.album.id)
                 self.assertIn(img, img.album.images)
                 self.assertEqual(img.id, img.information._imageid)
-                if img.category == 1:
+                if img.category == ImageCategory.Image:
                     self.assertEqual(img.id, img.imagemeta._imageid)
-                if img.category == 2:
+                if img.category == ImageCategory.Video:
                     self.assertEqual(img.id, img.videometa._imageid)
                 self.assertEqual(
                     img.abspath,
                     os.path.join(img.album.abspath, img.name))
                 for k, v in img.titles.items():
+                    self.assertIsInstance(k, str)
+                    self.assertIsInstance(v, str)
+                for k, v in img.properties.items():
                     self.assertIsInstance(k, str)
                     self.assertIsInstance(v, str)
     
@@ -76,10 +80,17 @@ class SanityCheck:
                 self.assertRegex(str(tag), '<Digikam Tag (.*)>')
                 with self.assertRaises(TypeError):
                     'tag name' in tag
+                numprops = 0
+                props = []
                 for k, v in tag.properties.items():
+                    numprops += 1
+                    props.append(k)
                     self.assertIsInstance(k, str)
                     if v is not None:
                         self.assertIsInstance(v, str)
+                self.assertEqual(numprops, len(tag.properties))
+                for k in tag.properties:
+                    self.assertIn(k._property, props)
     
     def test41_tags_check(self):
         try:

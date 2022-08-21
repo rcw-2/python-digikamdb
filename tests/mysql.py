@@ -11,7 +11,7 @@ from digikamdb import Digikam, DigikamDataIntegrityError    # noqa: F401
 from .base import DigikamTestBase
 from .sanity import SanityCheck
 from .data import TestData
-from .comments import CheckComments
+from .imagedata import CheckImageData
 from .newdata import NewDataRoot, NewDataRootOverride, NewData
 
 
@@ -77,6 +77,11 @@ class MySQLTestBase(DigikamTestBase):
             },
         },
     ]
+    
+    # Test data for image information
+    test_info = {
+        1:  { 'rating':   2 },
+    }
     
     @classmethod
     def setUpClass(cls):
@@ -161,7 +166,7 @@ class MySQL_02_TestData(MySQLTestBase, TestData):
     pass
 
 
-class MySQL_03_CheckComments(MySQLTestBase, CheckComments):
+class MySQL_03_CheckImageData(MySQLTestBase, CheckImageData):
     pass
 
 
