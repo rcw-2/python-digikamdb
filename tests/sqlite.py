@@ -66,6 +66,8 @@ class SQLiteTestBase(DigikamTestBase):
             },
         }
     ]
+                
+    test_info = {}
     
     @classmethod
     def setUpClass(cls):

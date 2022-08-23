@@ -66,7 +66,12 @@ class CheckImageData:
     def _check_captions(self, img, captions):
         for lang, refdata in captions.items():
             if lang == '_default':
-                self.assertEqual(img.caption, refdata)
+                if refdata is None:
+                    self.assertIsNone(img.caption)
+                elif isinstance(refdata, tuple):
+                    self.assertEqual(img.caption, refdata)
+                else:
+                    self.assertEqual(img.caption[0], refdata)
             else:
                 for author, refcaption in refdata.items():
                     self.assertEqual(img.captions[(lang, author)], refcaption)
@@ -151,6 +156,7 @@ class CheckImageData:
         for id_, info in self.test_info.items():
             with self.subTest(imageid = id_):
                 old_info[id_] = self._set_info(self.dk.images[id_], info)
+        self.dk.session.commit()
         self.__class__.old_image_info = old_info
     
     def test21_verify_info(self):
@@ -168,6 +174,7 @@ class CheckImageData:
         for id_, info in self.__class__.old_image_info.items():
             with self.subTest(imageid = id_):
                 self._set_info(self.dk.images[id_], info)
+        self.dk.session.commit()
     
     def test29_verify_restored_info(self):
         for id_, info in self.__class__.old_image_info.items():
