@@ -60,6 +60,12 @@ class SanityCheck:
                     self.assertIsInstance(k, str)
                     self.assertIsInstance(v, str)
     
+    def test31_image_tags(self):
+        for img in self.dk.images:
+            for tag in img.tags:
+                with self.subTest(imageid = img.id, tagid = tag.id):
+                    self.assertIn(img, tag.images)
+    
     def test40_tags(self):
         for tag in self.dk.tags:
             with self.subTest(tagid = tag.id):
@@ -107,6 +113,10 @@ class SanityCheck:
                 self.assertFalse(tag.children.first())
     
     def test50_settings(self):
+        settings = {}
         for k, v in self.dk.settings.items():
             self.assertEqual(self.dk.settings[k], v)
+            settings[k] = v
+        for k in self.dk.settings:
+            self.assertEqual(self.dk.settings[k], settings[k])
 

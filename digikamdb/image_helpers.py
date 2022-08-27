@@ -437,7 +437,7 @@ def define_image_helper_tables(container: 'Images'):        # noqa: F821, C901
             '_meteringMode',
             '_whiteBalance'
         )
-        def _convert_to_int(self, key, value):
+        def _convert_to_int(self, key: str, value: int):
             return int(value)
         
     class ImagePosition(dk.base):

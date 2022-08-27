@@ -1,10 +1,11 @@
 # Test base
 
 import logging
-from unittest import TestCase, skip     # noqa: F401
+from unittest import TestCase, skip                         # noqa: F401
 
-from sqlalchemy.exc import NoResultFound    # noqa: F401
+from sqlalchemy.exc import NoResultFound                    # noqa: F401
 
+from digikamdb.exceptions import *                          # noqa: F403
 
 log = logging.getLogger(__name__)
 
@@ -60,8 +61,21 @@ class TestData:
                     elif prop == 'copyright':
                         for p, v in value.items():
                             self.assertEqual(img.copyright[p], v)
+                    elif prop == 'title':
+                        self.assertEqual(img.title, value)
+                        self.assertEqual(img.titles[None], value)
+                        self.assertEqual(img.titles[''], value)
                     else:
                         self.assertEqual(getattr(img, prop), value)
+                
+                self.assertIsNone(img.titles['no-language'])
+                self.assertIsNone(
+                    img.titles.select(language = 'no-language').one_or_none()
+                )
+                img.titles['no-language'] = None                # should call remove()
+                self.assertIsNone(
+                    img.titles.select(language = 'no-language').one_or_none()
+                )
                 
                 img2 = self.dk.images.find(img.abspath)[0]
                 self.assertIs(img, img2)

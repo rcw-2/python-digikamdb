@@ -12,6 +12,7 @@ from digikamdb import (    # noqa: F401
     DigikamMultipleObjectsFound,
     DigikamDataIntegrityError
 )
+from digikamdb.types import *                               # noqa: F403
 
 from .base import DigikamTestBase
 from .sanity import SanityCheck
@@ -52,6 +53,7 @@ class SQLiteTestBase(DigikamTestBase):
                     'height':       3024,
                     'format':       'JPG',
                     'colorDepth':   8,
+                    'colorModel':   ImageColorModel.YCBCR,
                     'rating':       -1,
                 },
                 'imagemeta': {
@@ -61,6 +63,10 @@ class SQLiteTestBase(DigikamTestBase):
                     'focalLength':      4.32,
                     'focalLength35':    26,
                     'exposureTime':     0.0012531328320802004,
+                    'exposureMode':     ExifExposureMode.AUTO_EXPOSURE,
+                    'sensitivity':      50,
+                    'whiteBalance':     ExifWhiteBalance.AUTO,
+                    'meteringMode':     ExifMeteringMode.CENTER_WEIGHTET_AVERAGE,
                 },
                 'captions': {
                     ('x-default', 'RCW'):   (
@@ -68,7 +74,14 @@ class SQLiteTestBase(DigikamTestBase):
                         datetime.fromisoformat('2022-06-11T14:56:44'),
                     ),
                 },
-            }
+            },
+            {
+                'id':   3,
+                'name': 'IMG39991.JPG',
+                'imagemeta': {
+                    'lens': 'Canon EF-S 10-22mm f/3.5-4.5 USM',
+                },
+            },
         ],
         'tags': [{'id': 22, 'pid': 0, 'name': 'France'}]
     }

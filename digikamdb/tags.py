@@ -9,7 +9,7 @@ from sqlalchemy import (
     Column, Integer, ForeignKey, String, Table,
     case, event, inspect, select, text,
 )
-from sqlalchemy.orm import object_session, relationship
+from sqlalchemy.orm import object_session, relationship, validates
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from .table import DigikamTable
@@ -82,6 +82,12 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             back_populates = '_tags',
             lazy = 'dynamic'
         )
+        
+        @validates('_pid')
+        def _check_pid(self, key: str, value: int) -> int:
+            if value < 0:
+                raise DigikamAssignmentError('Tag parent id cannot be negative')
+            return value
         
         # Special functions
         
@@ -251,23 +257,23 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             """
             
             p = self.parent
-            if p and self not in p:
+            if p and self not in p:                         # pragma: no cover
                 raise DigikamDataIntegrityError(
                     'Tag table: Tag id=%d is not in children of parent (%d)' % (
                         self.id, p.id
                     )
                 )
             while p:
-                if not isinstance(p, Tag):
+                if not isinstance(p, Tag):                  # pragma: no cover
                     raise DigikamError(
                         'Tag parent is of class %s, not Tag' % p.__class__.__name__
                     )
-                if self not in p:
+                if self not in p:                           # pragma: no cover
                     raise DigikamDataIntegrityError(
                         'Tag table inconsistent: Tag id=%d is not in descendents ' +
                         'of ancestor %d' % (self.id, p.id)  # noqa: F507
                     )
-                if p.id == self.id:
+                if p.id == self.id:                         # pragma: no cover
                     raise DigikamDataIntegrityError(
                         'Tag table inconsistent: Circular ancestry in id=%d' % self.id
                     )
@@ -396,11 +402,12 @@ class Tags(DigikamTable):
         Adjusts the lft and rgt columns on insert.
         """
         
-        if not self._do_before_insert:
+        if not self._do_before_insert:                      # pragma: no cover
             return
 
-        if instance.pid < 0:
-            raise ValueError('Parent must be >= 0')
+        if instance.pid < 0:                                # pragma: no cover
+            # This will never happen, but we keep it for safety
+            raise DigikamAssignmentError('Parent must be >= 0')
         
         log.debug('Reordering nested sets for tags before insert')
         tags = mapper.persist_selectable
@@ -436,7 +443,7 @@ class Tags(DigikamTable):
         connection: 'Connection',                           # noqa: F821
         instance: 'Tag'                                     # noqa: F821
     ):
-        if not self._do_before_update:
+        if not self._do_before_update:                      # pragma: no cover
             return
         
         log.debug('Reordering nested sets for tags before update')
@@ -459,7 +466,7 @@ class Tags(DigikamTable):
         Adjusts the lft and rgt columns on delete.
         """
 
-        if not self._do_after_delete:
+        if not self._do_after_delete:                       # pragma: no cover
             return
         
         if instance._rgt - instance._lft > 1:

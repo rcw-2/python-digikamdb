@@ -344,7 +344,7 @@ class NewData(NewDataRoot):
                 (50.10961004586001, 8.702938349511566, 612)
             )
     
-    def test32_change_image_position(self):
+    def test32_change_image_position_1(self):
         new_data = self.__class__.new_data
         imgdata = new_data['images'][0]
         self.assertEqual(
@@ -357,12 +357,25 @@ class NewData(NewDataRoot):
             (50.11088572429458, 8.668430363718421, 721)
         )
     
-    def test33_remove_image_position(self):
+    def test32_change_image_position_2(self):
         new_data = self.__class__.new_data
         imgdata = new_data['images'][0]
         self.assertEqual(
             imgdata['position'],
             (50.11088572429458, 8.668430363718421, 721)
+        )
+        self._set_image_position(
+            imgdata,
+            ("50.11088572429458S", "8.668430363718421W", 524),
+            (-50.11088572429458, -8.668430363718421, 524)
+        )
+    
+    def test33_remove_image_position(self):
+        new_data = self.__class__.new_data
+        imgdata = new_data['images'][0]
+        self.assertEqual(
+            imgdata['position'],
+            (-50.11088572429458, -8.668430363718421, 524)
         )
         self._set_image_position(imgdata, None)
     
@@ -511,8 +524,8 @@ class NewData(NewDataRoot):
             'id':       tag.id,
             'pid':      parent,
             'name':     name,
-            'icon':     icon,
-            'iconkde':  iconkde,
+            '_icon':    icon,
+            '_iconkde': iconkde,
         })
         
         return tag
@@ -561,6 +574,8 @@ class NewData(NewDataRoot):
                 0,
                 {}
             )
+        with self.assertRaises(DigikamAssignmentError):
+            _ = self._add_tag(new_data['tags'], 'Error Tag', -2)
     
     def test51_tag_hierarchical_names(self):
         self.assertEqual(
@@ -634,48 +649,52 @@ class NewData(NewDataRoot):
         img = self.dk.images[new_data['images'][1]['id']]
         self.dk.tags[tagdata['id']].icon = img
         self.dk.session.commit()
-        tagdata['icon'] = img.id
-        tagdata['iconkde'] = None
+        tagdata['_icon'] = img.id
+        tagdata['_iconkde'] = None
     
     def test58_tag_icon2(self):
         new_data = self.__class__.new_data
         tagdata = new_data['tags'][1]
         tag = self.dk.tags[tagdata['id']]
-        self.assertEqual(tag._icon, tagdata['icon'])
-        self.assertEqual(tag._iconkde, tagdata['iconkde'])
+        self.assertEqual(tag._icon, tagdata['_icon'])
+        self.assertEqual(tag._iconkde, tagdata['_iconkde'])
+        self.assertIs(tag.icon, self.dk.images[tagdata['_icon']])
         tag.icon = new_data['images'][0]['id']
         self.dk.session.commit()
-        tagdata['icon'] = new_data['images'][0]['id']
-        tagdata['iconkde'] = None
+        tagdata['_icon'] = new_data['images'][0]['id']
+        tagdata['_iconkde'] = None
     
     def test59_tag_icon3(self):
         new_data = self.__class__.new_data
         tagdata = new_data['tags'][1]
         tag = self.dk.tags[tagdata['id']]
-        self.assertEqual(tag._icon, tagdata['icon'])
-        self.assertEqual(tag._iconkde, tagdata['iconkde'])
+        self.assertEqual(tag._icon, tagdata['_icon'])
+        self.assertEqual(tag._iconkde, tagdata['_iconkde'])
+        self.assertIs(tag.icon, self.dk.images[tagdata['_icon']])
         tag.icon = 'edit-cut'
         self.dk.session.commit()
-        tagdata['icon'] = None
-        tagdata['iconkde'] = 'edit-cut'
+        tagdata['_icon'] = None
+        tagdata['_iconkde'] = 'edit-cut'
     
     def test59_tag_icon4(self):
         new_data = self.__class__.new_data
         tagdata = new_data['tags'][1]
         tag = self.dk.tags[tagdata['id']]
-        self.assertEqual(tag._icon, tagdata['icon'])
-        self.assertEqual(tag._iconkde, tagdata['iconkde'])
+        self.assertEqual(tag._icon, tagdata['_icon'])
+        self.assertEqual(tag._iconkde, tagdata['_iconkde'])
+        self.assertEqual(tag.icon, tagdata['_iconkde'])
         tag.icon = None
         self.dk.session.commit()
         tagdata['icon'] = None
-        tagdata['iconkde'] = None
+        tagdata['_icon'] = None
+        tagdata['_iconkde'] = None
     
     def test60_tag_icon5(self):
         new_data = self.__class__.new_data
         tagdata = new_data['tags'][1]
         tag = self.dk.tags[tagdata['id']]
-        self.assertEqual(tag._icon, tagdata['icon'])
-        self.assertEqual(tag._iconkde, tagdata['iconkde'])
+        self.assertEqual(tag._icon, tagdata['_icon'])
+        self.assertEqual(tag._iconkde, tagdata['_iconkde'])
         with self.assertRaises(DigikamAssignmentError):
             tag.icon = {}
     
@@ -692,10 +711,12 @@ class NewData(NewDataRoot):
                 self.assertEqual(tag.id, tagdata['id'])
                 self.assertEqual(tag.pid, tagdata['pid'])
                 self.assertEqual(tag.name, tagdata['name'])
-                self.assertEqual(tag._icon, tagdata['icon'])
-                self.assertEqual(tag._iconkde, tagdata['iconkde'])
-                if tagdata['icon'] is not None:
-                    self.assertIs(tag.icon, self.dk.images[tagdata['icon']])
+                self.assertEqual(tag._icon, tagdata['_icon'])
+                self.assertEqual(tag._iconkde, tagdata['_iconkde'])
+                if tagdata['_icon'] is not None:
+                    self.assertIs(tag.icon, self.dk.images[tagdata['_icon']])
+                if tagdata['_iconkde'] is not None:
+                    self.assertEqual(tag.icon, tagdata['_iconkde'])
                 # Additional sanity check:
                 self.assertIs(tag, self.dk.tags[tag.hierarchicalname()])
     

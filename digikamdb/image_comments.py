@@ -51,7 +51,7 @@ class ImageComments(BasicProperties):
         super().__init__(parent)
         self._type = type_
     
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:                              # pragma: no cover
         return '<ImageComments object type=%d>' % self._type
     
     def _select_self(self) -> '~sqlalchemy.orm.Query':      # noqa: F821
@@ -105,7 +105,7 @@ class ImageTitles(ImageComments):
         # set type=3
         super().__init__(parent, 3)
     
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:                              # pragma: no cover
         return '<Titles for image %d>' % self._parent.id
     
     def _post_process_key(self, key: Union[str, Tuple]) -> str:
@@ -154,6 +154,6 @@ class ImageCaptions(ImageComments):
         # set type=1
         super().__init__(parent, 1)
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:                              # pragma: no cover
         return '<Captions for image %d>' % self._parent.id
 

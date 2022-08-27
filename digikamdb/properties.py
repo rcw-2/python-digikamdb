@@ -80,12 +80,7 @@ class BasicProperties(DigikamTable):
     
     def __contains__(self, prop: Union[str, int, Sequence]) -> bool:
         """in operator"""
-        try:
-            return self._select_prop(prop).one_or_none() is not None
-        except MultipleResultsFound:
-            raise DigikamMultipleObjectsFound('Multiple %s objects for %s=%s' % (
-                self.Class.__name__, self._id_column, prop
-            ))
+        return self._select_prop(prop).count() > 0
     
     def __getitem__(self, prop: Union[str, int, Sequence]) -> str:  # noqa: F821
         """[] operator"""
@@ -259,7 +254,7 @@ class BasicProperties(DigikamTable):
         else:
             # key must be iterable from here on
             ret = list(key)
-            if len(ret) > len(self._key_col):
+            if len(ret) > len(self._key_col):               # pragma: no cover
                 ret = ret[:len(self._key_col)]
         
         # make sure list is long enough
@@ -277,7 +272,7 @@ class BasicProperties(DigikamTable):
         value: Union[str, int, Tuple, List, None]
     ) -> Union[str, int, Tuple]:
         """Preprocesses values for [] operations."""
-        if isinstance(self._value_col, str):
+        if isinstance(self._value_col, str):                # pragma: no cover
             return value
         
         if value is None:
@@ -287,7 +282,7 @@ class BasicProperties(DigikamTable):
         else:
             # value must be iterable from here on
             ret = list(value)
-            if len(ret) > len(self._value_col):
+            if len(ret) > len(self._value_col):             # pragma: no cover
                 ret = ret[:len(self._value_col)]
         
         # make sure list is long enough

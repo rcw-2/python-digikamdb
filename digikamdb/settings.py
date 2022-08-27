@@ -52,7 +52,7 @@ class Settings(DigikamTable):
     _id_column = '_keyword'
     
     def __iter__(self) -> Iterable:
-        for s in super().__iter__:
+        for s in super().__iter__():
             yield s._keyword
     
     def __getitem__(self, key: str) -> str:

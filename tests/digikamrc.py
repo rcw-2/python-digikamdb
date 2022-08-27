@@ -1,14 +1,12 @@
 import logging
 import os
-from shutil import rmtree, unpack_archive
+from shutil import copyfile, rmtree, unpack_archive
 from subprocess import run, CalledProcessError
 from tempfile import mkdtemp
 
 from sqlalchemy.exc import NoResultFound    # noqa: F401
 
-from digikamdb import (
-    Digikam, DigikamConfigError, DigikamDataIntegrityError    # noqa: F401
-)
+from digikamdb import *                                     # noqa: F403
 
 from .base import DigikamTestBase
 
@@ -106,5 +104,13 @@ class DigikamRCTest(DigikamTestBase):
         self.dk = Digikam('digikamrc')
         for al in self.dk.albums:
             self.assertIsInstance(al.relativePath, str)
+    
+    def test_rc_mysql_internal(self):
+        copyfile(
+            os.path.join(self.datadir, 'digikamrc.mysql-internal'),
+            os.path.join(self.home, '.config', 'digikamrc')
+        )
         
-
+        with self.assertRaises(DigikamConfigError):
+            self.dk = Digikam('digikamrc')
+        

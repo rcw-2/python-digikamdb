@@ -122,6 +122,10 @@ Types of special properties
     :members:
     :member-order:  bysource
 
+.. autoclass::  ExifMeteringMode
+    :members:
+    :member-order:  bysource
+
 .. autoclass::  ExifOrientation
     :members:
     :member-order:  bysource

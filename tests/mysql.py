@@ -7,6 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import NoResultFound                    # noqa: F401
 
 from digikamdb import Digikam, DigikamDataIntegrityError    # noqa: F401
+from digikamdb.types import *                               # noqa: F403
 
 from .base import DigikamTestBase
 from .sanity import SanityCheck
@@ -64,6 +65,13 @@ class MySQLTestBase(DigikamTestBase):
                         'At the distillery Christian Drouin',
                         datetime.fromisoformat('2022-07-10T12:42:56'),
                     ),
+                },
+            },
+            {
+                'id':   3,
+                'name': 'IMG39991.JPG',
+                'imagemeta': {
+                    'lens': 'Canon EF-S 10-22mm f/3.5-4.5 USM',
                 },
             },
             {

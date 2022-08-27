@@ -150,7 +150,7 @@ class Digikam:
                             config[key1] = value
                             break
         
-        except DigikamError:
+        except DigikamError:                                # pragma: no cover
             raise
         except Exception as e:
             raise DigikamConfigError('Error reading config file: ' + str(e))
@@ -177,7 +177,7 @@ class Digikam:
                 )
                 return create_engine(db_str, future = True, echo = sql_echo)
                 
-            if config['db_type'] == 'QSQLITE':
+            elif config['db_type'] == 'QSQLITE':
                 log.debug('Using SQLite database in %s', config['db_name'])
                 return create_engine(
                     'sqlite:///%s' % (
@@ -185,10 +185,13 @@ class Digikam:
                     ),
                     future = True,
                     echo = sql_echo)
-
+            
+            else:
+                raise DigikamConfigError('Unknown database type ' + config['db_type'])
+        
         except DigikamError:
             raise
-        except KeyError as e:
+        except KeyError as e:                               # pragma: no cover
             if e.args[0] in cls._db_config_keys:
                 raise DigikamConfigError(
                     'Configuration not found: ' + cls._db_config_keys[e.args[0]]
