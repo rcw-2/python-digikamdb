@@ -339,7 +339,7 @@ class AlbumRoots(DigikamTable):
                         ident = 'volumeid:?uuid=' + uuids[dev]
                         spath = '/' + os.path.relpath(path, mpt).rstrip('.')
                         break
-                if mpt == '/':
+                if mpt == '/':                              # pragma: no cover
                     raise DigikamFileError('No mountpoint found for ' + path)
         
         else:

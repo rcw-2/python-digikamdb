@@ -287,7 +287,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                 DigikamDataIntegrityError
             """
             d = self._rgt - self._lft
-            if d <= 0 or d % 2 == 0:
+            if d <= 0 or d % 2 == 0:                        # pragma: no cover
                 raise DigikamDataIntegrityError(
                     'Tag table: inconsistent lft, rgt in id=%d (%d,%d)' % (
                         self.id, self.lft, self.rgt
@@ -295,7 +295,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                 )
             pos = self._lft
             for ch in self.children.order_by(self.__class__._lft):
-                if not (self._lft < ch._lft and self._rgt > ch._rgt):
+                if not (self._lft < ch._lft and self._rgt > ch._rgt): # pragma: no cover
                     raise DigikamDataIntegrityError(
                         'Tag table inconsistent: parent %d (%d,%d), child %d (%d,%d)' % (
                             self.id, self._lft, self._rgt, ch.id, ch._lft, ch._rgt
@@ -306,13 +306,13 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                         continue
                     if ch._rgt < ch2._lft or ch._lft > ch2._rgt:
                         continue
-                    raise DigikamDataIntegrityError(
+                    raise DigikamDataIntegrityError(        # pragma: no cover
                         'Tag table has ' +
                         'overlapping siblings %d (%d,%d), %d (%d,%d)' % (
                             ch.id, ch._lft, ch._rgt, ch2.id, ch2._lft, ch2._rgt
                         )
                     )
-                if ch._lft > pos + 1:
+                if ch._lft > pos + 1:                       # pragma: no cover
                     raise DigikamDataIntegrityError(
                         'Tag table inconsistent: gap before %d (%d), last pos %d' % (
                             ch.id, ch._lft, pos
@@ -469,7 +469,7 @@ class Tags(DigikamTable):
         if not self._do_after_delete:                       # pragma: no cover
             return
         
-        if instance._rgt - instance._lft > 1:
+        if instance._rgt - instance._lft > 1:               # pragma: no cover
             raise DigikamError('Cannot delete tag with sub-tags')
 
         log.debug('Reordering nested sets for tags after delete')

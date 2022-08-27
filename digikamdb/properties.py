@@ -96,7 +96,7 @@ class BasicProperties(DigikamTable):
             raise DigikamObjectNotFound('No %s object for %s=%s' % (
                 self.Class.__name__, self._id_column, prop
             ))
-        except MultipleResultsFound:
+        except MultipleResultsFound:                        # pragma: no cover
             raise DigikamMultipleObjectsFound('Multiple %s objects for %s=%s' % (
                 self.Class.__name__, self._id_column, prop
             ))
@@ -135,7 +135,7 @@ class BasicProperties(DigikamTable):
         
         try:
             row = self._select_prop(prop).one_or_none()
-        except MultipleResultsFound:
+        except MultipleResultsFound:                        # pragma: no cover
             raise DigikamMultipleObjectsFound('Multiple %s objects for %s=%s' % (
                 self.Class.__name__, self._id_column, prop
             ))
@@ -234,7 +234,7 @@ class BasicProperties(DigikamTable):
         )
         try:
             row = self._select_prop(prop).one_or_none()
-        except MultipleResultsFound:
+        except MultipleResultsFound:                        # pragma: no cover
             raise DigikamMultipleObjectsFound('Multiple %s objects for %s=%s' % (
                 self.Class.__name__, self._id_column, prop
             ))

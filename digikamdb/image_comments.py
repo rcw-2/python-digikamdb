@@ -113,13 +113,13 @@ class ImageTitles(ImageComments):
         key = super()._post_process_key(key)
         if isinstance(key, tuple):
             return key[0]
-        return key
+        return key                                          # pragma: no cover
     
     def _post_process_value(self, value: 'DigikamObject') -> Tuple:  # noqa: F821
         """Preprocesses values for [] operations."""
         value = super()._post_process_value(value)
         if isinstance(value, tuple):
-            return value[0]
+            return value[0]                                 # pragma: no cover
         return value
 
 

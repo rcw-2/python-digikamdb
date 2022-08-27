@@ -220,7 +220,7 @@ class Albums(DigikamTable):
                     log.debug('Looging for album %s in root %d', rpath, root.id)
                     return root.albums.filter_by(_relativePath = rpath).one_or_none()
                 # Multiple results should not occur...
-                except MultipleResultsFound:
+                except MultipleResultsFound:                # pragma: no cover
                     raise DigikamDataIntegrityError(
                         'Database contains overlapping album roots'
                     )

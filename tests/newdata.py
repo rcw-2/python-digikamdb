@@ -88,6 +88,8 @@ class NewDataRoot:
             mkdtemp(),
             'Album Root 2'
         )
+        with self.assertRaises(DigikamFileError):
+            self.dk.albumRoots.add('/not/existing/directory')
     
     def test15_verify_roots(self):
         new_data = self.__class__.new_data
@@ -216,6 +218,18 @@ class NewData(NewDataRoot):
                 self.assertIn(album, found)
                 self.assertIs(album, self.dk.albums.find(album.abspath, True))
     
+    def test22_album_properties(self):
+        albumdata = self.__class__.new_data['albums'][2]
+        album = self.dk.albums[albumdata['id']]
+        album.caption = 'My Album'
+        album.collection = 'My Collection'
+        self.dk.session.commit()
+        albumdata.update({
+            'caption':      'My Album',
+            'collection':   'My Collection',
+        })
+        
+        
     def test28_verify_albums(self):
         new_data = self.__class__.new_data
         for albumdata in new_data['albums']:

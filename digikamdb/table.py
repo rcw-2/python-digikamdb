@@ -76,13 +76,14 @@ class DigikamTable:
         try:
             if self._raise_on_not_found:
                 return self._select(**kwargs).one()
-            else:
+            else:                                           # pragma: no cover
+                # This will not happen now, but we keep it for safety
                 return self._select(**kwargs).one_or_none()
         except NoResultFound:
             raise DigikamObjectNotFound('No %s object for %s=%s' % (
                 self.Class.__name__, self._id_column, key
             ))
-        except MultipleResultsFound:
+        except MultipleResultsFound:                        # pragma: no cover
             raise DigikamMultipleObjectsFound('Multiple %s objects for %s=%s' % (
                 self.Class.__name__, self._id_column, key
             ))
@@ -180,7 +181,7 @@ class DigikamTable:
             self.Class.__name__,
             kwargs
         )
-        if not kwargs:
+        if not kwargs:                                      # pragma: no cover
             raise ValueError('Objects to delete must be specified')
 
         self._session.execute(
