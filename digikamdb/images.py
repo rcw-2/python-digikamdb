@@ -341,7 +341,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         # Relationship to Tags
         
         @property
-        def tags(self) -> List['Tag']:                      # noqa: F821
+        def tags(self) -> Iterable['Tag']:                  # noqa: F821
             """
             The image's tags (no setter)
             

@@ -150,6 +150,11 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                 raise DigikamAssignmentError('Tag.icon must be Image, str, or None')
         
         @property
+        def images(self) -> Iterable['Image']:              # noqa: F821
+            """Images belonging to the tag (no setter)"""
+            return self._images
+        
+        @property
         def _ancestors(self) -> List:
             """
             Returns the ancestors of a tag.
@@ -185,7 +190,10 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             """
             Returns the tag's parent object.
             
-            For the root tag, returns ``None``.
+            Returns ``None`` for
+            
+            * the root tag on MySQL or
+            * tags at top level on SQLite
             """
 
             # Tags without a parent
