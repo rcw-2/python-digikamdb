@@ -66,12 +66,22 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
         _properties = relationship(
             'TagProperty',
             primaryjoin = 'foreign(TagProperty._tagid) == Tag._id',
-            lazy = 'dynamic')
+            lazy = 'dynamic'
+        )
         _iconObj = relationship(
             'Image',
             primaryjoin = 'foreign(Image._id) == Tag._icon',
             viewonly = True,
-            uselist = False)
+            uselist = False
+        )
+        _images = relationship(
+            'Image',
+            primaryjoin = 'foreign(ImageTags.c.tagid) == Tag._id',
+            secondaryjoin = 'foreign(ImageTags.c.imageid) == Image._id',
+            secondary = 'ImageTags',
+            back_populates = '_tags',
+            lazy = 'dynamic'
+        )
         
         # Special functions
         

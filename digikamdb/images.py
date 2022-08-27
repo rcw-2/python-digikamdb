@@ -66,44 +66,55 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         _albumObj = relationship(
             'Album',
             primaryjoin = 'foreign(Image._album) == Album._id',
-            back_populates = '_images')
+            back_populates = '_images'
+        )
         _comments = relationship(
             'ImageComment',
             primaryjoin = 'foreign(ImageComment._imageid) == Image._id',
-            lazy = 'dynamic')
+            lazy = 'dynamic'
+        )
         _copyright = relationship(
             'ImageCopyrightEntry',
             primaryjoin = 'foreign(ImageCopyrightEntry._imageid) == Image._id',
-            lazy = 'dynamic')
+            lazy = 'dynamic'
+        )
         _history = relationship(
             'ImageHistory',
             primaryjoin = 'foreign(ImageHistory._imageid) == Image._id',
-            uselist = False)
+            uselist = False
+        )
         _information = relationship(
             'ImageInformation',
             primaryjoin = 'foreign(ImageInformation._imageid) == Image._id',
-            uselist = False)
+            uselist = False
+        )
         _metadata = relationship(
             'ImageMetadata',
             primaryjoin = 'foreign(ImageMetadata._imageid) == Image._id',
-            uselist = False)
+            uselist = False
+        )
         _position = relationship(
             'ImagePosition',
             primaryjoin = 'foreign(ImagePosition._imageid) == Image._id',
-            uselist = False)
+            uselist = False
+        )
         _properties = relationship(
             'ImageProperty',
             primaryjoin = 'foreign(ImageProperty._imageid) == Image._id',
-            lazy = 'dynamic')
+            lazy = 'dynamic'
+        )
         _tags = relationship(
             'Tag',
             primaryjoin = 'foreign(ImageTags.c.imageid) == Image._id',
             secondaryjoin = 'foreign(ImageTags.c.tagid) == Tag._id',
-            secondary = 'ImageTags')
+            secondary = 'ImageTags',
+            back_populates = '_images'
+        )
         _videometadata = relationship(
             'VideoMetadata',
             primaryjoin = 'foreign(VideoMetadata._imageid) == Image._id',
-            uselist = False)
+            uselist = False
+        )
         
         # -- Relationship properties -----------------------------------------
         
