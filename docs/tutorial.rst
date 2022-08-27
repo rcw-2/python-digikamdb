@@ -16,14 +16,14 @@ Digikam uses a SQLite or MySQL database to store its metadata. Access to the
 database is provided by the :class:`~digikamdb.conn.Digikam` class. There are
 several ways to specify the Digikam database:
 
-#.  Digikam-DB can use the Digikam configuration:
+*   Digikam-DB can use the Digikam configuration:
     
     .. code-block:: python
         
         from digikamdb import Digikam
         dk = Digikam('digikamrc')
     
-#.  Use a database URL suitable for SQLAlchemy's :func:`~sqlalchemy.create_engine`
+*   Use a database URL suitable for SQLAlchemy's :func:`~sqlalchemy.create_engine`
     function. For example, the default location (SQLite database) can be accessed
     with
     
@@ -45,7 +45,7 @@ several ways to specify the Digikam database:
     user with reduced rights (e.g. only ``SELECT`` and ``SHOW VIEW``) to keep
     your database safe if you do not need write access. 
     
-#.  You can also use a previously created SQLAlchemy :class:`~sqlalchemy.engine.Engine`
+*   You can also use a previously created SQLAlchemy :class:`~sqlalchemy.engine.Engine`
     object. This example uses the same database as the previous one:
     
     .. code-block:: python
@@ -134,14 +134,14 @@ Images can be accessed through the :attr:`~digikamdb.conn.Digikam.images`
 property of the ``Digikam`` class in different ways (``dk`` is a
 :class:`~digikamdb.conn.Digikam` object, see above):
 
-#. Iterating over all images:
+*   Iterating over all images:
     
     .. code-block:: python
         
         for image in dk.images:
             print(image.id, image.name, image.abspath)
 
-#. Via the ``[]`` operator:
+*   Via the ``[]`` operator:
     
     .. code-block:: python
         
@@ -149,7 +149,7 @@ property of the ``Digikam`` class in different ways (``dk`` is a
     
     To access images by name, use the ``find`` method.
 
-#. Via the :meth:`~digikamdb.images.Images.find` method:
+*   Via the :meth:`~digikamdb.images.Images.find` method:
     
     .. code-block:: python
         
@@ -159,7 +159,7 @@ property of the ``Digikam`` class in different ways (``dk`` is a
     ``find`` searches a path (which can be a directory or a file) and returns
     a list of all matching images.
 
-#. Via a the :meth:`~digikamdb.images.Images.select` method:
+*   Via a the :meth:`~digikamdb.images.Images.select` method:
     
     .. code-block:: python
         
@@ -216,8 +216,8 @@ The "plural" properties can be used to access other titles and captions.
 
 .. seealso::
     
-    * :class:`~_sqla.ImageTitles` class reference
-    * :class:`~_sqla.ImageCaptions` class reference
+    * :class:`~digikamdb.image_comments.ImageTitles` class reference
+    * :class:`~digikamdb.image_comments.ImageCaptions` class reference
 
 Tags
 ~~~~~
@@ -247,14 +247,14 @@ Albums can be accessed through the :attr:`~digikamdb.conn.Digikam.albums`
 property of the ``Digikam`` class in different ways (``dk`` is a
 :class:`~digikamdb.conn.Digikam` object, see above):
 
-#. Iterating over all albums:
+*   Iterating over all albums:
     
     .. code-block:: python
         
         for album in dk.albums:
             print(album.id, album.caption, album.abspath)
 
-#. Via the ``[]`` operator:
+*   Via the ``[]`` operator:
     
     .. code-block:: python
         
@@ -262,7 +262,7 @@ property of the ``Digikam`` class in different ways (``dk`` is a
     
     To access albums by directory, use the ``find`` method.
 
-#. Via the :meth:`~digikamdb.albums.Albums.find` method:
+*   Via the :meth:`~digikamdb.albums.Albums.find` method:
     
     .. code-block:: python
         
@@ -272,7 +272,7 @@ property of the ``Digikam`` class in different ways (``dk`` is a
     ``find`` searches a path (which can be a directory or a file) and returns
     a list of all matching albums.
 
-#. Via a the :meth:`~digikamdb.albums.Albums.select` method:
+*   Via a the :meth:`~digikamdb.albums.Albums.select` method:
     
     .. code-block:: python
         

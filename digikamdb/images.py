@@ -370,7 +370,16 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         
         @property
         def status(self) -> Status:
-            """The image's status (read-only)"""
+            """
+            The image's status (read-only)
+            
+            Returns:
+                * 0 - undefined
+                * 1 - visible
+                * 2 - hidden
+                * 3 - trashed
+                * 4 - obsolete
+            """
             return Status(self._status)
         
         @property

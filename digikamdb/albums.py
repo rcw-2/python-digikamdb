@@ -4,8 +4,8 @@ Digikam Albums
 
 import logging
 import os
-from datetime import datetime
-from typing import List, Union
+from datetime import date
+from typing import List, Optional, Union
 
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import MultipleResultsFound
@@ -63,14 +63,14 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
         
         @property
         def root(self) -> 'AlbumRoot':                      # noqa: F821
-            """Returns the album's root"""
+            """The album collection's root object"""
             return self._root
         
         # Relationships to Images
         
         @property
-        def icon(self) -> 'Image':                          # noqa: F821
-            """Returns the album's icon"""
+        def icon(self) -> Optional['Image']:                # noqa: F821
+            """The album's icon, if set"""
             return self._iconObj
         
         @property
@@ -91,7 +91,7 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
             return self._relativePath
         
         @property
-        def date(self) -> datetime:
+        def date(self) -> date:
             """The album's date (read-only)"""
             return self._date
         
@@ -106,7 +106,11 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
         
         @property
         def collection(self) -> str:
-            """The album's collection"""
+            """
+            The album's collection
+            
+            This property is named *Category* in Digikam.
+            """
             return self._collection
         
         @collection.setter

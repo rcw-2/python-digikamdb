@@ -48,7 +48,8 @@ In this small example, we
 * connect to the database via a :class:`~digikamdb.conn.Digikam` object,
 * create a tag **my tag** if it does not exist yet,
 * add this tag to image :file:`/path/to/my/image.jpg`,
-* change some properties of :file:`/path/to/my/image.jpg` and
+* change some properties of :file:`/path/to/my/image.jpg`,
+* commit these changes to the database and
 * print file name and complete path of the image with id **42**.
 
 .. code-block:: python
@@ -66,6 +67,7 @@ In this small example, we
     img.caption = 'My Caption'
     img.title = 'My Title'
     img.information.rating = 3
+    dk.session.commit()     # Commit changes to database
     
     img2 = dk.images[42]    # Access image by id
     print(img2.name, img2.abspath())
@@ -75,7 +77,9 @@ Limitations
 ------------
 
 * Adding or deleting albumroots, albums and images is not supported.
-* Digikam-DB will probably not run under Windows or MacOS
+* Digikam-DB will probably not run under Windows or MacOS.
+* Fractions of seconds on datetime fields are ignored (this is standard on
+  MySQL, but not on SQLite).
 * The only tables implemented are:
   
   * AlbumRoots
@@ -87,8 +91,9 @@ Limitations
   * ImageMetadata
   * ImagePositions
   * Images
+  * ImageTags
   * Settings
-  * Tags
   * TagProperties
+  * Tags
   * VideoMetadata
 
