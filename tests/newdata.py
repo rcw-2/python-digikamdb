@@ -205,6 +205,10 @@ class NewData(NewDataRoot):
     
     def test21_find_albums(self):
         new_data = self.__class__.new_data
+        
+        self.assertIsNone(self.dk.albums.find('/', True))
+        self.assertIsNone(self.dk.albums.find('/not/existing/path', True))
+       
         found = self.dk.albums.find('/')
         for albumdata in new_data['albums']:
             with self.subTest(albumidx = albumdata['_idx']):
