@@ -180,6 +180,6 @@ class CheckImageData:
         for id_, info in self.__class__.old_image_info.items():
             with self.subTest(imageid = id_):
                 self._check_info(self.dk.images[id_], info)
-                
- 
+    
+
             

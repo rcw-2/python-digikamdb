@@ -39,6 +39,7 @@ class NewDataRoot:
             'images':       [],
             'tags':         [],
             'settings':     [],
+            'imagetags':    {},
         }
         self.__class__.new_data = new_data
     
@@ -152,15 +153,17 @@ class NewData(NewDataRoot):
         data: List,
         albumRoot: int,
         relativePath: str,
-        date: datetime
+        date: datetime,
+        caption: str = None,
+        collection: str = None
     ) -> 'Album':                                           # noqa: F821
         with self.subTest(Album = relativePath):
             new_album = self.dk.albums._insert(
                 albumRoot = albumRoot,
                 relativePath = relativePath,
                 date = date,
-                caption = None,
-                collection = None,
+                caption = caption,
+                collection = collection,
                 icon = None
             )
             self.dk.session.commit()
@@ -175,8 +178,8 @@ class NewData(NewDataRoot):
                 'albumRoot':    albumRoot,
                 'relativePath': relativePath,
                 'date':         date,
-                'caption':      None,
-                'collection':   None,
+                'caption':      caption,
+                'collection':   collection,
                 'icon':         None,
                 'path':         abspath,
             })
@@ -190,8 +193,24 @@ class NewData(NewDataRoot):
         
         os.mkdir(os.path.join(root1.abspath, 'New_Album'))
         self._add_album(new_data['albums'], root1.id, '/', today)
-        self._add_album(new_data['albums'], root1.id, '/New_Album', today)
+        self._add_album(
+            new_data['albums'],
+            root1.id,
+            '/New_Album',
+            today,
+            'New Album',
+            'My Albums'
+        )
         self._add_album(new_data['albums'], root2.id, '/', today)
+    
+    def test21_find_albums(self):
+        new_data = self.__class__.new_data
+        found = self.dk.albums.find('/')
+        for albumdata in new_data['albums']:
+            with self.subTest(albumidx = albumdata['_idx']):
+                album = self.dk.albums[albumdata['id']]
+                self.assertIn(album, found)
+                self.assertIs(album, self.dk.albums.find(album.abspath, True))
     
     def test28_verify_albums(self):
         new_data = self.__class__.new_data
@@ -645,7 +664,33 @@ class NewData(NewDataRoot):
                     for prop, value in tagdata['properties'].items():
                         self.assertEqual(tag.properties[prop], value)
     
-    def test70_add_settings(self):
+    def test70_add_image_tags(self):
+        new_data = self.__class__.new_data
+        img = self.dk.images[new_data['images'][0]['id']]
+        if not img.id in new_data['imagetags']:
+            new_data['imagetags'][img.id] = []
+        imgtagdata = new_data['imagetags'][img.id]
+        
+        tag = self.dk.tags[new_data['tags'][0]['id']]
+        img.tags.append(tag)
+        imgtagdata.append(tag.id)
+        
+        tag = self.dk.tags[new_data['tags'][1]['id']]
+        img.tags.append(tag)
+        imgtagdata.append(tag.id)
+
+        self.dk.session.commit()
+    
+    def test78_verify_image_tags(self):
+        new_data = self.__class__.new_data
+        for imgid, tagids in new_data['imagetags'].items():
+            with self.subTest(imageid = imgid):
+                img = self.dk.images[imgid]
+                for tagid in tagids:
+                    tag = self.dk.tags[tagid]
+                    self.assertIn(tag, img.tags)
+    
+    def test80_add_settings(self):
         new_data = self.__class__.new_data
         self.assertTrue('databaseUserImageFormats' not in self.dk.settings)
         self.dk.settings['databaseUserImageFormats'] = '-cr2'
@@ -655,7 +700,7 @@ class NewData(NewDataRoot):
             'value':    '-cr2',
         })
     
-    def test71_change_settings(self):
+    def test81_change_settings(self):
         new_data = self.__class__.new_data
         setdata = new_data['settings'][0]
         self.assertEqual(self.dk.settings[setdata['keyword']], setdata['value'])
@@ -663,7 +708,7 @@ class NewData(NewDataRoot):
         self.dk.session.commit()
         setdata['value'] += ';-xcf'
     
-    def test78_verify_settings(self):
+    def test88_verify_settings(self):
         new_data = self.__class__.new_data
         for setdata in new_data['settings']:
             self.assertEqual(self.dk.settings[setdata['keyword']], setdata['value'])
