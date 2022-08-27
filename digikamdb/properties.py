@@ -174,6 +174,23 @@ class BasicProperties(DigikamTable):
             
             yield self._post_process_key(key), self._post_process_value(row)
     
+    def update(self, values: Optional[Mapping] = None, **kwargs):
+        """
+        Updates multiple properties.
+        
+        This method behaves like :meth:`dict.update`.
+        
+        Args:
+            values:     ``dict`` with new values
+            kwargs:     Mapping for new values
+        """
+        if values:
+            for key, value in values.items():
+                self[key] = value
+        if kwargs:
+            for key, value in kwargs.items():
+                self[key] = value
+    
     def _select_self(self) -> '~sqlalchemy.orm.Query':      # noqa: F821
         """Selects all properties of the parent object."""
         return self._select(**{ self._parent_id_col: self.parent.id })
