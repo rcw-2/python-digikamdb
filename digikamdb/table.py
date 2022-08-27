@@ -93,7 +93,7 @@ class DigikamTable:
         **kwargs
     ) -> '~sqlalchemy.orm.Query':                           # noqa: F821
         """
-        Returns the result of ``filter_by`` on a global select.
+        Returns the result of a ``SELECT`` on the table.
         
         Args:
             args:   Each positional argument must be a string containing

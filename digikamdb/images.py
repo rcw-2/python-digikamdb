@@ -40,7 +40,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         Digikam splits metadata (Exif and own) in several tables. `Image`
         has the corresponding properties:
         
-        * :attr:`caption` and :attr:`title`
+        * :attr:`captions` and :attr:`titles`
         * :attr:`copyright`
         * :attr:`imagemeta` (for pictures)
         * :attr:`information`
@@ -112,7 +112,10 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def album(self) -> 'Album':                      # noqa: F821
             """
-            Returns the album (directory) to which the image belongs.
+            The album object to which the image belongs (read-only)
+            
+            This corresponds to the directory the image file where the image
+            file resides.
             """
             return self._albumObj
         
@@ -121,8 +124,10 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def captions(self) -> ImageCaptions:
             """
-            Returns image's captions object.
+            The image's captions object (read-only)
             
+            This property contains all the image's captions. To access the
+            default caption, you can also use the :attr:`caption` property.
             See :class:`Captions` for a more detailed description.
             """
             if not hasattr(self, '_captionsObj'):
@@ -132,7 +137,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def caption(self) -> str:
             """
-            Returns or sets the image's default caption.
+            The image's default caption
             
             The default caption has 'x-default' as language and ``None``
             as author. For comments in other languages or from other authors,
@@ -147,7 +152,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def titles(self) -> ImageTitles:
             """
-            Returns the image's titles.
+            The image's titles
             
             Digikam supports multilingual titles. To access the title in a
             specific language, use the ``[]`` operator:
@@ -167,7 +172,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def title(self) -> str:
             """
-            Returns the title in default language ('x-default').
+            The image's title in default language ('x-default')
             
             For comments in other languages, use :attr:`~Image.titles`.
             """
@@ -182,7 +187,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def copyright(self) -> ImageCopyright:
             """
-            Returns the copyright data.
+            The image's copyright data
             
             """
             if not hasattr(self, '_copyrightObj'):
@@ -221,9 +226,9 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def position(self) -> Optional[Tuple]:
             """
-            Returns or sets GPS location data.
+            The image's GPS location data.
             
-            The Value is a tuple with latitude, longitude and altitude. When
+            The value is a tuple with latitude, longitude and altitude. When
             setting the property, latitude and longitude can be given as a
             signed float, as a stringified float or as a string containing
             the absolute value followed by ``N``, ``S``, ``W`` or ``E``. The
@@ -313,7 +318,9 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def properties(self) -> ImageProperties:
             """
-            Returns the image's properties
+            The image's properties (no setter)
+            
+            See :class:`~_sqla.ImageProperties` for more information.
             """
             
             if not hasattr(self, '_propertiesObj'):
@@ -324,14 +331,18 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         
         @property
         def tags(self) -> List['Tag']:                      # noqa: F821
-            """Returns the image's tags"""
+            """
+            The image's tags (no setter)
+            
+            Tags can be changed by modifying the list.
+            """
             return self._tags
         
         # Relationship to VideoMetadata
         
         @property
         def videometa(self) -> 'VideoMetadata':             # noqa: F821
-            """Returns the metadata for video files"""
+            """Metadata for video files (no setter)"""
             return self._videometadata
         
         # Column properties:
@@ -348,10 +359,12 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         
         @property
         def status(self) -> Status:
+            """The image's status (read-only)"""
             return Status(self._status)
         
         @property
         def category(self) -> Category:
+            """The image's category (read-only)"""
             return Category(self._category)
         
         @validates('_status', '_category')
@@ -360,18 +373,24 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         
         @property
         def modificationDate(self) -> datetime:
+            """The image file's modification date (read-only)"""
             return self._modificationDate
         
         @property
         def fileSize(self) -> int:
+            """The image file's size (read-only)"""
             return self._fileSize
         
         @property
         def uniqueHash(self) -> str:
+            """The image's unique hash (read-only)"""
             return self._uniqueHash
         
         @property
         def manualOrder(self) -> int:
+            """
+            The image's manual order in its album (no setter)
+            """
             return self._manualOrder
         
         # Other properties and members

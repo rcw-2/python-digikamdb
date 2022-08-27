@@ -37,6 +37,10 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
         
         See also:
             * Class :class:`~digikamdb.albums.Albums`
+        
+        .. todo::
+            * Function to sort images in an album
+            * __contains__ function (image in album)
         """
 
         __tablename__ = 'Albums'
@@ -113,7 +117,7 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
         
         @property
         def abspath(self) -> str:
-            """Returns the album folder's absolute path"""
+            """The album folder's absolute path (read-only)"""
             if self.relativePath == '/':
                 return self.root.abspath
             return os.path.abspath(os.path.join(
@@ -180,7 +184,10 @@ class Albums(DigikamTable):
             if os.path.commonpath([r.abspath, abspath]) == r.abspath:
                 log.debug('Root %d (%s) is a parent dir', r.id, r.abspath)
                 roots_over.append(r)
-            if os.path.commonpath([r.abspath, abspath]) == abspath:
+            if (
+                os.path.commonpath([r.abspath, abspath]) == abspath
+                and r.abspath != abspath
+            ):
                 log.debug('Root %d (%s) is a subdir', r.id, r.abspath)
                 roots_under.append(r)
         
@@ -202,7 +209,7 @@ class Albums(DigikamTable):
         
         if roots_over:
             root = roots_over[0]
-            rpath = '/' + os.path.relpath(abspath, root.abspath)
+            rpath = '/' + os.path.relpath(abspath, root.abspath).rstrip('.')
             
             if exact:
                 try:

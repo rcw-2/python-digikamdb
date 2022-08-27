@@ -27,7 +27,7 @@ class ImageComments(BasicProperties):
     
     Args:
         parent:     Corresponding Image object
-        type:       Comment type (1 for caption, 3 for title)
+        type_:      Comment type (1 for caption, 3 for title)
     """
     #: Funktion returning the table class
     _class_function = _imageproperty_class
@@ -98,6 +98,9 @@ class ImageTitles(ImageComments):
         parent:     Image object the title belongs to.
     """
     
+    #: Value column
+    _value_col = '_comment'
+
     def __init__(self, parent: 'Image'):                    # noqa: F821
         # set type=3
         super().__init__(parent, 3)

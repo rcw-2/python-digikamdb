@@ -43,7 +43,7 @@ several ways to specify the Digikam database:
     For specification of the database, use the values you entered in the
     Digikam database configuration. With MySQL, you can also use a different
     user with reduced rights (e.g. only ``SELECT`` and ``SHOW VIEW``) to keep
-    your database safe. 
+    your database safe if you do not need write access. 
     
 #.  You can also use a previously created SQLAlchemy :class:`~sqlalchemy.engine.Engine`
     object. This example uses the same database as the previous one:
@@ -55,6 +55,13 @@ several ways to specify the Digikam database:
         engine = create_engine('mysql+pymysql://user:passwd@mysql.mydomain.org/mydatabase')
         dk = Digikam(engine)
 
+.. note::
+    Digikam-DB does not do commits by itself, so you have do this manually at
+    appropriate places to make sure your changes are actually written to the
+    database. The :attr:`~digikamdb.conn.Digikam.session` property contains the
+    SQLAlchemy session and can be used to do this (``dk.session.commit()`` in
+    the examples above).
+
 .. seealso::
     
     * `Digikam Database Settings <https://docs.kde.org/trunk5/en/digikam-doc/digikam/using-setup.html#using-setup-database>`_
@@ -63,6 +70,9 @@ several ways to specify the Digikam database:
 
 General API Structure
 ----------------------
+
+Digikam object properties
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Data stored in the database can be accessed through properties of the Digikam
 class, as described in the following chapters. The properties are
@@ -76,7 +86,7 @@ class, as described in the following chapters. The properties are
 With the exception of ``settings``, these properties behave alike:
 
 * The properties are iterable, yielding objects of the respective type
-  (:class:`~_sqla.Image`, :class:`~_sqla.Album`, :class:`_sqla.AlbumRoot`
+  (:class:`~_sqla.Image`, :class:`~_sqla.Album`, :class:`~_sqla.AlbumRoot`
   or :class:`~_sqla.Tag`). These classes are mapped to the respective database
   tabley by SQLAlchemy.
 * Individual objects can be accessed by their id via the ``[]`` operator. Some
@@ -114,15 +124,15 @@ Working with Images
 --------------------
 
 .. note::
-    Digikam-DB does not directly support creating new images, or deleting
-    existing ones.
+    Digikam-DB does not directly support creating new images, or deleting,
+    renaming or moving existing ones.
 
 Retrieving Images
 ~~~~~~~~~~~~~~~~~~
 
 Images can be accessed through the :attr:`~digikamdb.conn.Digikam.images`
-property of the ``Digikam`` class in different ways (``dk`` is a ``Digikam``
-object, see above):
+property of the ``Digikam`` class in different ways (``dk`` is a
+:class:`~digikamdb.conn.Digikam` object, see above):
 
 #. Iterating over all images:
     
@@ -139,7 +149,7 @@ object, see above):
     
     To access images by name, use the ``find`` method.
 
-#. Via the :meth:`~digikamdb.tags.Images.find` method:
+#. Via the :meth:`~digikamdb.images.Images.find` method:
     
     .. code-block:: python
         
@@ -149,7 +159,7 @@ object, see above):
     ``find`` searches a path (which can be a directory or a file) and returns
     a list of all matching images.
 
-#. Via a the :meth:`~digikamdb.images.images.select` method:
+#. Via a the :meth:`~digikamdb.images.Images.select` method:
     
     .. code-block:: python
         
@@ -162,7 +172,7 @@ object, see above):
         # Find all images modified in 2020 or later:
         imglist = dk.images.select("modificationDate >= '2020-01-01 00:00:00'")
     
-    :meth:`~digikamdb.images.images.select` supports the following attributes:
+    :meth:`~digikamdb.images.Images.select` supports the following attributes:
     
     * :attr:`~_sqla.Image.id`
     * :attr:`~_sqla.Image.album` (numeric field containing the album id)
@@ -174,7 +184,47 @@ object, see above):
     * :attr:`~_sqla.Image.uniqueHash`
     * :attr:`~_sqla.Image.manualOrder`
 
-.. todo:: Describe modifying images
+.. seealso::
+    
+    * :class:`~digikamdb.images.Images` class reference
+    * :class:`~_sqla.Image` class reference
+
+Titles and Captions
+~~~~~~~~~~~~~~~~~~~~
+
+Titles and captions are text fields usually containing descriptive information
+about the image. Both are multi-lingual, captions can also have an author and a
+date. They are accessed via the ``Image`` properties :attr:`~_sqla.Image.titles`
+and :attr:`~_sqla.Image.captions`. For both, there is a "quick access" attribute:
+
+* :attr:`~_sqla.Image.title`: language = ``x-default``
+* :attr:`~_sqla.Image.caption`: language = ``x-default``, auhtor = ``None``
+
+The "plural" properties can be used to access other titles and captions.
+
+.. code-block:: python
+    
+    print(img.title)                # print title in 'x-default'
+    print(img.titles['x-default'])  # same as above
+    
+    print(img.caption)              # print caption in 'x-default', no author
+    print(img.captions[('x-default', None)]
+                                    # same as above
+    
+    img.titles['de-DE'] = 'Ein Titel'   # German title
+    img.titles['fr-FR'] = 'Un titre'    # French title
+
+.. seealso::
+    
+    * :class:`~_sqla.ImageTitles` class reference
+    * :class:`~_sqla.ImageCaptions` class reference
+
+Tags
+~~~~~
+
+See :ref:`imagetags`.
+
+.. todo:: More metadata
 
 
 Working with Albums
@@ -184,10 +234,72 @@ Albums in Digikam are actually directories in the file system. They are shown
 as a tree in digikam, but the database does not reflect that.
 
 .. note::
-    Digikam-DB does not directly support creating new albums, or deleting
-    existing ones.
+    
+    * Digikam-DB does not directly support creating new albums, or deleting
+      existing ones.
+    * New album roots can be added through Digikam-DB, but have to be populated
+      with albums and images by Digikam.
 
-.. todo:: Albums Tutorial
+Retrieving Albums
+~~~~~~~~~~~~~~~~~~
+
+Albums can be accessed through the :attr:`~digikamdb.conn.Digikam.albums`
+property of the ``Digikam`` class in different ways (``dk`` is a
+:class:`~digikamdb.conn.Digikam` object, see above):
+
+#. Iterating over all albums:
+    
+    .. code-block:: python
+        
+        for album in dk.albums:
+            print(album.id, album.caption, album.abspath)
+
+#. Via the ``[]`` operator:
+    
+    .. code-block:: python
+        
+        album = dk.albums[42]               # id == 42
+    
+    To access albums by directory, use the ``find`` method.
+
+#. Via the :meth:`~digikamdb.albums.Albums.find` method:
+    
+    .. code-block:: python
+        
+        for album in dk.album.find('/path/to/dir/with/images'):
+            print(album.id, album.caption, album.abspath)
+    
+    ``find`` searches a path (which can be a directory or a file) and returns
+    a list of all matching albums.
+
+#. Via a the :meth:`~digikamdb.albums.Albums.select` method:
+    
+    .. code-block:: python
+        
+        # Find all albums in collection 'family'
+        alblist = dk.albums.select(collection = 'family')
+        
+        # Find all albums whose captionn contains 'vacation'
+        alblist = dk.albums.select("caption like '%vacation%'")
+        
+        # Find all albums modified in 2020 or later:
+        alblist = dk.albums.select("date >= '2020-01-01 00:00:00'")
+    
+    :meth:`~digikamdb.albums.Albums.select` supports the following attributes:
+    
+    * :attr:`~_sqla.Album.id`
+    * :attr:`~_sqla.Album.caption`
+    * :attr:`~_sqla.Album.relativePath`
+    * :attr:`~_sqla.Album.date`
+    * :attr:`~_sqla.Album.collection`
+
+.. seealso::
+    
+    * :class:`~digikamdb.albums.Albums` class reference
+    * :class:`~_sqla.Album` class reference
+
+
+.. todo:: Modifying Albums
 
 
 Working with Tags
@@ -239,13 +351,24 @@ New tags can be created with the :meth:`~digikamdb.tags.Tags.add` method:
     # Tag at top level without an icon
     my_tag = dk.tags.add('My Tag', 0)
     
-    # Tag with parent Friends and KDE icon tag-people
+    # Tag with parent 'Friends' and KDE icon tag-people
     chris = dk.tags.add('Chris', dk.tags['Friends'], 'tag-people')
+    
+    # Save changes to database
+    dk.session.commit()
 
 The optional third argument specifies the tag's icon. It can be an ``Image``
 obect, an ``int`` or a ``str``. When given as a ``str``, the icon is assumed
 to be a KDE icon specifier. Otherwise, it should be an image from the
 database.
+
+.. seealso::
+    
+    * `Digikam: Managing Tags <https://docs.kde.org/trunk5/en/digikam-doc/digikam/using-digikam.html#using-mainwindow-tagsview>`_
+    * :class:`~digikamdb.tags.Tags` Class Reference
+    * :class:`~_sqla.Tag` (mapped table) Class Reference
+
+.. _imagetags:
 
 Accessing an Image's Tags
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -275,17 +398,20 @@ containing all Images that have the tag set:
 
 .. code-block:: python
     
-    #
+    # Get all images in album with id=42 and tag 'My Tag'
     for img in dk.tags['My Tag'].images.filter_by(_album = 42):
         print('Image', img.name, 'has tag <My Tag>')
 
-.. todo:: Describe modifying tags
+To add a tag to an image, modify its :attr:`~_sqla.Image.tags` property:
 
-.. seealso::
+.. code-block:: python
     
-    * `Digikam: Managing Tags <https://docs.kde.org/trunk5/en/digikam-doc/digikam/using-digikam.html#using-mainwindow-tagsview>`_
-    * :class:`~digikamdb.tags.Tags` Class Reference
-    * :class:`~_sqla.Tag` (mapped table) Class Reference
+    # Add tag to image
+    img.tags.append(tag)
+
+.. todo::
+    * Describe modifying tags
+    * Describe setting image tags
 
 
 Managing Settings
