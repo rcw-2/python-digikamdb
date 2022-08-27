@@ -34,12 +34,34 @@ class TestData:
                     al.abspath,
                     self.replacepath(data['path']))
     
-    def test30_images(self):
+    def test30_images(self):                                # noqa: C901
         for data in self.test_data['images']:
             with self.subTest(imageid = data['id']):
                 img = self.dk.images[data['id']]
                 for prop, value in data.items():
-                    self.assertEqual(getattr(img, prop), value)
+                    if prop == 'information':
+                        for p, v in value.items():
+                            self.assertEqual(getattr(img.information, p), v)
+                    elif prop == 'imagemeta':
+                        for p, v in value.items():
+                            self.assertEqual(getattr(img.imagemeta, p), v)
+                    elif prop == 'videometa':
+                        for p, v in value.items():
+                            self.assertEqual(getattr(img.videometa, p), v)
+                    elif prop == 'properties':
+                        for p, v in value.items():
+                            self.assertEqual(img.properties[p], v)
+                    elif prop == 'titles':
+                        for p, v in value.items():
+                            self.assertEqual(img.titles[p], v)
+                    elif prop == 'captions':
+                        for p, v in value.items():
+                            self.assertEqual(img.captions[p], v)
+                    elif prop == 'copyright':
+                        for p, v in value.items():
+                            self.assertEqual(img.copyright[p], v)
+                    else:
+                        self.assertEqual(getattr(img, prop), value)
                 
                 img2 = self.dk.images.find(img.abspath)[0]
                 self.assertIs(img, img2)

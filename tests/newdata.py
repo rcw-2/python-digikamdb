@@ -288,6 +288,9 @@ class NewData(NewDataRoot):
         if 'imagemetadata' in imgdata:
             for k, v in imgdata['imagemetadata'].items():
                 self.assertEqual(getattr(img.imagemeta, k), v)
+        if 'titles' in imgdata:
+            for k, v in imgdata['titles'].items():
+                self.assertEqual(img.titles[k], v)
     
     def test30_add_images(self):
         new_data = self.__class__.new_data
@@ -434,6 +437,43 @@ class NewData(NewDataRoot):
             'focalLength':      24,
             'focalLength35':    38.4,
         }
+    
+    def test37_image_comments_1(self):
+        new_data = self.__class__.new_data
+        imgdata = new_data['images'][0]
+        self._check_image(imgdata)
+        img = self.dk.images[imgdata['id']]
+        
+        new_titles = {
+            'x-default':    'Default',
+            'de-DE':        'Deutsch',
+            'fr-FR':        'Français',
+            'es-ES':        'Español',
+        }
+        img.titles.update(new_titles)
+        self.dk.session.commit()
+        if not 'titles' in imgdata:
+            imgdata['titles'] = {}
+        imgdata['titles'].update(new_titles)
+        
+    def test37_image_comments_2(self):
+        new_data = self.__class__.new_data
+        imgdata = new_data['images'][0]
+        self._check_image(imgdata)
+        img = self.dk.images[imgdata['id']]
+        self.assertEqual(img.title, 'Default')
+        
+        new_titles = {
+            'x-default':    'Default 2',
+            'de-DE':        'Deutsch 2',
+            'fr-FR':        'Français 2',
+            'es-ES':        'Español 2',
+        }
+        img.titles.update(**new_titles)
+        self.dk.session.commit()
+        if not 'titles' in imgdata:
+            imgdata['titles'] = {}
+        imgdata['titles'].update(**new_titles)
     
     def test48_verify_images(self):
         new_data = self.__class__.new_data

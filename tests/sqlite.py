@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import datetime
 from shutil import unpack_archive
 
 from sqlalchemy import create_engine
@@ -46,6 +47,27 @@ class SQLiteTestBase(DigikamTestBase):
                 'name': '20210806_165143.jpg',
                 'title': 'The Distillery',
                 'position': None,
+                'information': {
+                    'width':        4032,
+                    'height':       3024,
+                    'format':       'JPG',
+                    'colorDepth':   8,
+                    'rating':       -1,
+                },
+                'imagemeta': {
+                    'make':             'samsung',
+                    'model':            'SM-G970F',
+                    'aperture':         2.4,
+                    'focalLength':      4.32,
+                    'focalLength35':    26,
+                    'exposureTime':     0.0012531328320802004,
+                },
+                'captions': {
+                    ('x-default', 'RCW'):   (
+                        'At the distillery Christian Drouin',
+                        datetime.fromisoformat('2022-06-11T14:56:44'),
+                    ),
+                },
             }
         ],
         'tags': [{'id': 22, 'pid': 0, 'name': 'France'}]

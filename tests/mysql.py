@@ -44,6 +44,27 @@ class MySQLTestBase(DigikamTestBase):
                 'name': '20210806_165143.jpg',
                 'title': 'The distillery',
                 'position': None,
+                'information': {
+                    'width':        4032,
+                    'height':       3024,
+                    'format':       'JPG',
+                    'colorDepth':   8,
+                    'rating':       -1,
+                },
+                'imagemeta': {
+                    'make':             'samsung',
+                    'model':            'SM-G970F',
+                    'aperture':         2.4,
+                    'focalLength':      4.32,
+                    'focalLength35':    26,
+                    'exposureTime':     0.0012531328320802004,
+                },
+                'captions': {
+                    ('x-default', None):   (
+                        'At the distillery Christian Drouin',
+                        datetime.fromisoformat('2022-07-10T12:42:56'),
+                    ),
+                },
             },
             {
                 'id':       5,
