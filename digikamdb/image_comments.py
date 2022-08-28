@@ -27,7 +27,7 @@ class ImageComments(BasicProperties):
     
     Args:
         parent:     Corresponding Image object
-        type_:      Comment type (1 for caption, 3 for title)
+        type\\_:    Comment type (1 for caption, 3 for title)
     """
     #: Funktion returning the table class
     _class_function = _imageproperty_class

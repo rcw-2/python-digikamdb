@@ -55,23 +55,19 @@ Exceptions
 
 Digikam-DB defines several Exceptions for Digikam-specific errors.
 
-DigikamError
-~~~~~~~~~~~~~
-
 .. autoexception:: DigikamError
-
-DigikamConfigError
-~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoexception:: DigikamConfigError
 
-DigikamFileError
-~~~~~~~~~~~~~~~~~~~~~~~~
-
 .. autoexception:: DigikamFileError
 
-DigikamDataIntegrityError
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoexception:: DigikamAssignmentError
+
+.. autoexception:: DigikamQueryError
+
+.. autoexception:: DigikamObjectNotFound
+
+.. autoexception:: DigikamMultipleObjectsFound
 
 .. autoexception:: DigikamDataIntegrityError
 

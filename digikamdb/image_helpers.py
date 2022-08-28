@@ -21,6 +21,7 @@ from .types import (
     ExifFlash as Flash,
     ExifMeteringMode as MeteringMode,
     ExifOrientation as Orientation,
+    ExifSubjectDistanceRange as SubjectDistanceRange,
     ExifWhiteBalance as WhiteBalance,
     ImageColorModel as ColorModel
 )
@@ -256,17 +257,25 @@ def define_image_helper_tables(container: 'Images'):        # noqa: F821, C901
         
         @property
         def uuid(self) -> str:
-            """Returns ImageHistory.uuid (read-only)"""
+            """ImageHistory.uuid (read-only)"""
             return self._uuid
         
         @property
         def history(self) -> str:
-            """Returns ImageHistory.history (read-only)"""
+            """
+            The image's history data (read-only)
+            
+            If not None, this field contains XML data describing previous
+            versions of the image.
+            """
             return self._history
     
     class ImageInformation(dk.base):
         """
-        Represents a row of the `ImageInformation` table
+        Represents a row of the `ImageInformation` table.
+        
+        This data comes from the image file and should not be changed, with the
+        exception of :attr:`~ImageInformation.rating`.
         """
         __tablename__ = 'ImageInformation'
         
@@ -294,7 +303,7 @@ def define_image_helper_tables(container: 'Images'):        # noqa: F821, C901
         
         @property
         def rating(self) -> int:
-            """The image's rating (-1 - 5)"""
+            """The image's rating (from -1 to 5)"""
             return self._rating
         
         @rating.setter
@@ -363,14 +372,17 @@ def define_image_helper_tables(container: 'Images'):        # noqa: F821, C901
         
         @property
         def make(self) -> str:
+            """Camera's manufacturer"""
             return self._make
         
         @property
         def model(self) -> str:
+            """Camera model"""
             return self._model
         
         @property
         def lens(self) -> str:
+            """Lens model"""
             return self._lens
         
         @property
@@ -405,36 +417,44 @@ def define_image_helper_tables(container: 'Images'):        # noqa: F821, C901
         
         @property
         def sensitivity(self) -> int:
+            """Photographic sensitivity (ISO number)"""
             return self._sensitivity
         
         @property
         def flash(self) -> Flash:
+            """Information about flash usage"""
             return Flash(self._flash)
         
         @property
         def whiteBalance(self) -> WhiteBalance:
+            """White balance mode"""
             return WhiteBalance(self._whiteBalance)
         
         @property
         def whiteBalanceColorTemperature(self) -> int:
+            """Color temperature for manual white balance"""
             return self._whiteBalanceColorTemperature
         
         @property
         def meteringMode(self) -> MeteringMode:
+            """The image's metering mode"""
             return MeteringMode(self._meteringMode)
         
         @property
         def subjectDistance(self) -> float:
+            """Distance to subject, as measured by the camera"""
             return self._subjectDistance
         
         @property
-        def subjectDistanceCategory(self) -> int:
-            return self._subjectDistanceCategory
+        def subjectDistanceCategory(self) -> SubjectDistanceRange:
+            """Exif SubjectDistanceRange attribute"""
+            return SubjectDistanceRange(self._subjectDistanceCategory)
     
         @validates(
             '_exposureMode', '_exposureProgram',
             '_flash',
             '_meteringMode',
+            '_subjectDistanceCategory',
             '_whiteBalance'
         )
         def _convert_to_int(self, key: str, value: int):
@@ -496,8 +516,7 @@ def define_image_helper_tables(container: 'Images'):        # noqa: F821, C901
         Digikam Video Metadata
         
         This object contains Video metadata of the corresponding
-        :class:`Image` object. The following column-related properties can be
-        directly accessed:
+        :class:`Image` object.
         """
         __tablename__ = 'VideoMetadata'
         

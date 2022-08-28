@@ -84,7 +84,7 @@ class Digikam:
         else:
             raise TypeError('Database specification must be Engine or str')
         
-        self._session = Session(self.engine, future = True)
+        self._session = Session(self._engine, future = True)
 
         self._base = self._digikamobject_class(declarative_base())
         
@@ -94,7 +94,7 @@ class Digikam:
         self._albums    = Albums(self)
         self._images    = Images(self)
 
-        self.base.prepare(self.engine)
+        self.base.prepare(self._engine)
         self.tags.setup()
     
     _db_config_keys = dict(
@@ -109,7 +109,7 @@ class Digikam:
     
     @property
     def base(self) -> type:
-        """Returns the base class for table-mapped classes."""
+        """Base class for table-mapped classes"""
         return self._base
     
     @classmethod
@@ -205,7 +205,9 @@ class Digikam:
         """
         Clears the object.
         
-        This will call :meth:`Session.close` and :meth:`Engine.dispose`.
+        This will call :meth:`~sqlalchemy.orm.Session.close` and
+        :meth:`~sqlalchemy.engine.Engine.dispose` for the session and engine
+        objects.
         """
         log.info('Scrapping Digikam object')
         self._settings = None
@@ -215,48 +217,43 @@ class Digikam:
         self._images = None
         self.session.close()
         self._session = None
-        self.engine.dispose()
+        self._engine.dispose()
         self._engine = None
     
     @property
     def settings(self) -> Settings:
-        """Returns the :class:`Settings` object."""
+        """The :class:`~digikamdb.settings.Settings` object"""
         return self._settings
     
     @property
     def tags(self) -> Tags:
-        """Returns the :class:`Tags` object."""
+        """The :class:`~digikamdb.tags.Tags` object"""
         return self._tags
     
     @property
     def albumRoots(self) -> AlbumRoots:
-        """Returns the :class:`AlbumRoots` object."""
+        """The :class:`~digikamdb.albumroots.AlbumRoots` object"""
         return self._albumRoots
     
     @property
     def albums(self) -> Albums:
-        """Returns the :class:`Albums` object."""
+        """The :class:`~digikamdb.albums.Albums` object"""
         return self._albums
     
     @property
     def images(self) -> Images:
-        """Returns the :class:`Images` object."""
+        """The :class:`~digikamdb.images.Images` object"""
         return self._images
     
     @property
-    def engine(self) -> Engine:
-        """Returns the SQLAlchemy engine"""
-        return self._engine
-    
-    @property
     def session(self) -> Session:
-        """Returns the SQLAlchemy ORM session"""
+        """The SQLAlchemy ORM session"""
         return self._session
     
     @property
     def is_mysql(self) -> bool:
-        """Returns ``True`` if database is MySQL."""
-        return (self.engine.dialect.name == 'mysql')
+        """``True`` if database is MySQL"""
+        return (self._engine.dialect.name == 'mysql')
     
     def _digikamobject_class(self, base: type) -> type:
         """
@@ -277,6 +274,13 @@ class Digikam:
             __mapper_args__ = {
                 'column_prefix':    '_',
             }
+            
+            _digikam = self
+            
+            @property
+            def digikam(self) -> Digikam:
+                """The ``Digikam`` object"""
+                return self._digikam
         
         return DigikamObject
 

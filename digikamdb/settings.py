@@ -45,11 +45,14 @@ class Settings(DigikamTable):
             print(k, '=', v)
     
     Args:
-        parent:     Digikam object
+        digikam:     Digikam object
     """
     
     _class_function = _settings_class
     _id_column = '_keyword'
+    
+    def __init__(self, digikam: 'Digikam'):                       # noqa: F821
+        super().__init__(digikam)
     
     def __iter__(self) -> Iterable:
         for s in super().__iter__():

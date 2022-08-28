@@ -83,6 +83,12 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             lazy = 'dynamic'
         )
         
+        #: Needed for nested sets operations
+        _is_mysql = dk.is_mysql
+        
+        #: Needed for Tagstree operations
+        _session = dk.session
+        
         @validates('_pid')
         def _check_pid(self, key: str, value: int) -> int:
             if value < 0:
@@ -97,7 +103,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
         def __contains__(self, obj: 'Tag') -> bool:
             if not isinstance(obj, Tag):
                 raise TypeError('A tag can only contain other tags')
-            if Tag.is_mysql:
+            if self._is_mysql:
                 return self._lft < obj._lft and self._rgt > obj._rgt
             else:
                 return self.id in obj._ancestors
@@ -140,8 +146,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
         
         @icon.setter
         def icon(self, value: Union['Image', str, int, None]):  # noqa: F821
-            dk = self._container.digikam
-            if isinstance(value, dk.images.Class):
+            if isinstance(value, self.digikam.images.Image):
                 value = value.id
             if value is None:
                 self._icon = None
@@ -171,7 +176,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             """
             log.debug('Getting ancestors for tag %d', self.id)
             
-            if self.is_mysql:
+            if self._is_mysql:
                 # MySQL
                 return self._session.scalars(
                     select(Tag)
@@ -183,7 +188,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             return [
                 row._pid
                 for row in self._session.scalars(
-                    select(self._container.TagsTreeEntry).filter_by(_id = self.id)
+                    select(self.digikam.tags.TagsTreeEntry).filter_by(_id = self.id)
                 )
                 if row._pid > 0
             ]
@@ -203,21 +208,21 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             """
 
             # Tags without a parent
-            if self.is_mysql:
+            if self._is_mysql:
                 if self.pid < 0:
                     return None
             else:
                 if self.pid <= 0:
                     return None
 
-            return self._container._select(_id = self.pid).one()
+            return self.digikam.tags._select(_id = self.pid).one()
         
         @property
         def children(self) -> Iterable['Tag']:              # noqa: F821
             """
             Returns the tag's children.
             """
-            return self._container._select(_pid = self.id)
+            return self.digikam.tags._select(_pid = self.id)
         
         @property
         def properties(self) -> TagProperties:
@@ -241,7 +246,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             if 'internalTag' in self.properties:
                 return self.name
             
-            if self.is_mysql:
+            if self._is_mysql:
                 return '/'.join(
                     [t.name for t in self._ancestors if t.id > 0]
                 ) + '/' + self.name
@@ -382,7 +387,7 @@ class Tags(DigikamTable):
             _tagid = Column('tagid', Integer, primary_key = True)
             _property = Column('property', String, primary_key = True)
         
-        if not self.is_mysql:
+        if not self._is_mysql:
             class TagsTreeEntry(self.digikam.base):
                 """Class for the tags tree"""
                 __tablename__ = 'TagsTree'
@@ -499,7 +504,7 @@ class Tags(DigikamTable):
         Called by Digikam constructor.
         """
         
-        if self.is_mysql:
+        if self._is_mysql:
             self._do_before_insert = True
             self._do_before_update = True
             self._do_after_delete = True
@@ -634,7 +639,7 @@ class Tags(DigikamTable):
 
         for tag in self:
             tag._check()
-        if self.Class.is_mysql:
+        if self.Class._is_mysql:
             self._root._check_nested_sets()
 
 

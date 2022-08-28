@@ -24,16 +24,7 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
     
     class Album(dk.base):
         """
-        Digikam Album
-        
-        The following column-related properties can be directly accessed:
-        
-        * **id** (*int*)
-        * **relativePath** (*str*) - Path relative to the album root
-          (starts with :file:`/`)
-        * **date** (*date*)?
-        * **caption** (*str*)
-        * **collection** (*str*)
+        Represents a row in the table ``Albums``.
         
         See also:
             * Class :class:`~digikamdb.albums.Albums`
@@ -48,6 +39,7 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
         _iconObj = relationship(
             'Image',
             primaryjoin = 'foreign(Album._icon) == Image._id',
+            viewonly = True,
             uselist = False)
         _images = relationship(
             'Image',
@@ -59,7 +51,7 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
         
         @property
         def root(self) -> 'AlbumRoot':                      # noqa: F821
-            """The album collection's root object"""
+            """The album collection's root object (no setter)"""
             return self._root
         
         # Relationships to Images
@@ -69,9 +61,15 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
             """The album's icon, if set"""
             return self._iconObj
         
+        @icon.setter
+        def icon(self, value: Union['Image', int]):         # noqa: F821
+            if isinstance(value, int):
+                value = self.digikam.images[value]
+            self._iconObj = value
+        
         @property
         def images(self) -> List['Image']:                  # noqa: F821
-            """Returns the album's images"""
+            """The album's images (no setter)"""
             return self._images
         
         # column properties
@@ -88,12 +86,16 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
         
         @property
         def date(self) -> date:
-            """The album's date (read-only)"""
+            """
+            The album's date (read-only)
+            
+            The date can be set in Digikam
+            """
             return self._date
         
         @property
         def caption(self) -> str:
-            """The album's caption"""
+            """The album's caption (description)"""
             return self._caption
         
         @caption.setter
@@ -167,13 +169,14 @@ class Albums(DigikamTable):
         Args:
             path:   Path to album(s). Can be given as any type that the
                     :mod:`os.path` functions understand.
-            exact:  If true, look for exactly one album.
+            exact:  If true, look for exactly one album. If false, and ``path``
+                    contains subdirectories, these are also returned.
         Returns:
             The found albums. If ``exact == True``, the album object is
             returned, or ``None`` if it was not found. If ``exact == False``,
             returns a list with the found albums.
         Raises:
-            DigikamDataIntegrityError
+            DigikamDataIntegrityError: Database contains overlapping roots.
         """
         log.debug(
             'Albums: searching for %s%s',

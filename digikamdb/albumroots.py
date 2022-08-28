@@ -65,12 +65,17 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
         
         @property
         def status(self) -> Status:
-            """The album root's status (read-only)"""
+            """
+            The album root's status (read-only)
+            
+            This property is dynamically set by Digikam and only valid when
+            Digikam is running.
+            """
             return Status(self._status)
         
         @property
         def type(self) -> Type:
-            """The album root's type"""
+            """The album root's type (hardwired, removable or network)"""
             return Type(self._type)
         
         @type.setter
@@ -104,7 +109,10 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
 
         @property
         def specificPath(self) -> str:
-            """The album root's path relative to :attr:`~AlbumRoot.identifier`"""
+            """
+            The album root's path relative to :attr:`~AlbumRoot.identifier`,
+            starting with ``/``
+            """
             return self._specificPath
         
         @specificPath.setter
@@ -280,26 +288,33 @@ class AlbumRoots(DigikamTable):
         self,
         path: str,
         label: Optional[str] = None,
-        status: int = 0,
-        type_: int = 1,
+        status: Status = Status.LocationAvailable,
+        type_: Type = Type.UndefinedType,
         check_dir: bool = True,
         use_uuid: bool = True
     ) -> 'AlbumRoot':                                       # noqa: F821
         """
         Adds a new album root.
         
-        If check_dir is False, the identifier will be path.
+        If check_dir is False, the identifier will be of ``path=`` type, and
+        ``use_uuid`` is ignored. The :attr:`~AlbumRoot.identifier` and 
+        :attr:`~AlbumRoot.relativePath` are derifed from ``path``.
+        
+        To add albums and images in the new album root, start Digikam and scand
+        for new objects.
         
         Args:
             path:       Path to new album root.
+            label:      Label of the new album root.
             check_dir:  Check if the directory exists and is not a subdir
                         of another album root or vice versa.
             status:     The new root's status.
-            use_uuid:   Use UUID of filesystem as identifier.
+            use_uuid:   Use UUID of filesystem as identifier. If false, the
+                        is used as identifier.
         Returns:
             The newly created AlbumRoot object.
         
-        .. warning::
+        .. note::
             The :class:`~digikamdb.conn.Digikam` parameter ``root_override``
             is ignored by this method.
         """

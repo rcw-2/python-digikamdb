@@ -1,6 +1,7 @@
 API for Images
 ===============
 
+
 .. module:: digikamdb.images
 
 The Images Class
@@ -9,11 +10,13 @@ The Images Class
 .. autoclass:: Images
    :members:
 
+
 The Image Class (mapped)
 -------------------------
 
 .. autoclass:: _sqla.Image
    :members:
+
 
 .. module:: digikamdb.image_comments
 
@@ -35,8 +38,8 @@ Image Comments
     .. autoclass::  _sqla.ImageComment
         :members:
 
-.. module:: digikamdb.image_helpers
 
+.. module:: digikamdb.image_helpers
 
 Image Properties
 -----------------

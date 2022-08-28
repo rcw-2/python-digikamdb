@@ -17,8 +17,8 @@ class BasicProperties(DigikamTable):
     Basic class for properties
     
     Instances of this class belong to a Digikam object that has a property
-    named ``properties`` that points to the BasicProperties instance. The
-    individual properties can be accessed as follows:
+    (e.g. ``properties``) that points to the BasicProperties instance. The
+    individual properties can be accessed similarly to ``dict`` values:
     
     .. code-block:: python
         
@@ -28,6 +28,8 @@ class BasicProperties(DigikamTable):
     
     The class is iterable, yielding all property names, and has a method
     :meth:`~BasicProperties.items` similar to that of :meth:`dict <dict.items>`.
+    
+    The number of properties can be found with ``len(obj.properties)``
     
     Args:
         parent:     Object the properties belong to.
@@ -64,7 +66,7 @@ class BasicProperties(DigikamTable):
             parent.__class__.__name__,
             parent.id
         )
-        super().__init__(parent._container.digikam, log_create = False)
+        super().__init__(parent.digikam, log_create = False)
         self._parent = parent
     
     @property
@@ -156,7 +158,7 @@ class BasicProperties(DigikamTable):
         log.debug('%s: iterating over objects', self.__class__.__name__)
         yield from self._select_self()
     
-    def items(self) -> Iterable:
+    def items(self) -> Iterable[Tuple]:
         """
         Returns the properties as an iterable yielding (key, value) tuples.
         """

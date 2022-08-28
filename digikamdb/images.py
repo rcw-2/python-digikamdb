@@ -116,6 +116,9 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
             uselist = False
         )
         
+        #: Needed for access to related tables
+        _session = dk.session
+        
         # -- Relationship properties -----------------------------------------
         
         # Relationship to Albums
@@ -135,7 +138,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def captions(self) -> ImageCaptions:
             """
-            The image's captions object (read-only)
+            The image's captions object (no setter)
             
             This property contains all the image's captions. To access the
             default caption, you can also use the :attr:`caption` property.
@@ -163,7 +166,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def titles(self) -> ImageTitles:
             """
-            The image's titles
+            The image's titles (no setter)
             
             Digikam supports multilingual titles. To access the title in a
             specific language, use the ``[]`` operator:
@@ -198,8 +201,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def copyright(self) -> ImageCopyright:
             """
-            The image's copyright data
-            
+            The image's copyright data (no setter)
             """
             if not hasattr(self, '_copyrightObj'):
                 self._copyrightObj = ImageCopyright(self)
@@ -210,7 +212,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def history(self) -> 'ImageHistory':                # noqa: F821
             """
-            Returns the image's history
+            The image's history (no setter)
             """
             return self._history
         
@@ -219,7 +221,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def information(self) -> 'ImageInformation':        # noqa: F821
             """
-            Returns some of the image's information.
+            Part of the image's metadata (no setter)
             """
             return self._information
         
@@ -228,7 +230,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def imagemeta(self) -> 'ImageMetadata':             # noqa: F821
             """
-            Returns the image's photographic metadata
+            The image's photographic metadata (no setter)
             """
             return self._metadata
         
@@ -237,7 +239,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def position(self) -> Optional[Tuple]:
             """
-            The image's GPS location data.
+            The image's GPS location data
             
             The value is a tuple with latitude, longitude and altitude. When
             setting the property, latitude and longitude can be given as a
@@ -269,7 +271,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
             if pos is None:
                 if self._position:
                     self._session.execute(
-                        delete(self._container.ImagePosition)
+                        delete(self.digikam.images.ImagePosition)
                         .filter_by(_imageid = self.id))
                 return
             
@@ -314,7 +316,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
                 alt = None
                 if len(pos) > 2:
                     alt = pos[2]
-                newpos = self._container.ImagePosition(
+                newpos = self.digikam.images.ImagePosition(
                     _imageid = self.id,
                     _latitude = latstr,
                     _longitude = lngstr,
@@ -371,16 +373,15 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def status(self) -> Status:
             """
-            The image's status (read-only)
+            The image's status
             
-            Returns:
-                * 0 - undefined
-                * 1 - visible
-                * 2 - hidden
-                * 3 - trashed
-                * 4 - obsolete
+            The status can be undefined, visible, hidden, trashed or obsolete.
             """
             return Status(self._status)
+        
+        @status.setter
+        def status(self, value):
+            self._status = value
         
         @property
         def category(self) -> Category:
@@ -403,7 +404,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         
         @property
         def uniqueHash(self) -> str:
-            """The image's unique hash (read-only)"""
+            """The image's unique (MD5) hash (read-only)"""
             return self._uniqueHash
         
         @property
@@ -418,7 +419,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def abspath(self) -> str:
             """
-            Returns the absolute path of the image file.
+            The absolute path of the image file (read-only)
             """
             return os.path.abspath(os.path.join(
                 self.album.abspath,
@@ -469,7 +470,7 @@ class Images(DigikamTable):
         Finds an Image by name.
         
         Args:
-            name:   Path to image file. Can be given as any type that the
+            path:   Path to image file. Can be given as any type that the
                     :mod:`os.path` functions understand.
         """
         log.debug(

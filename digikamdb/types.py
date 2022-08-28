@@ -6,14 +6,14 @@ from typing import Any, Mapping, Union
 
 
 class AlbumRootStatus(IntEnum):
-    """Class for :attr:`~_sqla.AlbumRoot.status`"""
+    """Class for :attr:`AlbumRoot.status<_sqla.AlbumRoot.status>`"""
     LocationAvailable   = 0
     LocationUnavailable = 2
     LocationHidden      = 1
 
 
 class AlbumRootType(IntEnum):
-    """Class for :attr:`~_sqla.AlbumRoot.type`"""
+    """Class for :attr:`AlbumRoot.type<_sqla.AlbumRoot.type>`"""
     UndefinedType   = 0
     VolumeHardWired = 1
     VolumeRemovable = 2
@@ -21,7 +21,7 @@ class AlbumRootType(IntEnum):
 
 
 class ImageCategory(IntEnum):
-    """Image Category"""
+    """Class for :attr:`Image.category<_sqla.Image.category>`"""
     UndefinedCategory   = 0
     Image               = 1
     Video               = 2
@@ -30,7 +30,7 @@ class ImageCategory(IntEnum):
 
 
 class ImageStatus(IntEnum):
-    """Image Status"""
+    """Class for :attr:`Image.status<_sqla.Image.status>`"""
     UndefinedStatus = 0
     Visible         = 1
     Hidden          = 2
@@ -39,7 +39,10 @@ class ImageStatus(IntEnum):
 
 
 class ImageColorModel(IntEnum):
-    """Digikam Color Model"""
+    """
+    Digikam Color Model
+    
+    Used by :attr:`ImageInformation.colorModel<_sqla.ImageInformation.colorModel>`"""
     COLORMODELUNKNOWN   = 0
     RGB                 = 1
     GRAYSCALE           = 2
@@ -58,6 +61,8 @@ class ExifOrientation(IntEnum):
     The constants describe the position of row 0 and column 0 in the visual
     image, as specified in the Exif documentation. The mirrored orientations
     will usually not show up in digital photos.
+    
+    Used by :attr:`ImageInformation.orientation<_sqla.ImageInformation.orientation>`
     """
     #: Landscape, camera held upright
     TOP_LEFT        = 1
@@ -78,14 +83,22 @@ class ExifOrientation(IntEnum):
 
 
 class ExifExposureMode(IntEnum):
-    """Exif ExposureMode Tag"""
+    """
+    Exif ExposureMode Tag
+    
+    Used by :attr:`ImageMetadata.exposureMode<_sqla.ImageMetadata.exposureMode>`
+    """
     AUTO_EXPOSURE   = 0
     MANUAL_EXPOSURE = 1
     AUTO_BRACKET    = 2
 
 
 class ExifExposureProgram(IntEnum):
-    """Exif ExposureProgram Tag"""
+    """
+    Exif ExposureProgram Tag
+    
+    Used by :attr:`ImageMetadata.exposureProgram<_sqla.ImageMetadata.exposureProgram>`
+    """
     NOT_DEFINED         = 0
     MANUAL              = 1
     NORMAL_PROGRAM      = 2
@@ -98,13 +111,21 @@ class ExifExposureProgram(IntEnum):
 
 
 class ExifWhiteBalance(IntEnum):
-    """Exif WhiteBalance Tag"""
+    """
+    Exif WhiteBalance Tag
+    
+    Used by :attr:`ImageMetadata.whiteBalance<_sqla.ImageMetadata.whiteBalance>`
+    """
     AUTO    = 0
     MANUAL  = 1
 
 
 class ExifMeteringMode(IntEnum):
-    """Exif MeteringMode Tag"""
+    """
+    Exif MeteringMode Tag
+    
+    Used by :attr:`ImageMetadata.meteringMode<_sqla.ImageMetadata.meteringMode>`
+    """
     UNKNOWN                 = 0
     AVERAGE                 = 1
     CENTER_WEIGHTET_AVERAGE = 2
@@ -115,8 +136,21 @@ class ExifMeteringMode(IntEnum):
     OTHER                   = 255
 
 
+class ExifSubjectDistanceRange(IntEnum):
+    """
+    Exif SubjectDistanceRange
+    
+    Used by
+    :attr:`ImageMetadata.subjectDistanceCategory<_sqla.ImageMetadata.subjectDistanceCategory>`
+    """                                                     # noqa: E501
+    UNKNOWN         = 0
+    MACRO           = 1
+    CLOSE_VIEW      = 2
+    DISTANT_VIEW    = 3
+
+
 class ExifFlashReturn(IntEnum):
-    """Exif Flash Return part of Flash Tag"""
+    """Exif Flash Return (part of :class:`ExifFlash` Tag)"""
     NO_STROBE_RETURN_DETECTION_FUNCTION = 0
     RESERVED                            = 1
     STROBE_RETURN_LIGHT_DETECTED        = 2
@@ -124,7 +158,7 @@ class ExifFlashReturn(IntEnum):
 
 
 class ExifFlashMode(IntEnum):
-    """Exif Flash Mode part of Flash Tag"""
+    """Exif Flash Mode (part of :class:`ExifFlash` Tag)"""
     UNKNOWN                         = 0
     COMPULSORY_FLASH_FIRING         = 1
     COMPULSORY_FLASH_SUPPRESSION    = 2
@@ -134,6 +168,8 @@ class ExifFlashMode(IntEnum):
 class ExifFlash:
     """
     Exif Flash Tag
+    
+    Used by :attr:`ImageMetadata.flash<_sqla.ImageMetadata.flash>`
     
     Args:
         value:  The :class:`int` value of flash tag, or a :class:`dict`

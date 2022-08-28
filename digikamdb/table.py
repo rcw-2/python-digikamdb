@@ -30,14 +30,17 @@ class DigikamTable:
     * Some internal functionality
     
     Parameters:
-        digikam:     ``Digikam`` object
-        log_create:
+        digikam:    The "parent" ``Digikam`` object
+        log_create: Used internally to control logging
     """
     
+    #: Function returning the corresponding mapped class
     _class_function = None
+    
+    #: ID column
     _id_column = '_id'
     
-    #: Raise an Exception when ``[]`` does not find a suitable column.
+    #: Raise an Exception when ``[]`` does not find a suitable row.
     #: Otherwise, ``None`` is returned.
     _raise_on_not_found = True
     
@@ -50,17 +53,14 @@ class DigikamTable:
             log.debug('Creating %s object', self.__class__.__name__)
         self._digikam = digikam
         self._session = self.digikam.session
-        self.is_mysql = self.digikam.is_mysql
+        self._is_mysql = self.digikam.is_mysql
         self.Class = self.__class__._class_function(self.digikam)
-        self.Class._session = self._session
-        self.Class.is_mysql = self.is_mysql
-        self.Class._container = self
         setattr(self, self.Class.__name__, self.Class)
     
     @property
     def digikam(self) -> 'Digikam':                         # noqa: F821
         """
-        Returns the Digikam object.
+        The ``Digikam`` object.
         """
         return self._digikam
     
@@ -96,18 +96,36 @@ class DigikamTable:
         """
         Returns the result of a ``SELECT`` on the table.
         
+        Each positional argument must be a string containing a valid ``WHERE``
+        clause (without ``WHERE``). These clauses are combined with ``AND``.
+        Keyword arguments are used as additional ``WHERE`` clauses checking for
+        equality. For example, ``select('a > 2', b = 1)`` will result in a
+        ``SELECT ... WHERE a>2 AND b=1`` SQL statement.
+        
+        The result is a :class:`~sqlalchemy.orm.Query` object that can be
+        refined further. When adding additional conditions, the column names
+        must be prefixed with ``_``.
+        
+        The results can be accessed by iterating over the query or through
+        methods like :meth:`~sqlalchemy.orm.Query.all` or
+        :meth:`~sqlalchemy.orm.Query.one_or_none`.
+        
         Args:
-            args:   Each positional argument must be a string containing
-                    a valid ``WHERE`` clause (without ``WHERE``). These
-                    clauses are combined with ``AND``.
-            kwargs: Arguments for the :meth:`~sqlalchemy.orm.Query.filter_by`
-                    method of SQLAlchemy query objects.
+            args:   ``WHERE`` clauses as text
+            kwargs: Columns to check for equality
+        
+        Returns:
+            The resulting ``Query`` object.
+        
+        See also:
+            * SQLAlchemy Query :meth:`~sqlalchemy.orm.Query.filter` method
+            * SQLAlchemy Query :meth:`~sqlalchemy.orm.Query.filter_by` method
         """
         query = self._select(**kwargs)
         for arg in args:
             txt = arg.strip()
             log.debug(' adding WHERE %s', txt)
-            query = query.where(text(txt))
+            query = query.filter(text(txt))
         return query
     
     @staticmethod
