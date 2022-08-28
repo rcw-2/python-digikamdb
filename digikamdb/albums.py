@@ -37,10 +37,6 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
         
         See also:
             * Class :class:`~digikamdb.albums.Albums`
-        
-        .. todo::
-            * Function to sort images in an album
-            * __contains__ function (image in album)
         """
 
         __tablename__ = 'Albums'
@@ -149,13 +145,16 @@ class Albums(DigikamTable):
             print(album.relativePath)
     
     Parameters:
-        parent:     Digikam object for access to database and other classes.
+        digikam:    Digikam object for access to database and other classes.
     
     See also:
         * Class :class:`~_sqla.Album`
     """
     
     _class_function = _album_class
+    
+    def __init__(self, digikam: 'Digikam'):                 # noqa: F821
+        super().__init__(digikam)
     
     def find(                                               # noqa: C901
         self,

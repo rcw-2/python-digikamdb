@@ -295,7 +295,9 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                 )
             pos = self._lft
             for ch in self.children.order_by(self.__class__._lft):
-                if not (self._lft < ch._lft and self._rgt > ch._rgt): # pragma: no cover
+                if not (
+                    self._lft < ch._lft and self._rgt > ch._rgt
+                ):                                          # pragma: no cover
                     raise DigikamDataIntegrityError(
                         'Tag table inconsistent: parent %d (%d,%d), child %d (%d,%d)' % (
                             self.id, self._lft, self._rgt, ch.id, ch._lft, ch._rgt

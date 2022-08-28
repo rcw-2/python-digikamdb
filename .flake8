@@ -34,3 +34,7 @@ extend-ignore =
     # The following are ignored for development:
     E302, E303, E713, F401, W291
 
+# Ignores for tests
+per-file-ignores =
+    tests/*:F403,F405
+

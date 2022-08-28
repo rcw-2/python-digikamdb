@@ -71,7 +71,8 @@ In this small example, we
     
     img2 = dk.images[42]    # Access image by id
     print(img2.name, img2.abspath())
-    
+
+For more information on usage, see :doc:`/tutorial`.
 
 Limitations
 ------------

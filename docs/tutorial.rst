@@ -1,5 +1,5 @@
-Tutorial
-=========
+Using Digikam-DB
+=================
 
 This document assumes that you are reasonably familiar with Digikam. If using
 MySQL, some knowledge about MySQL database setup and user management is
@@ -117,7 +117,7 @@ available methods include:
 :`~sqlalchemy.orm.Query.one_or_none`:meth:: Returns one object, or ``None``
 :`~sqlalchemy.orm.Query.all`:meth::         Returns the whole result as a list.
 
-See the :class:`~sqlalchemy.orm.Query` documentation for more information.
+See the :class:`~sqlalchemy.orm.Query` class documentation for more information.
 
 
 Working with Images
@@ -316,14 +316,14 @@ Tags can be accessed through the :attr:`~digikamdb.conn.Digikam.tags` property
 of the ``Digikam`` class in different ways (``dk`` is a ``Digikam`` object,
 see above):
 
-#. Iterating over all tags:
+*   Iterating over all tags:
     
     .. code-block:: python
         
         for tag in dk.tags:
             print(tag.id, ':', tag.name)
 
-#. Via the ``[]`` operator:
+*   Via the ``[]`` operator:
     
     .. code-block:: python
         
@@ -333,11 +333,11 @@ see above):
     
     To access a tag by name this way, the name has to be unique, or an
     exception is raised. To access tags by a non-unique name, use the
-    ``find`` method.
+    :meth:`~digikamdb.tags.Tags.select` method.
     
     If no matching tag is found, an Exception is raised.
 
-#. Via a SELECT with certain attributes:
+*   Via a SELECT with certain attributes:
     
     .. code-block:: python
         
@@ -407,15 +407,13 @@ To add a tag to an image, modify its :attr:`~_sqla.Image.tags` property:
 .. code-block:: python
     
     # Add tag to image
-    img.tags.append(tag)
+    img.tags.append(tag1)
+    
+    # Remove another tag from image
+    img.tags.remove(tag2)
 
 .. todo::
     * Describe modifying tags
     * Describe setting image tags
 
-
-Managing Settings
-------------------
-
-.. todo:: Settings tutorial
 

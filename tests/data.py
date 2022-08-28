@@ -101,5 +101,9 @@ class TestData:
                 
                 tag2 = self.dk.tags[tag.id]
                 self.assertIs(tag, tag2)
+        
+        name = self.test_data['tags'][0]['name']
+        with self.assertRaises(DigikamObjectNotFound):
+            _ = self.dk.tags['not/existing/parent/' + name]
 
 

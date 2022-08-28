@@ -6,7 +6,7 @@ import logging
 import os
 import re
 import stat
-from typing import List, Mapping, Optional
+from typing import Iterable, List, Mapping, Optional
 
 from sqlalchemy.orm import relationship, validates
 
@@ -43,8 +43,8 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
         # Relationship to Albums
         
         @property
-        def albums(self) -> List['Album']:                  # noqa: F821
-            """Returns the albums belonging to this root."""
+        def albums(self) -> Iterable['Album']:                  # noqa: F821
+            """The albums belonging to this root (no setter)"""
             return self._albums
         
         # column properties
@@ -104,7 +104,7 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
 
         @property
         def specificPath(self) -> str:
-            """The album root's path from ``identifier``"""
+            """The album root's path relative to :attr:`~AlbumRoot.identifier`"""
             return self._specificPath
         
         @specificPath.setter
@@ -116,7 +116,7 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
         @property
         def mountpoint(self) -> str:
             """
-            Returns the volume's mount point.
+            The volume's mount point (read-only)
             
             The result can be modified if ``root_override`` is specified
             in the :class:`Digikam` constructor.
@@ -180,7 +180,7 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
         @property
         def abspath(self) -> str:
             """
-            Returns the album root's absolute path.
+            The album root's absolute path (read-only)
             
             The result can be modified if ``root_override`` is specified
             in the :class:`Digikam` constructor.

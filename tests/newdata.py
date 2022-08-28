@@ -11,12 +11,7 @@ from typing import Any, List, Optional
 
 from sqlalchemy.exc import NoResultFound
 
-from digikamdb import (
-    DigikamObjectNotFound,
-    DigikamDataIntegrityError,
-    DigikamFileError,
-    DigikamAssignmentError,
-)
+from digikamdb import *
 from digikamdb.types import (
     ExifExposureProgram as ExposureProgram,
     ExifFlash as Flash, ExifFlashMode as FlashMode,
@@ -575,14 +570,24 @@ class NewData(NewDataRoot):
             'New Tag 5',
             0,
         )
+        self._add_tag(
+            new_data['tags'],
+            'Subtag',
+            tag1
+        )
+        self._add_tag(
+            new_data['tags'],
+            'Subtag',
+            tag2
+        )
         with self.assertRaises(TypeError):
-            _ = self._add_tag(
+            self._add_tag(
                 new_data['tags'],
                 'New Tag XXX',
                 'New Tag 3',
             )
         with self.assertRaises(TypeError):
-            _ = self._add_tag(
+            self._add_tag(
                 new_data['tags'],
                 'New Tag YYY',
                 0,
@@ -608,6 +613,22 @@ class NewData(NewDataRoot):
             self.dk.tags['New Tag 4'].hierarchicalname(),
             'New Tag 1/New Tag 2/New Tag 4'
         )
+        self.assertEqual(
+            self.dk.tags['New Tag 5'].hierarchicalname(),
+            'New Tag 5'
+        )
+        self.assertIs(
+            self.dk.tags['New Tag 1/Subtag'].parent,
+            self.dk.tags['New Tag 1']
+        )
+        self.assertIs(
+            self.dk.tags['New Tag 1/New Tag 2/Subtag'].parent,
+            self.dk.tags['New Tag 2']
+        )
+        with self.assertRaises(DigikamMultipleObjectsFound):
+            _ = self.dk.tags['Subtag']
+        with self.assertRaises(DigikamObjectNotFound):
+            _ = self.dk.tags['Bad/Subtag']
     
     def test52_change_tags(self):
         new_data = self.__class__.new_data
@@ -758,7 +779,32 @@ class NewData(NewDataRoot):
         img.tags.append(tag)
         imgtagdata.append(tag.id)
 
+        tag = self.dk.tags[new_data['tags'][2]['id']]
+        img.tags.append(tag)
+        imgtagdata.append(tag.id)
+
         self.dk.session.commit()
+    
+    def test71_remove_image_tag(self):
+        new_data = self.__class__.new_data
+        img = self.dk.images[new_data['images'][0]['id']]
+        imgtagdata = new_data['imagetags'][img.id]
+        
+        tag = self.dk.tags[new_data['tags'][2]['id']]
+        self.assertIn(tag, img.tags)
+        self.assertIn(img, tag.images)
+        
+        img.tags.remove(tag)
+        self.dk.session.commit()
+        imgtagdata.remove(tag.id)
+    
+    def test72_verify_remove_image_tag(self):
+        new_data = self.__class__.new_data
+        img = self.dk.images[new_data['images'][0]['id']]
+        
+        tag = self.dk.tags[new_data['tags'][2]['id']]
+        self.assertNotIn(tag, img.tags)
+        self.assertNotIn(img, tag.images)
     
     def test78_verify_image_tags(self):
         new_data = self.__class__.new_data
@@ -768,7 +814,8 @@ class NewData(NewDataRoot):
                 for tagid in tagids:
                     tag = self.dk.tags[tagid]
                     self.assertIn(tag, img.tags)
-    
+                    self.assertIn(img, tag.images)
+   
     def test80_add_settings(self):
         new_data = self.__class__.new_data
         self.assertTrue('databaseUserImageFormats' not in self.dk.settings)
