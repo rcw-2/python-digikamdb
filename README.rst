@@ -50,7 +50,7 @@ directory as this file, it will be ignored by Git) that defines the variables
 ``db_host``, ``db_user``, ``db_pass`` and ``db_name``. The given user must
 have all privileges on the given database.
 
-To fill the database, the :command:`mysql` binary is called, so make sure to
+To fill the database, the ``mysql`` binary is called, so make sure to
 have ``mysql-client`` installed.
 
 
