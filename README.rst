@@ -20,11 +20,6 @@ SQLite and MySQL databases.
 Installation
 -------------
 
-.. note::
-    
-    This package has not been uploaded to PyPi yet, installation via
-    Pip will not work.
-
 For installation via PIP, simply type:
 
 .. code-block:: bash
