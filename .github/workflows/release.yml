@@ -1,0 +1,34 @@
+# Publish to PyPi when a tag is set
+# 
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  pull_request:
+    tags:
+      - "v*"
+
+jobs:
+  
+  publish:
+    
+    name: Publish to PyPi
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Generate Packages
+      run: |
+        pip install setuptools-scm
+        python -m setuptools_scm | grep '\.dev' && exit 1
+        pip install build
+        python -m build
+    - name: Upload to pypi.org
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
+
+
+

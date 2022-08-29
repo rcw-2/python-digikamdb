@@ -1,5 +1,7 @@
-# Automatic test on push/pull request
-# Derived from: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+# Workflow on push & pull request
+# * Check with flake8
+# * Run tests in different environments
+# 
 
 name: Test
 
@@ -12,8 +14,7 @@ on:
       - ".gitignore"
       - ".readthedocs.yaml"
       - "docs/**"
-      - MANIFEST.in
-      - README.rst
+      - "*.rst"
   pull_request:
     branches:
       - main
@@ -22,8 +23,7 @@ on:
       - ".gitignore"
       - ".readthedocs.yaml"
       - "docs/**"
-      - MANIFEST.in
-      - README.rst
+      - "*.rst"
   workflow_dispatch: {}
 
 jobs:
@@ -173,7 +173,7 @@ jobs:
       run: |
         pip install build
         python -m build
-    - name: Upload to text.pypi.org
+    - name: Upload to test.pypi.org
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.TEST_PYPI_API_TOKEN }}
