@@ -10,12 +10,12 @@ Appendix: Additional Information
 .. ifconfig::   include_private_content
     
     TODO
-    ------
+    ******
     
     .. todolist::
 
 Changelog
-----------
+************
 
 .. include:: ../CHANGELOG.rst
 
