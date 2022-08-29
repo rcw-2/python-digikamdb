@@ -14,3 +14,8 @@ Appendix: Additional Information
     
     .. todolist::
 
+Changelog
+----------
+
+.. include:: ../CHANGELOG.rst
+
