@@ -1,4 +1,4 @@
-|Documentation Status| |Test Status|
+|PyPi Package| |Documentation Status| |Test Status|
 
 Digikam-DB
 ===========
@@ -49,6 +49,8 @@ To fill the database, the ``mysql`` binary is called, so make sure to
 have ``mysql-client`` installed.
 
 
+.. |PyPi Package| image:: https://badge.fury.io/py/Digikam-DB.svg
+    :target: https://badge.fury.io/py/Digikam-DB
 
 .. |Documentation Status| image:: https://readthedocs.org/projects/digikam-db/badge/?version=latest
     :target: http://digikam-db.readthedocs.io/?badge=latest

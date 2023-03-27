@@ -21,7 +21,7 @@ documentation = "https://digikam-db.readthedocs.io"
 homepage = "https://github.com/rcw-2/python-digikamdb"
 
 [project.optional-dependencies]
-docs = ["tomli; python_version < '3.11'"]
+docs = ["sphinx", "tomli; python_version < '3.11'"]
 mysql = ["pymysql"]
 
 [build-system]
