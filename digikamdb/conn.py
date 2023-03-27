@@ -8,8 +8,8 @@ from typing import Mapping, Optional, Union
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session
-from sqlalchemy.ext.declarative import DeferredReflection, declarative_base
+from sqlalchemy.orm import Session, declarative_base
+from sqlalchemy.ext.declarative import DeferredReflection
 
 from .settings import Settings
 from .tags import Tags
