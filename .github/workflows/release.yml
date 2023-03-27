@@ -24,7 +24,7 @@ jobs:
     - uses: actions/checkout@v3
       name: Checkout Git repository
       with:
-        fetch-depth:  10
+        fetch-depth:  0
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
