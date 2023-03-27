@@ -428,7 +428,7 @@ class Tags(DigikamTable):
                     tags.c.id == instance.pid))
 
         connection.execute(
-            tags.update(tags.c.rgt >= new_position).values(
+            tags.update().where(tags.c.rgt >= new_position).values(
                 lft = case(
                     [(
                         tags.c.lft >= new_position,
@@ -485,7 +485,7 @@ class Tags(DigikamTable):
         right = instance._rgt
         
         connection.execute(
-            tags.update(tags.c.rgt > right).values(
+            tags.update().where(tags.c.rgt > right).values(
                 lft = case(
                     [(
                         tags.c.lft > right,
