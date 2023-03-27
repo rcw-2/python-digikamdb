@@ -63,15 +63,15 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.7"
           - "3.8"
           - "3.9"
           - "3.10"
+          - "3.11"
         mysql-version:
           - "mysql-8.0"
-          - "mariadb-10.4"
           - "mariadb-10.5"
           - "mariadb-10.6"
+          - "mariadb-10.11"
     steps:
     - uses: actions/checkout@v3
       name: Checkout Git repository
@@ -84,12 +84,7 @@ jobs:
         mysql-version:  ${{ matrix.mysql-version }}
         root-password:  ${{ secrets.MYSQL_ROOT_PW }}
     - name: Set up Python ${{ matrix.python-version }}
-      uses: v0.1.1 (2023-03-27)
---------------------
-* Changed SQLAlchemy dependency to ~=1.4 as tests fail with 2.0
-* Added Sphinx as doc dependency
-
-
+      uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
