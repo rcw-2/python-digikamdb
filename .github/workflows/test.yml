@@ -74,6 +74,9 @@ jobs:
           - "mariadb-10.6"
     steps:
     - uses: actions/checkout@v3
+      name: Checkout Git repository
+      with:
+        fetch-depth:  10
     - name: Set up MySQL ${{ matrix.mysql-version }}
       uses: shogo82148/actions-setup-mysql@v1
       with:
@@ -146,6 +149,9 @@ jobs:
     
     steps:
     - uses: actions/checkout@v3
+      name: Checkout Git repository
+      with:
+        fetch-depth:  10
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
@@ -181,6 +187,9 @@ jobs:
     
     steps:
     - uses: actions/checkout@v3
+      name: Checkout Git repository
+      with:
+        fetch-depth:  10
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
