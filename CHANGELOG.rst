@@ -1,4 +1,4 @@
-v0.1.2 (?)
+v0.1.2 (2023-03-27)
 --------------------
 * Fixed SQLAlchemy 2.0 compatibility issues.
 
