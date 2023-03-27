@@ -2,6 +2,7 @@
 
 import logging
 import os
+import sys
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase, skip     # noqa: F401
@@ -45,6 +46,10 @@ class DigikamTestBase(TestCase):
         log.info('Tearing down %s object', self.__class__.__name__)
         if hasattr(self, 'dk'):
             self.dk.destroy()
+        
+        if sys.version_info.major > 3 or sys.version_info.minor > 10:
+            return
+            # The following stuff does not work in Python 3.11.
         
         result = self.defaultTestResult()
         self._feedErrorsToResult(result, self._outcome.errors)
