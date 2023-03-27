@@ -430,10 +430,10 @@ class Tags(DigikamTable):
         connection.execute(
             tags.update().where(tags.c.rgt >= new_position).values(
                 lft = case(
-                    [(
+                    (
                         tags.c.lft >= new_position,
                         tags.c.lft + 2,
-                    )],
+                    ),
                     else_ = tags.c.lft
                 ),
                 rgt = tags.c.rgt + 2,
@@ -487,10 +487,10 @@ class Tags(DigikamTable):
         connection.execute(
             tags.update().where(tags.c.rgt > right).values(
                 lft = case(
-                    [(
+                    (
                         tags.c.lft > right,
                         tags.c.lft - 2,
-                    )],
+                    ),
                     else_ = tags.c.lft
                 ),
                 rgt = tags.c.rgt - 2
