@@ -60,7 +60,7 @@ In this small example, we
     if not tag:
         tag = dk.tags.add('my tag', dk.tags.root)
     
-    img = dk.images.find('/path/to/my/image.jpg')
+    img = dk.images.find('/path/to/my/image.jpg')[0]
     img.tags.append(tag)
     img.caption = 'My Caption'
     img.title = 'My Title'
@@ -68,7 +68,7 @@ In this small example, we
     dk.session.commit()     # Commit changes to database
     
     img2 = dk.images[42]    # Access image by id
-    print(img2.name, img2.abspath())
+    print(img2.name, img2.abspath)
 
 For more information on usage, see :doc:`/tutorial`.
 

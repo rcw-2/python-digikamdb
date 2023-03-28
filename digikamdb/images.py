@@ -441,9 +441,9 @@ class Images(DigikamTable):
     .. code-block:: python
         
         dk = Digikam(...)
-        myimage = dk.images.find('/path/to/my/image.jpg')   # by name
-        myimage = dk.images[42]                             # by id
-        for img in dk.images:                               # iterate
+        myimage = dk.images.find('/path/to/my/image.jpg')[0]  # by name
+        myimage = dk.images[42]                               # by id
+        for img in dk.images:                                 # iterate
             print(img.name)
     
     Parameters:
@@ -470,8 +470,11 @@ class Images(DigikamTable):
         Finds an Image by name.
         
         Args:
-            path:   Path to image file. Can be given as any type that the
-                    :mod:`os.path` functions understand.
+            path:   Path to image file or album directory. Can be given as any
+                    type that the :mod:`os.path` functions understand.
+        
+        .. todo::
+            * Enable wildcards
         """
         log.debug(
             'Images: searching for %s',

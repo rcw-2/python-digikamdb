@@ -224,7 +224,7 @@ Tags
 
 See :ref:`imagetags`.
 
-.. todo:: More metadata
+.. todo:: More image metadata
 
 
 Working with Albums
