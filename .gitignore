@@ -2,8 +2,9 @@
 *.pyc
 __pycache__
 
-# Geany files
+# Configuration files of development tools
 *.geany
+/.vscode
 
 # Backups and temporary files
 *~
