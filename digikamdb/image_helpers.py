@@ -371,83 +371,95 @@ def define_image_helper_tables(container: 'Images'):        # noqa: F821, C901
             _subjectDistance = Column('subjectDistance', mysql.DOUBLE(asdecimal = False))
         
         @property
-        def make(self) -> str:
+        def make(self) -> Optional[str]:
             """Camera's manufacturer"""
             return self._make
         
         @property
-        def model(self) -> str:
+        def model(self) -> Optional[str]:
             """Camera model"""
             return self._model
         
         @property
-        def lens(self) -> str:
+        def lens(self) -> Optional[str]:
             """Lens model"""
             return self._lens
         
         @property
-        def aperture(self) -> float:
+        def aperture(self) -> Optional[float]:
             """The image's aperture value/f-number (read-only)"""
             return self._aperture
         
         @property
-        def focalLength(self) -> float:
+        def focalLength(self) -> Optional[float]:
             """The image's focal length (read-only)"""
             return self._focalLength
         
         @property
-        def focalLength35(self) -> float:
+        def focalLength35(self) -> Optional[float]:
             """The image's 35mm-equivalent focal length (read-only)"""
             return self._focalLength35
         
         @property
-        def exposureTime(self) -> float:
+        def exposureTime(self) -> Optional[float]:
             """The image's exposure time (read-only)"""
             return self._exposureTime
         
         @property
-        def exposureProgram(self) -> ExposureProgram:
+        def exposureProgram(self) -> Optional[ExposureProgram]:
             """The image's exposure program (read-only)"""
+            if self._exposureProgram is None:
+                return None
             return ExposureProgram(self._exposureProgram)
         
         @property
-        def exposureMode(self) -> ExposureMode:
+        def exposureMode(self) -> Optional[ExposureMode]:
             """The image's exposure mode (read-only)"""
+            if self._exposureMode is None:
+                return None
             return ExposureMode(self._exposureMode)
         
         @property
-        def sensitivity(self) -> int:
+        def sensitivity(self) -> Optional[int]:
             """Photographic sensitivity (ISO number)"""
             return self._sensitivity
         
         @property
-        def flash(self) -> Flash:
+        def flash(self) -> Optional[Flash]:
             """Information about flash usage"""
+            if self._flash is None:
+                return None
             return Flash(self._flash)
         
         @property
-        def whiteBalance(self) -> WhiteBalance:
+        def whiteBalance(self) -> Optional[WhiteBalance]:
             """White balance mode"""
+            if self._whiteBalance is None:
+                return None
             return WhiteBalance(self._whiteBalance)
         
         @property
-        def whiteBalanceColorTemperature(self) -> int:
+        def whiteBalanceColorTemperature(self) -> Optional[int]:
             """Color temperature for manual white balance"""
             return self._whiteBalanceColorTemperature
         
         @property
-        def meteringMode(self) -> MeteringMode:
+        def meteringMode(self) -> Optional[MeteringMode]:
             """The image's metering mode"""
+            if self._meteringMode is None:
+                return None
             return MeteringMode(self._meteringMode)
         
         @property
-        def subjectDistance(self) -> float:
+        def subjectDistance(self) -> Optional[float]:
             """Distance to subject, as measured by the camera"""
             return self._subjectDistance
         
         @property
-        def subjectDistanceCategory(self) -> SubjectDistanceRange:
+        def subjectDistanceCategory(self) -> Optional[SubjectDistanceRange]:
             """Exif SubjectDistanceRange attribute"""
+            if self._subjectDistanceCategory is None:
+                return None
             return SubjectDistanceRange(self._subjectDistanceCategory)
     
         @validates(
