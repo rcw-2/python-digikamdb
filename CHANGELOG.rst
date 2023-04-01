@@ -1,3 +1,8 @@
+v0.1.3(?)
+--------------------
+* Fixed exceptions when some ImageMetadata columns contain NULL
+* Fixed column names in nestet tags check
+
 v0.1.2 (2023-03-27)
 --------------------
 * Fixed SQLAlchemy 2.0 compatibility issues.

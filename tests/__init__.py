@@ -35,7 +35,7 @@ from .mysql import (                                        # noqa: F401
 
 
 # Log with debug to test.log
-handler = logging.handlers.RotatingFileHandler('test.log', backupCount = 7)
+handler = logging.handlers.RotatingFileHandler('test.log', backupCount = 3)
 logging.basicConfig(
     handlers = [handler],
     level = logging.DEBUG,

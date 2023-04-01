@@ -295,7 +295,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             if d <= 0 or d % 2 == 0:                        # pragma: no cover
                 raise DigikamDataIntegrityError(
                     'Tag table: inconsistent lft, rgt in id=%d (%d,%d)' % (
-                        self.id, self.lft, self.rgt
+                        self.id, self._lft, self._rgt
                     )
                 )
             pos = self._lft
