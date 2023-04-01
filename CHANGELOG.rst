@@ -1,4 +1,4 @@
-v0.1.3(?)
+v0.1.3(2023-04-01)
 --------------------
 * Fixed exceptions when some ImageMetadata columns contain NULL
 * Fixed column names in nestet tags check
