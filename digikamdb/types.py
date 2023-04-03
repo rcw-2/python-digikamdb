@@ -128,7 +128,7 @@ class ExifMeteringMode(IntEnum):
     """
     UNKNOWN                 = 0
     AVERAGE                 = 1
-    CENTER_WEIGHTET_AVERAGE = 2
+    CENTER_WEIGHTED_AVERAGE = 2
     SPOT                    = 3
     MULTI_SPOT              = 4
     PATTERN                 = 5
