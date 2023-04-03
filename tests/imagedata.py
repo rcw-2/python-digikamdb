@@ -68,10 +68,8 @@ class CheckImageData:
             if lang == '_default':
                 if refdata is None:
                     self.assertIsNone(img.caption)
-                elif isinstance(refdata, tuple):
-                    self.assertEqual(img.caption, refdata)
                 else:
-                    self.assertEqual(img.caption[0], refdata)
+                    self.assertEqual(img.caption, refdata)
             else:
                 for author, refcaption in refdata.items():
                     self.assertEqual(img.captions[(lang, author)], refcaption)

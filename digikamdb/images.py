@@ -138,7 +138,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def captions(self) -> ImageCaptions:
             """
-            The image's captions object (no setter)
+            The image's captions object
             
             This property contains all the image's captions. To access the
             default caption, you can also use the :attr:`caption` property.
@@ -149,15 +149,22 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
             return self._captionsObj
         
         @property
-        def caption(self) -> str:
+        def caption(self) -> Optional[str]:
             """
             The image's default caption
             
             The default caption has 'x-default' as language and ``None``
             as author. For comments in other languages or from other authors,
             use :attr:`~Image.captions`.
+            
+            .. versionchanged:: 0.2.0
+                Returns a string instead of a tuple.
             """
-            return self.captions['']
+            cap = self.captions['x-default']
+            if cap is None:
+                return None
+            else:
+                return cap[0]
         
         @caption.setter
         def caption(self, val: Optional[str]):
