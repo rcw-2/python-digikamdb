@@ -52,8 +52,10 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                 ``id == 0`` and ``pid == -1``, and there is no tag with
                 ``id == -1``. All other tags are descendents of
                 ``_Digikam_Root_Tag_``.
+            *   On MySQL, the ``Tags`` table implements an additional
+                *nested sets* structure with columns ``lft`` and ``rgt``.
 
-        See also:
+        .. seealso::
             * Class :class:`~digikamdb.tags.Tags`
         """
         

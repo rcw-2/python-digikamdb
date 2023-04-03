@@ -136,12 +136,12 @@ class ImageCaptions(ImageComments):
     
     .. code-block:: python
         
-        c1 = img.captions[('', 'Fred')]     # Default language, author Fred
-        c2 = img.captions['es-ES']          # Spanish, no author
-        c3 = img.captions[None]             # Default language, no author
-        c4 = img.captions['de-DE', 'Ralph'] # German, author Ralph
+        c1 = img.captions[('', 'Fred')]         # Default language, author Fred
+        c2 = img.captions['es-ES']              # Spanish, no author
+        c3 = img.captions[None]                 # Default language, no author
+        c4 = img.captions[('de-DE', 'Ralph')]   # German, author Ralph
         
-        img.captions[''] = 'Some text'      # sets the default caption
+        img.captions[''] = 'Some text'          # sets the default caption
     
     The caption's value is a tuple containing the caption text and the
     caption's date. When setting the value, just the text can be given, and
