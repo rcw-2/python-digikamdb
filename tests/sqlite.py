@@ -66,7 +66,7 @@ class SQLiteTestBase(DigikamTestBase):
                     'exposureMode':     ExifExposureMode.AUTO_EXPOSURE,
                     'sensitivity':      50,
                     'whiteBalance':     ExifWhiteBalance.AUTO,
-                    'meteringMode':     ExifMeteringMode.CENTER_WEIGHTET_AVERAGE,
+                    'meteringMode':     ExifMeteringMode.CENTER_WEIGHTED_AVERAGE,
                 },
                 'captions': {
                     ('x-default', 'RCW'):   (
