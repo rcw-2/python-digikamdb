@@ -4,6 +4,7 @@ Defines the ``Digikam`` class for database access.
 
 import logging
 import os
+import re
 from typing import Mapping, Optional, Union
 
 from sqlalchemy import create_engine
@@ -67,16 +68,21 @@ class Digikam:
         """
         Constructor
         """
-        log.info(
-            'Initializing Digikam object from %s',
-            database
-        )
         if isinstance(database, Engine):
+            log.info(
+                'Initializing Digikam object from %s',
+                database
+            )
             self._engine = database
         elif isinstance(database, str):
             if database == 'digikamrc':
+                log.info('Initializing Digikam object from digikamrc')
                 self._engine = Digikam.db_from_config(sql_echo = sql_echo)
             else:
+                log.info(
+                    'Initializing Digikam object from %s',
+                    re.sub(r':.*@', ':XXX@', database)
+                )
                 self._engine = create_engine(
                     database,
                     future = True,
