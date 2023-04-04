@@ -158,6 +158,20 @@ class BasicProperties(DigikamTable):
         log.debug('%s: iterating over objects', self.__class__.__name__)
         yield from self._select_self()
     
+    def get(
+        self,
+        prop: Union[str, int, Sequence],
+        default: Any = None
+    ) -> str:
+        """
+        Works similar to :meth:`dict.get`.
+        """
+        ret = self._select_prop(prop).one_or_none()
+        if ret is None:
+            return default
+        else:
+            return self._post_process_value(ret)
+    
     def items(self) -> Iterable[Tuple]:
         """
         Returns the properties as an iterable yielding (key, value) tuples.
