@@ -1,3 +1,9 @@
+v0.2.1 (2023-04-07)
+--------------------
+* Digikam.__init__: don't log sensitive data.
+* BasicProperties: added get method.
+* Imageinformation.orientation can be None.
+
 v0.2.0 (2023-04-03)
 --------------------
 * Changes may break existing code.
