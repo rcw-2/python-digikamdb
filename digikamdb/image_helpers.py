@@ -321,9 +321,12 @@ def define_image_helper_tables(container: 'Images'):        # noqa: F821, C901
             return self._digitizationDate
         
         @property
-        def orientation(self) -> Orientation:
+        def orientation(self) -> Optional[Orientation]:
             """The image's orientation (read-only)"""
-            return Orientation(self._orientation)
+            if self._orientation:
+                return Orientation(self._orientation)
+            else:
+                return None
         
         @property
         def width(self) -> int:
@@ -346,9 +349,12 @@ def define_image_helper_tables(container: 'Images'):        # noqa: F821, C901
             return self._colorDepth
         
         @property
-        def colorModel(self) -> ColorModel:
+        def colorModel(self) -> Optional[ColorModel]:
             """The image's color model (read-only)"""
-            return ColorModel(self._colorModel)
+            if self._colorModel is None:
+                return None
+            else:
+                return ColorModel(self._colorModel)
         
         @validates('_orientation', '_colorModel')
         def _convert_to_int(self, key, value):
