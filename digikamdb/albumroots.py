@@ -172,7 +172,7 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
             if vid.startswith('volumeid:?path='):
                 path = vid[15:]
             
-            if os.path.isdir(path):
+            if path is not None and os.path.isdir(path):
                 self._mountpoint = path
                 log.debug(
                     'Setting mountpoint for %s to %s',
