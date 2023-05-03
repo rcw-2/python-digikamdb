@@ -36,7 +36,7 @@ class Settings(DigikamTable):
     .. code-block:: python
         
         dk = digikamdb.Digikam()
-        if 'DBVersion in dk.settings':
+        if 'DBVersion' in dk.settings:
             db_version = dk.settings['DBVersion']           # Get DB version
         dk.settings['databaseUserImageFormats'] = '-xcf'    # Exclude GIMP files
         for k in dk.settings:                               # Iterate over settings

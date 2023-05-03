@@ -7,7 +7,7 @@ import os
 import re
 from typing import Mapping, Optional, Union
 
-from sqlalchemy import create_engine
+from sqlalchemy import text, create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, declarative_base
 from sqlalchemy.ext.declarative import DeferredReflection
@@ -90,6 +90,8 @@ class Digikam:
         else:
             raise TypeError('Database specification must be Engine or str')
         
+        self._db_version = self._get_db_version()
+        
         self._session = Session(self._engine, future = True)
 
         self._base = self._digikamobject_class(declarative_base())
@@ -112,6 +114,19 @@ class Digikam:
         db_user = 'Database Username',
         db_internal = 'Internal Database Server'
     )
+    
+    def _get_db_version(self) -> int:
+        with self._engine.connect() as conn:
+            return int(
+                conn.execute(text(
+                    "SELECT value FROM Settings WHERE keyword = 'DBVersion'"
+                )).one().value
+            )
+    
+    @property
+    def has_tags_nested_sets(self):
+        """Indicates if the ``Tags`` table has nested sets"""
+        return self.is_mysql and self._db_version <= 10
     
     @property
     def base(self) -> type:
@@ -258,7 +273,9 @@ class Digikam:
     
     @property
     def is_mysql(self) -> bool:
-        """``True`` if database is MySQL"""
+        """
+        ``True`` if database is MySQL
+        """
         return (self._engine.dialect.name == 'mysql')
     
     def _digikamobject_class(self, base: type) -> type:

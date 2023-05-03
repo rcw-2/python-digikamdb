@@ -52,8 +52,8 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                 ``id == 0`` and ``pid == -1``, and there is no tag with
                 ``id == -1``. All other tags are descendents of
                 ``_Digikam_Root_Tag_``.
-            *   On MySQL, the ``Tags`` table implements an additional
-                *nested sets* structure with columns ``lft`` and ``rgt``.
+            *   On MySQL with DBVersion <= 10, the ``Tags`` table implements an
+                additional *nested sets* structure with columns ``lft`` and ``rgt``.
 
         .. seealso::
             * Class :class:`~digikamdb.tags.Tags`
@@ -85,8 +85,11 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             lazy = 'dynamic'
         )
         
-        #: Needed for nested sets operations
+        # Needed to determine if root tag exists
         _is_mysql = dk.is_mysql
+        
+        #: Needed for nested sets operations
+        _has_nested_sets = dk.has_tags_nested_sets
         
         #: Needed for Tagstree operations
         _session = dk.session
@@ -105,7 +108,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
         def __contains__(self, obj: 'Tag') -> bool:
             if not isinstance(obj, Tag):
                 raise TypeError('A tag can only contain other tags')
-            if self._is_mysql:
+            if self._has_nested_sets:
                 return self._lft < obj._lft and self._rgt > obj._rgt
             else:
                 return self.id in obj._ancestors
@@ -178,7 +181,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             """
             log.debug('Getting ancestors for tag %d', self.id)
             
-            if self._is_mysql:
+            if self._has_nested_sets:
                 # MySQL
                 return self._session.scalars(
                     select(Tag)
@@ -207,6 +210,8 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             
             * the root tag on MySQL or
             * tags at top level on SQLite
+            
+            .. todo:: Check for fresh MySQL DB with DBversion > 10
             """
 
             # Tags without a parent
@@ -248,7 +253,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             if 'internalTag' in self.properties:
                 return self.name
             
-            if self._is_mysql:
+            if self._has_nested_sets:
                 return '/'.join(
                     [t.name for t in self._ancestors if t.id > 0]
                 ) + '/' + self.name
@@ -389,17 +394,24 @@ class Tags(DigikamTable):
             _tagid = Column('tagid', Integer, primary_key = True)
             _property = Column('property', String, primary_key = True)
         
-        if not self._is_mysql:
+        self.TagProperty = TagProperty
+        
+        if not self.digikam.has_tags_nested_sets:
             class TagsTreeEntry(self.digikam.base):
-                """Class for the tags tree"""
+                """
+                Class for the tags tree
+                
+                This is a view on MySQL with DBVersion <= 10.
+                
+                .. versionchanged:: 0.2.2
+                    Also defined for MySQL.
+                """
                 __tablename__ = 'TagsTree'
                 
                 _id = Column('id', Integer, primary_key = True)
                 _pid = Column('pid', Integer, primary_key = True)
             
             self.TagsTreeEntry = TagsTreeEntry
-        
-        self.TagProperty = TagProperty
     
     def _before_insert(
         self,
@@ -506,7 +518,12 @@ class Tags(DigikamTable):
         Called by Digikam constructor.
         """
         
-        if self._is_mysql:
+        self._do_before_insert = False
+        self._do_before_update = False
+        self._do_after_delete = False
+        self._has_nested_sets = False
+        
+        if self.digikam.has_tags_nested_sets:
             self._do_before_insert = True
             self._do_before_update = True
             self._do_after_delete = True
@@ -514,11 +531,6 @@ class Tags(DigikamTable):
             event.listen(self.Class, 'before_insert', self._before_insert)
             event.listen(self.Class, 'before_update', self._before_update)
             event.listen(self.Class, 'after_delete', self._after_delete)
-        
-        else:
-            self._do_before_insert = False
-            self._do_before_update = False
-            self._do_after_delete = False
     
     def __getitem__(self, key):
         if isinstance(key, str):
@@ -556,7 +568,8 @@ class Tags(DigikamTable):
         """
         Returns the root tag when on MySQL.
         
-        Raises :exc:`~sqlalchemy.exc.NoResultError` in SQLite.
+        Raises:
+            DigikamObjectNotFound:  When called on SQLite.
         """
         try:
             return self._select(_pid = -1).one()
@@ -633,15 +646,18 @@ class Tags(DigikamTable):
         * each tag is contained in its ancestors
         * there are no circular parent-child relations
         * the nested sets and adjacency list structures are consistent
-          (MySQL only)
+          (MySQL with DBVersion <= 10 only)
         
         Raises:
             DigikamDataIntegrityError:  Table is in an inconsistent state.
+        
+        .. versionchanged:: 0.2.2
+            Do not check nested sets for DBVersion > 10
         """
 
         for tag in self:
             tag._check()
-        if self.Class._is_mysql:
+        if self.digikam.has_tags_nested_sets:
             self._root._check_nested_sets()
 
 

@@ -1,3 +1,7 @@
+v0.2.2 (2023-??-??)
+--------------------
+* Added support for MySQL without nested sets in ``Tags`` (`DBVersion` > 10)
+
 v0.2.1 (2023-04-07)
 --------------------
 * Digikam.__init__: don't log sensitive data.
@@ -13,7 +17,7 @@ v0.2.0 (2023-04-03)
 v0.1.3 (2023-04-01)
 --------------------
 * Fixed exceptions when some ImageMetadata columns contain NULL.
-* Fixed column names in nestet tags check.
+* Fixed column names in nested tags check.
 
 v0.1.2 (2023-03-27)
 --------------------
