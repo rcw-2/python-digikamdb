@@ -62,33 +62,46 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version:
-#          - "3.8"
-#          - "3.9"
+        python:
+          - "3.8"
+          - "3.9"
           - "3.10"
-#          - "3.11"
-        mysql-version:
-#          - "mysql-8.0"
+          - "3.11"
+        mysql:
+          - "mysql-8.0"
           - "mariadb-10.5"
-#          - "mariadb-10.6"
-#          - "mariadb-10.11"
+          - "mariadb-10.6"
+          - "mariadb-10.11"
+        sqlalchemy:
+          - "1.4"
+          - "2.0"
+        exclude:
+          - python:     "3.8"
+            mysql:      mariadb-10.11
+          - python:     "3.8"
+            sqlalchemy: "2.0"
+          - python:     "3.11"
+            mysql:      mariadb-10.5
+          - python:     "3.11"
+            sqlalchemy: "1.4"
     steps:
     - name: Checkout Git repository
       uses: actions/checkout@v3
       with:
         fetch-depth:  0
-    - name: Set up MySQL ${{ matrix.mysql-version }}
+    - name: Set up MySQL ${{ matrix.mysql }}
       uses: shogo82148/actions-setup-mysql@v1
       with:
-        #distribution:   ${{ matrix.mysql-flavor }}
-        mysql-version:  ${{ matrix.mysql-version }}
+        mysql-version:  ${{ matrix.mysql }}
         root-password:  ${{ secrets.MYSQL_ROOT_PW }}
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python ${{ matrix.python }}
       uses: actions/setup-python@v3
       with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+        python-version: ${{ matrix.python }}
+    - name: Install Python packages
       run: |
+        # Install SQLAlchemy ${{ matrix.sqlalchemy }}
+        pip install sqlalchemy~=${{ matrix.sqlalchemy }}
         # There seems to be no easy way to install dependencies
         # from pyproject.toml, so we just install the package...
         pip install -e .[mysql]
