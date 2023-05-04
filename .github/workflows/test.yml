@@ -63,18 +63,18 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.8"
-          - "3.9"
+#          - "3.8"
+#          - "3.9"
           - "3.10"
-          - "3.11"
+#          - "3.11"
         mysql-version:
-          - "mysql-8.0"
+#          - "mysql-8.0"
           - "mariadb-10.5"
-          - "mariadb-10.6"
-          - "mariadb-10.11"
+#          - "mariadb-10.6"
+#          - "mariadb-10.11"
     steps:
-    - uses: actions/checkout@v3
-      name: Checkout Git repository
+    - name: Checkout Git repository
+      uses: actions/checkout@v3
       with:
         fetch-depth:  0
     - name: Set up MySQL ${{ matrix.mysql-version }}
@@ -148,8 +148,8 @@ jobs:
         python-version: ["3.10"]
     
     steps:
-    - uses: actions/checkout@v3
-      name: Checkout Git repository
+    - name: Checkout Git repository
+      uses: actions/checkout@v3
       with:
         fetch-depth:  0
     - name: Set up Python ${{ matrix.python-version }}
@@ -174,9 +174,9 @@ jobs:
         # Run coverage report
         coverage report -m
   
-  publish_test:
+  packaging_test:
     
-    name: Publish to Test PyPi
+    name: Test Packaging
     needs:
     - build_and_test
     
@@ -186,8 +186,8 @@ jobs:
         python-version: ["3.10"]
     
     steps:
-    - uses: actions/checkout@v3
-      name: Checkout Git repository
+    - name: Checkout Git repository
+      uses: actions/checkout@v3
       with:
         fetch-depth:  0
     - name: Set up Python ${{ matrix.python-version }}
@@ -199,6 +199,7 @@ jobs:
         pip install build
         python -m build
     - name: Upload to test.pypi.org
+      if:   false
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.TEST_PYPI_API_TOKEN }}
