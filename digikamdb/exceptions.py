@@ -59,3 +59,8 @@ class DigikamDataIntegrityError(DigikamError):
     """
     pass
 
+class DigikamVersionError(DigikamError):
+    """
+    The requested property is not present in the used database version.
+    """
+

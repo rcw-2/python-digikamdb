@@ -417,8 +417,19 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         @property
         def manualOrder(self) -> int:
             """
-            The image's manual order in its album (no setter)
+            The image's manual order in its album (read-only)
+            
+            Raises:
+                DigikamVersionError:    If DBVersion < 10
+            
+            .. versionchanged:: 0.2.2
+                Raises :exc:`DigikamVersionError` for low DB versions.
+            
             """
+            if self.digikam.db_version < 10:
+                raise DigikamVersionError(
+                    'manualOrder is present in DBVersion >= 10'
+                )
             return self._manualOrder
         
         # Other properties and members
