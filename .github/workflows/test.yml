@@ -80,6 +80,8 @@ jobs:
             mysql:      mariadb-10.11
           - python:     "3.8"
             sqlalchemy: "2.0"
+          - python:     "3.9"
+            mysql:      mariadb-10.11
           - python:     "3.11"
             mysql:      mariadb-10.5
           - python:     "3.11"
