@@ -124,9 +124,22 @@ class Digikam:
             )
     
     @property
-    def has_tags_nested_sets(self):
-        """Indicates if the ``Tags`` table has nested sets"""
-        return self.is_mysql and self._db_version <= 10
+    def db_version(self) -> int:
+        """
+        The Digikam database version
+        
+        .. versionadded:: 0.2.2
+        """
+        return self._db_version
+    
+    @property
+    def has_tags_nested_sets(self) -> bool:
+        """
+        Indicates if the ``Tags`` table has nested sets
+        
+        .. versionadded:: 0.2.2
+        """
+        return self.is_mysql and self.db_version <= 10
     
     @property
     def base(self) -> type:
