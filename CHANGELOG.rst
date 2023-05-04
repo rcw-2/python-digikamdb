@@ -1,6 +1,9 @@
 v0.2.2 (2023-??-??)
 --------------------
-* Added support for MySQL without nested sets in ``Tags`` (`DBVersion` > 10)
+*   Added support for MySQL without nested sets in `Tags` (DBVersion > 10)
+*   Raise ``DigikamVersionError`` when trying to access properties not supported
+    by the used database version.
+*   Added ``Album.modificationDate`` and ``AlbumRoot.caseSensitivity``
 
 v0.2.1 (2023-04-07)
 --------------------

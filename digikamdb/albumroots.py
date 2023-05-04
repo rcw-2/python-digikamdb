@@ -11,7 +11,7 @@ from typing import Iterable, List, Mapping, Optional
 from sqlalchemy.orm import relationship, validates
 
 from .table import DigikamTable
-from .exceptions import DigikamFileError
+from .exceptions import DigikamFileError, DigikamVersionError
 from .types import AlbumRootStatus as Status, AlbumRootType as Type
 
 
@@ -208,6 +208,22 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
             return os.path.abspath(os.path.join(
                 self.mountpoint,
                 self.specificPath.lstrip('/')))
+        
+        @property
+        def caseSensitivity(self) -> bool:
+            """
+            Indicates if this album root is case sensitive.
+            
+            Raises:
+                DigikamVersionError:    If DBVersion < 16
+            
+            .. versionadded:: 0.2.2
+            """
+            if self.digikam.db_version < 16:
+                raise DigikamVersionError(
+                    'caseSensitivity is present in DBVersion >= 16'
+                )
+            return self._caseSensitivity != 0
     
     return AlbumRoot
 

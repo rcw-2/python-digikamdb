@@ -4,9 +4,10 @@ Digikam Albums
 
 import logging
 import os
-from datetime import date
+from datetime import date, datetime
 from typing import List, Optional, Union
 
+from sqlalchemy import Column
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import MultipleResultsFound
 
@@ -22,6 +23,9 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
     Defines the Album class
     """
     
+    if not dk.is_mysql:
+        from sqlalchemy.dialects import sqlite
+    
     class Album(dk.base):
         """
         Represents a row in the table ``Albums``.
@@ -31,6 +35,14 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
         """
 
         __tablename__ = 'Albums'
+        
+        if (not dk.is_mysql) and (dk.db_version >= 14):
+            _modificationDate = Column(
+                'modificationDate',
+                sqlite.DATETIME(
+                    storage_format = '%(year)04d-%(month)02d-%(day)02dT%(hour)02d:%(minute)02d:%(second)02d',   # noqa: E501
+                    regexp = r'(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)')
+            )
         
         _root = relationship(
             'AlbumRoot',
@@ -114,6 +126,22 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
         @collection.setter
         def collection(self, value):
             self._collection = value
+        
+        @property
+        def modificationDate(self) -> datetime:
+            """
+            The album's modification date (read-only)
+            
+            Raises:
+                DigikamVersionError:    If DBVersion < 14
+            
+            .. versionadded:: 0.2.2
+            """
+            if self.digikam.db_version < 14:
+                raise DigikamVersionError(
+                    'modificationDate is present in DBVersion >= 14'
+                )
+            return self._modificationDate
         
         # Other properties and methods
         
