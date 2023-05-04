@@ -12,7 +12,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import MultipleResultsFound
 
 from .table import DigikamTable
-from .exceptions import DigikamDataIntegrityError
+from .exceptions import DigikamDataIntegrityError, DigikamVersionError
 
 
 log = logging.getLogger(__name__)

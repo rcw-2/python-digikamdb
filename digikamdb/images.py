@@ -19,6 +19,7 @@ from .properties import BasicProperties
 from .image_comments import ImageCaptions, ImageTitles
 from .image_helpers import ImageCopyright, ImageProperties, define_image_helper_tables
 from .types import ImageCategory as Category, ImageStatus as Status
+from .exceptions import DigikamVersionError
 
 
 log = logging.getLogger(__name__)
