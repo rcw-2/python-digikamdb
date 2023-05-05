@@ -128,7 +128,7 @@ class MySQLTestBase(DigikamTestBase):
         
         try:
             run(
-                '{4} {5} | mysql -h {0} -u {1} -p"{2}" {3}'.format(
+                '{4} {5} | mysql -v -h {0} -u {1} -p"{2}" {3}'.format(
                     mysql_data.db_host,
                     mysql_data.db_user,
                     mysql_data.db_pass,
