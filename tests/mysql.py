@@ -145,8 +145,11 @@ class MySQLTestBase(DigikamTestBase):
             e.cmd = e.cmd.replace(mysql_data.db_pass, 'XXX')
             # Raise another Exception to make stderr visible
             # in unittest output
+            log.error('Error: %s', e)
+            log.debug('STDOUT: %s', e.stdout.decode('utf-8'))
+            log.debug('STDERR: %s', e.stderr.decode('utf-8'))
             raise RuntimeError(e.stderr.decode('utf-8'))
-                
+        
         cls.mysql_db = 'mysql+pymysql://{0}:{1}@{2}/{3}'.format(
             mysql_data.db_user,
             mysql_data.db_pass,
