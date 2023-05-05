@@ -98,6 +98,10 @@ jobs:
       with:
         mysql-version:  ${{ matrix.mysql }}
         root-password:  ${{ secrets.MYSQL_ROOT_PW }}
+        # log_bin causes errors when creating procedures,
+        # and we don't need replication.
+        my-cnf: |
+          log_bin = off
     - name: Set up Python ${{ matrix.python }}
       uses: actions/setup-python@v3
       with:
