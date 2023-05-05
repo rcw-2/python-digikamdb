@@ -206,6 +206,13 @@ class MySQL_04_NewData(MySQLTestBase, NewData):
     root_override = None
 
 
+class MySQL_04a_NewData15(MySQLTestBase, NewData):
+    
+    # Use empty database without root_override
+    test_db_dump = 'empty-15.sql.xz'
+    root_override = None
+
+
 class MySQL_05_RootOverride_01(MySQLTestBase, NewDataRoot):
     
     # Use empty database with empty root_override

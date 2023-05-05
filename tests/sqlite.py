@@ -158,6 +158,13 @@ class SQLite_04_NewData(SQLiteTestBase, NewData):
     root_override = None
 
 
+class SQLite_04a_NewData15(SQLiteTestBase, NewData):
+    
+    # Use empty database without root_override
+    test_db = 'empty-15.tar.xz'
+    root_override = None
+
+
 class SQLite_05_RootOverride_01(SQLiteTestBase, NewDataRoot):
     
     # Use empty database without root_override
