@@ -101,7 +101,7 @@ jobs:
         # log_bin causes errors when creating procedures,
         # and we don't need replication.
         my-cnf: |
-          log_bin = off
+          log_bin = OFF
     - name: Set up Python ${{ matrix.python }}
       uses: actions/setup-python@v3
       with:
