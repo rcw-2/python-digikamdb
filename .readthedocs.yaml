@@ -2,6 +2,10 @@
 
 version:    2
 
+build:
+  # Avoid complaints about old OpenSSL 
+  os: ubuntu-22.04
+
 python:
   install:
     - path:     .
