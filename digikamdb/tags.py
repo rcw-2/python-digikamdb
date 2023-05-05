@@ -189,13 +189,17 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                     .order_by(Tag._lft)
                 ).all()
             
-            # We're on SQLite
+            # We're on a newer DBVersion or on SQLite
+            if self._is_mysql:
+                min_pid = 0
+            else:
+                min_pid = 1
             return [
                 row._pid
                 for row in self._session.scalars(
                     select(self.digikam.tags.TagsTreeEntry).filter_by(_id = self.id)
                 )
-                if row._pid > 0
+                if row._pid >= min_pid
             ]
             
         # Other properties and methods
