@@ -166,7 +166,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
                 raise DigikamAssignmentError('Tag.icon must be Image, str, or None')
         
         @property
-        def images(self) -> Iterable['Image']:              # noqa: F821
+        def images(self) -> Iterable['Image']:                  # noqa: F821
             """Images belonging to the tag (no setter)"""
             return self._images
         
@@ -215,7 +215,7 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             * the root tag on MySQL or
             * tags at top level on SQLite
             
-            .. todo:: Check for fresh MySQL DB with DBversion > 10
+            .. todo:: Support moving tags
             """
 
             # Tags without a parent

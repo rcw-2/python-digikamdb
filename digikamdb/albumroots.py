@@ -218,6 +218,8 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
                 DigikamVersionError:    If DBVersion < 16
             
             .. versionadded:: 0.2.2
+            
+            .. todo:: Take ``caseSensitivity`` into account when accessing images.
             """
             if self.digikam.db_version < 16:
                 raise DigikamVersionError(

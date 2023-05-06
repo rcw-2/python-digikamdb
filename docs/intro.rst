@@ -79,20 +79,15 @@ Limitations
 * Digikam-DB will probably not run under Windows or MacOS.
 * Fractions of seconds on datetime fields are ignored (this is standard on
   MySQL, but not on SQLite).
-* The only tables implemented are:
+* Digikam-DB only implements the Core database of Digikam, not the Thumbs,
+  Faces, and Similarity databases.
+* There is no interface to the following tables of the Core DB:
   
-  * AlbumRoots
-  * Albums
-  * ImageComments
-  * ImageCopyright
-  * ImageInformation
-  * ImageHistory
-  * ImageMetadata
-  * ImagePositions
-  * Images
-  * ImageTags
-  * Settings
-  * TagProperties
-  * Tags
-  * VideoMetadata
+  * DownloadHistory
+  * ImageRelations
+  * ImageTagProperties
+  * Searches
+  
+
+
 

@@ -1,4 +1,4 @@
-v0.2.2 (2023-??-??)
+v0.2.2 (2023-05-05)
 --------------------
 *   Added support for MySQL without nested sets in `Tags` (DBVersion > 10)
 *   Raise ``DigikamVersionError`` when trying to access properties not supported
