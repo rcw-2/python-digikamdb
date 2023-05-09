@@ -1,9 +1,15 @@
+v0.3.0 (2023-05-09)
+--------------------
+*   Reader-friendly string conversions for Exif classes.
+*   Made ``ExifFlash`` more standards-conforming (may break existing code if
+    ``function`` attribute is used).
+
 v0.2.2 (2023-05-05)
 --------------------
-*   Added support for MySQL without nested sets in `Tags` (DBVersion > 10)
+*   Added support for MySQL without nested sets in `Tags` (DBVersion > 10).
 *   Raise ``DigikamVersionError`` when trying to access properties not supported
     by the used database version.
-*   Added ``Album.modificationDate`` and ``AlbumRoot.caseSensitivity``
+*   Added ``Album.modificationDate`` and ``AlbumRoot.caseSensitivity``.
 
 v0.2.1 (2023-04-07)
 --------------------
