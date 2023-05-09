@@ -18,7 +18,7 @@ from .exceptions import DigikamDataIntegrityError, DigikamVersionError
 log = logging.getLogger(__name__)
 
 
-def _album_class(dk: 'Digikam') -> type:                    # noqa: F821
+def _album_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
     """
     Defines the Album class
     """
