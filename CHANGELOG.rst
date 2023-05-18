@@ -1,3 +1,10 @@
+v0.3.1 (?)
+--------------------
+*   Replaced ``DigikamObjectNotFound`` and ``DigikamMultipleObjectsFound`` with
+    ``DigikamObjectNotFoundError`` and ``DigikamMultipleObjectsFoundError``. The
+    old exceptions are still present for compatibility, but will be removed in
+    the future.
+
 v0.3.0 (2023-05-09)
 --------------------
 *   Reader-friendly string conversions for Exif classes.

@@ -6,7 +6,7 @@ from typing import Any, Iterable, List, Mapping, Optional, Sequence, Tuple, Unio
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from .table import DigikamTable
-from .exceptions import DigikamObjectNotFound, DigikamMultipleObjectsFound
+from .exceptions import DigikamObjectNotFoundError, DigikamMultipleObjectsFoundError
 
 
 log = logging.getLogger(__name__)
@@ -95,11 +95,11 @@ class BasicProperties(DigikamTable):
                     log.debug('No record found, returning None')
                     return None
         except NoResultFound:
-            raise DigikamObjectNotFound('No %s object for %s=%s' % (
+            raise DigikamObjectNotFoundError('No %s object for %s=%s' % (
                 self.Class.__name__, self._id_column, prop
             ))
         except MultipleResultsFound:                        # pragma: no cover
-            raise DigikamMultipleObjectsFound('Multiple %s objects for %s=%s' % (
+            raise DigikamMultipleObjectsFoundError('Multiple %s objects for %s=%s' % (
                 self.Class.__name__, self._id_column, prop
             ))
         return self._post_process_value(ret)
@@ -138,7 +138,7 @@ class BasicProperties(DigikamTable):
         try:
             row = self._select_prop(prop).one_or_none()
         except MultipleResultsFound:                        # pragma: no cover
-            raise DigikamMultipleObjectsFound('Multiple %s objects for %s=%s' % (
+            raise DigikamMultipleObjectsFoundError('Multiple %s objects for %s=%s' % (
                 self.Class.__name__, self._id_column, prop
             ))
         if row:
@@ -251,7 +251,7 @@ class BasicProperties(DigikamTable):
         try:
             row = self._select_prop(prop).one_or_none()
         except MultipleResultsFound:                        # pragma: no cover
-            raise DigikamMultipleObjectsFound('Multiple %s objects for %s=%s' % (
+            raise DigikamMultipleObjectsFoundError('Multiple %s objects for %s=%s' % (
                 self.Class.__name__, self._id_column, prop
             ))
         if row is not None:

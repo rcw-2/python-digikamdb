@@ -9,47 +9,63 @@ class DigikamError(Exception):
     
     All other Digikam-DB exceptions are derived from this class.
     """
-    pass
 
 
 class DigikamConfigError(DigikamError):
     """
     Error in Digikam Digikam configuration.
     """
-    pass
 
 
 class DigikamFileError(DigikamError):
     """
     Error accessing an image file or album directory.
     """
-    pass
 
 
 class DigikamAssignmentError(DigikamError):
     """
     A value cannot be assigned to a Digikam object.
     """
-    pass
 
 
 class DigikamQueryError(DigikamError):
     """
     Error executing database query, or invalid result.
     """
-    pass
 
 
 class DigikamObjectNotFound(DigikamQueryError):
     """
     No matching object was not found.
+    
+    .. deprecated: 0.3.1
+        use :exc:`DigikamObjectNotFoundError` instead
     """
-    pass
 
 
 class DigikamMultipleObjectsFound(DigikamQueryError):
     """
     Multiple objects were found when at most one was expected.
+    
+    .. deprecated: 0.3.1
+        use :exc:`DigikamMultipleObjectsFoundError` instead
+    """
+
+
+class DigikamObjectNotFoundError(DigikamObjectNotFound):
+    """
+    No matching object was not found.
+    
+    .. versionadded:: 0.3.1
+    """
+
+
+class DigikamMultipleObjectsFoundError(DigikamMultipleObjectsFound):
+    """
+    Multiple objects were found when at most one was expected.
+    
+    .. versionadded:: 0.3.1
     """
 
 
@@ -57,7 +73,7 @@ class DigikamDataIntegrityError(DigikamError):
     """
     The database is in an inconsistent state.
     """
-    pass
+
 
 class DigikamVersionError(DigikamError):
     """

@@ -11,8 +11,8 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from .exceptions import (
     DigikamError,
-    DigikamObjectNotFound,
-    DigikamMultipleObjectsFound,
+    DigikamObjectNotFoundError,
+    DigikamMultipleObjectsFoundError,
     DigikamDataIntegrityError
 )
 
@@ -80,11 +80,11 @@ class DigikamTable:
                 # This will not happen now, but we keep it for safety
                 return self._select(**kwargs).one_or_none()
         except NoResultFound:
-            raise DigikamObjectNotFound('No %s object for %s=%s' % (
+            raise DigikamObjectNotFoundError('No %s object for %s=%s' % (
                 self.Class.__name__, self._id_column, key
             ))
         except MultipleResultsFound:                        # pragma: no cover
-            raise DigikamMultipleObjectsFound('Multiple %s objects for %s=%s' % (
+            raise DigikamMultipleObjectsFoundError('Multiple %s objects for %s=%s' % (
                 self.Class.__name__, self._id_column, key
             ))
     
@@ -182,6 +182,7 @@ class DigikamTable:
         )
         new = self.Class(**kwargs)
         self._session.add(new)
+        self._session.flush()
         return new
     
     def _delete(self, **kwargs) -> None:
