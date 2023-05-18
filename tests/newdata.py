@@ -580,6 +580,13 @@ class NewData(NewDataRoot):
             'Subtag',
             tag2
         )
+        tag6 = self._add_tag(
+            new_data['tags'],
+            'Grandparent/Parent/New Tag 6',
+            0
+        )
+        new_data['tags'][-1]['name'] = 'New Tag 6'
+        new_data['tags'][-1]['pid'] = tag6.pid
         with self.assertRaises(TypeError):
             self._add_tag(
                 new_data['tags'],
@@ -624,6 +631,14 @@ class NewData(NewDataRoot):
         self.assertIs(
             self.dk.tags['New Tag 1/New Tag 2/Subtag'].parent,
             self.dk.tags['New Tag 2']
+        )
+        self.assertIs(
+            self.dk.tags['Grandparent/Parent/New Tag 6'].parent,
+            self.dk.tags['Grandparent/Parent']
+        )
+        self.assertIn(
+            self.dk.tags['Grandparent/Parent/New Tag 6'],
+            self.dk.tags['Grandparent']
         )
         with self.assertRaises(DigikamMultipleObjectsFound):
             _ = self.dk.tags['Subtag']

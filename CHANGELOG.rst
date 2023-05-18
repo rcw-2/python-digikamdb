@@ -1,5 +1,6 @@
 v0.3.1 (?)
 --------------------
+*   ``Tags.add()`` accepts hierarchical tag names.
 *   Replaced ``DigikamObjectNotFound`` and ``DigikamMultipleObjectsFound`` with
     ``DigikamObjectNotFoundError`` and ``DigikamMultipleObjectsFoundError``. The
     old exceptions are still present for compatibility, but will be removed in

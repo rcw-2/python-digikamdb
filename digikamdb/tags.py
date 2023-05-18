@@ -17,8 +17,8 @@ from .properties import BasicProperties
 from .exceptions import (
     DigikamError,
     DigikamAssignmentError,
-    DigikamObjectNotFound,
-    DigikamMultipleObjectsFound,
+    DigikamObjectNotFoundError,
+    DigikamMultipleObjectsFoundError,
     DigikamDataIntegrityError
 )
 
@@ -366,8 +366,8 @@ class Tags(DigikamTable):
     Parameters:
         digikam:     Digikam object for access to database and other classes.
     Raises:
-        DigikamObjectNotFound:          No matching tag was found.
-        DigikamMultipleObjectsFound:    Multiple tags where found when one
+        DigikamObjectNotFoundError:          No matching tag was found.
+        DigikamMultipleObjectsFoundError:    Multiple tags where found when one
                                         was expected.
     
     See also:
@@ -546,7 +546,7 @@ class Tags(DigikamTable):
             q = self._select(_name = name)
             num = q.count()
             if num == 0:
-                raise DigikamObjectNotFound('No Tag for name=' + key)
+                raise DigikamObjectNotFoundError('No Tag for name=' + key)
             
             if num == 1:
                 tag = q.one()
@@ -554,16 +554,16 @@ class Tags(DigikamTable):
                     return tag
                 if tag.hierarchicalname() == key:
                     return tag
-                raise DigikamObjectNotFound('No Tag for name=' + key)
+                raise DigikamObjectNotFoundError('No Tag for name=' + key)
             
             for tag in q:
                 if tag.hierarchicalname() == key:
                     return tag
             
             if '/' in key:
-                raise DigikamObjectNotFound('No Tag for name=' + key)
+                raise DigikamObjectNotFoundError('No Tag for name=' + key)
             else:
-                raise DigikamMultipleObjectsFound('Multiple tags for name=' + key)
+                raise DigikamMultipleObjectsFoundError('Multiple tags for name=' + key)
 
         return super().__getitem__(key)
 
@@ -573,12 +573,12 @@ class Tags(DigikamTable):
         Returns the root tag when on MySQL.
         
         Raises:
-            DigikamObjectNotFound:  When called on SQLite.
+            DigikamObjectNotFoundError:  When called on SQLite.
         """
         try:
             return self._select(_pid = -1).one()
         except NoResultFound:
-            raise DigikamObjectNotFound('No tag for pid=-1')
+            raise DigikamObjectNotFoundError('No tag for pid=-1')
     
     def add(
         self,
@@ -590,6 +590,10 @@ class Tags(DigikamTable):
         Adds a new tag.
         
         To create a Tag at the root of the tag tree, set ``parent`` to 0.
+        ``name`` can be a hierarchical name (e.g. "locations/cities/Amsterdam"),
+        in which case the intermediate tags ("locations" and "cities" in the
+        given example) are created too, without setting an icon if one is
+        specified.
         
         Parameters:
             name:   The new tag's name
@@ -601,6 +605,9 @@ class Tags(DigikamTable):
                     icon.
         Returns:
             The newly created tag object.
+        
+        .. versionchange:: 0.3.1
+            Accepts hierarchical tag names.
         """
         
         if isinstance(parent, self.Class):
@@ -608,7 +615,23 @@ class Tags(DigikamTable):
         elif isinstance(parent, int):
             pid = parent
         else:
-            raise TypeError('Parent must be int or Tag')
+            raise TypeError(
+                'Parent must be int or Tag, not {}'.format(parent.__class__.__name__)
+            )
+        
+        if '/' in name:
+            names = name.split('/')
+            name = names.pop()
+            if pid > 0 and isinstance(parent, int):
+                parent = self[parent]
+                pname = parent.abspath + '/' + '/'.join(names)
+            else:
+                pname = '/'.join(names)
+            try:
+                ptag = self[pname]
+            except DigikamObjectNotFoundError:
+                ptag = self.add(pname, pid)
+            pid = ptag.id
         
         options = {}
         if icon is not None:
