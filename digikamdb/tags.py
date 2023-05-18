@@ -37,10 +37,10 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
         
         Tags in Digikam are hierarchical. ``Tag`` reflects this by providing:
         
-        * The :attr:`parent` and :attr:`children` properties,
-        * ``tag1 in tag2`` can be used to test if ``tag2`` is an ancestor of
-          ``tag1``.
-        * The :meth:`hierarchicalname` method.
+        *   The :attr:`parent` and :attr:`children` properties,
+        *   ``tag1 in tag2`` can be used to test if ``tag2`` is an ancestor of
+            ``tag1``.
+        *   The :meth:`hierarchicalname` method.
         
         .. note::
             The tree structure differs between SQLite and MySQL:
@@ -111,7 +111,13 @@ def _tag_class(dk: 'Digikam') -> type:                      # noqa: F821, C901
             if self._has_nested_sets:
                 return self._lft < obj._lft and self._rgt > obj._rgt
             else:
-                return self.id in obj._ancestors
+                return self._session.scalars(
+                    select(self.digikam.tags.TagsTreeEntry).filter_by(
+                        _id = obj.id,
+                        _pid = self.id
+                    )
+                ).one_or_none() is not None
+                # return self. id in obj._ancestors
         
         @property
         def id(self) -> int:
