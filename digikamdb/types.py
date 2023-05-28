@@ -12,7 +12,7 @@ class ExifEnum(IntEnum):
     .. versionadded:: 0.3.0
     """
     def __str__(self) -> str:
-        return self.name.capitalize().replace('_', ' ')
+        return self.name.title().replace('_', ' ')
 
 
 class AlbumRootStatus(IntEnum):

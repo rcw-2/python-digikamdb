@@ -5,6 +5,7 @@ v0.3.1 (?)
     ``DigikamObjectNotFoundError`` and ``DigikamMultipleObjectsFoundError``. The
     old exceptions are still present for compatibility, but will be removed in
     the future.
+*   Changed capitalize() in enum string representations to title().
 
 v0.3.0 (2023-05-09)
 --------------------
