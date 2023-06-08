@@ -55,12 +55,6 @@ several ways to specify the Digikam database:
         engine = create_engine('mysql+pymysql://user:passwd@mysql.mydomain.org/mydatabase')
         dk = Digikam(engine)
 
-.. note::
-    Digikam-DB does not do commits by itself, so you have do this manually at
-    appropriate places to make sure your changes are actually written to the
-    database. The :attr:`~digikamdb.conn.Digikam.session` property contains the
-    SQLAlchemy session and can be used to do this (``dk.session.commit()`` in
-    the examples above).
 
 .. seealso::
     
@@ -68,10 +62,22 @@ several ways to specify the Digikam database:
     * :class:`~digikamdb.conn.Digikam` Class Reference
 
 
+Database Commits
+~~~~~~~~~~~~~~~~~
+
+Digikam-DB does not do commits by itself, allowing you to control which
+operations belong to a transaction. This means that transactions
+containing write operations have to be committed manually at appropriate
+places to make sure your changes are actually written to the database. The
+:attr:`~digikamdb.conn.Digikam.session` property contains the SQLAlchemy
+session and can be used to do this (``dk.session.commit()`` in the examples
+above).
+
+
 General API Structure
 ----------------------
 
-Digikam object properties
+Digikam Object Properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Data stored in the database can be accessed through properties of the Digikam
@@ -101,6 +107,7 @@ With the exception of ``settings``, these properties behave alike:
 
 See the API documentation for details.
 
+
 SQLAlchemy Query Objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -126,6 +133,7 @@ Working with Images
 .. note::
     Digikam-DB does not directly support creating new images, or deleting,
     renaming or moving existing ones.
+
 
 Retrieving Images
 ~~~~~~~~~~~~~~~~~~
@@ -219,6 +227,7 @@ The "plural" properties can be used to access other titles and captions.
     * :class:`~digikamdb.image_comments.ImageTitles` class reference
     * :class:`~digikamdb.image_comments.ImageCaptions` class reference
 
+
 Tags
 ~~~~~
 
@@ -239,6 +248,7 @@ as a tree in digikam, but the database does not reflect that.
       existing ones.
     * New album roots can be added through Digikam-DB, but have to be populated
       with albums and images by Digikam.
+
 
 Retrieving Albums
 ~~~~~~~~~~~~~~~~~~
@@ -309,6 +319,7 @@ Digikam keeps a table of all defined tags with their properties, and another
 table containing the assignment of tags to images (or vice versa). Thus tags
 can be accessed globally or as tags assigned to an image.
 
+
 Accessing Globally Defined Tags
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -369,6 +380,7 @@ database.
     * :class:`~_sqla.Tag` (mapped table) Class Reference
 
 .. _imagetags:
+
 
 Accessing an Image's Tags
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
