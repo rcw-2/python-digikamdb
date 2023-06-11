@@ -1,4 +1,4 @@
-v0.3.1 (?)
+v0.3.1 (2023-06-11)
 --------------------
 *   ``Tags.add()`` accepts hierarchical tag names.
 *   Replaced ``DigikamObjectNotFound`` and ``DigikamMultipleObjectsFound`` with
