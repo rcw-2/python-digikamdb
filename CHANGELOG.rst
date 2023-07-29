@@ -1,3 +1,8 @@
+v0.3.2 (?)
+--------------------
+*   New ``ExifExposureProgram`` value ``BULB``
+    (unofficial, but used by Canon)
+
 v0.3.1 (2023-06-11)
 --------------------
 *   ``Tags.add()`` accepts hierarchical tag names.

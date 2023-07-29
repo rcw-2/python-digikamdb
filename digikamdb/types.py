@@ -117,6 +117,9 @@ class ExifExposureProgram(ExifEnum):
     
     .. versionchanged:: 0.3.0
         More readable string representation
+    
+    .. versionchanged:: 0.3.2
+        Added BULB mode (non-official, but used by Canon)
     """
     NOT_DEFINED         = 0
     MANUAL              = 1
@@ -127,6 +130,7 @@ class ExifExposureProgram(ExifEnum):
     ACTION_PROGRAM      = 6
     PORTRAIT_MODE       = 7
     LANDSCAPE_MODE      = 8
+    BULB                = 9
 
 
 class ExifWhiteBalance(ExifEnum):
