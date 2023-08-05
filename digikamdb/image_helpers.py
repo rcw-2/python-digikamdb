@@ -349,12 +349,21 @@ def define_image_helper_tables(container: 'Images'):        # noqa: F821, C901
             return self._colorDepth
         
         @property
-        def colorModel(self) -> Optional[ColorModel]:
-            """The image's color model (read-only)"""
+        def colorModel(self) -> Union[ColorModel,int,None]:
+            """
+            The image's color model (read-only)
+            
+            .. versionchanged:: 0.3.2
+                Return numeric value if it is not a valid :class:`ExifColorModel`
+            """
             if self._colorModel is None:
                 return None
             else:
-                return ColorModel(self._colorModel)
+                try:
+                    return ColorModel(self._colorModel)
+                except ValueError:
+                    log.warning('%d is not a valid color model', self._colorModel)
+                    return self._colorModel
         
         @validates('_orientation', '_colorModel')
         def _convert_to_int(self, key, value):

@@ -2,6 +2,8 @@ v0.3.2 (?)
 --------------------
 *   New ``ExifExposureProgram`` value ``BULB``
     (unofficial, but used by Canon)
+*   ``DigikamImageInformation.colorModel`` returns numeric value if
+    it is not a valid ``ImageColorModel``
 
 v0.3.1 (2023-06-11)
 --------------------
