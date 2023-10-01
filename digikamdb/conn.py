@@ -56,7 +56,8 @@ class Digikam:
         database:   Digikam database.
         sql_echo:   Sets the ``echo`` option of SQLAlchemy.
         root_override:  Can be used to override the location of album roots
-                        in the file system.
+                        in the file system. See `Root Overrides`_ for more
+                        information.
     """
     
     def __init__(

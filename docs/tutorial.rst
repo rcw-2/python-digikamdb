@@ -55,11 +55,48 @@ several ways to specify the Digikam database:
         engine = create_engine('mysql+pymysql://user:passwd@mysql.mydomain.org/mydatabase')
         dk = Digikam(engine)
 
-
 .. seealso::
     
     * `Digikam Database Settings <https://docs.kde.org/trunk5/en/digikam-doc/digikam/using-setup.html#using-setup-database>`_
     * :class:`~digikamdb.conn.Digikam` Class Reference
+
+.. _Root Overrides:
+
+Root Overrides
+~~~~~~~~~~~~~~~
+
+In some situations, Digikam-DB may need hints to find the path to your albums.
+With the ``root_override`` argument of :class:`~digikamdb.conn.Digikam`, you
+can provide the location of an album root manually. There are different ways
+to specify the path to the album root:
+
+.. code-block:: python
+
+    dk = Digikam(
+        my_database,
+        root_override = {
+            'ids': {
+                'volumeid:?uuid=69bcae9a-608b-11ee-9c1b-939c964e84aa': '/data/pics1',
+                23: '/data/pics2',
+            },
+            'paths': {
+                'volumeid:?uuid=69bcae9a-608b-11ee-9c1b-939c964e84aa/pics3': '/data/pics3',
+                42: '/data/pics4',
+            }
+        }
+    )
+
+Entries in ``ids`` give substitutions for the ``identifier`` column in the
+``AlbumRoots`` table. The roots can be specified by the row's ``id`` or by its
+``identifier`` (usually containing a volume ID like in the example above). The
+latter affects all album roots with the same ``identifier``.
+
+Entries in ``paths`` give substitutions for the whole path. The roots can be
+specified by the row's ``id`` or by the combination of ``identifier`` and
+``specificPath``.
+
+Entries in ``paths`` take precedence over entries in ``ids``. Specification by
+``id`` takes precedence over ``identifier`` (and ``specificPath``).
 
 
 Database Commits
