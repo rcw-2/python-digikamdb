@@ -1,4 +1,4 @@
-v0.3.2 (?)
+v0.3.2 (2023-10-01)
 --------------------
 *   New ``ExifExposureProgram`` value ``BULB``
     (unofficial, but used by Canon)
