@@ -1,9 +1,14 @@
+v0.3.3 (2023-11-??)
+--------------------
+*   AlbumRoot.mountpoint emits a warning when trying to determine mount point
+    on other systems than Linux.
+
 v0.3.2 (2023-10-01)
 --------------------
 *   New ``ExifExposureProgram`` value ``BULB``
-    (unofficial, but used by Canon)
+    (unofficial, but used by Canon).
 *   ``DigikamImageInformation.colorModel`` returns numeric value if
-    it is not a valid ``ImageColorModel``
+    it is not a valid ``ImageColorModel``.
 
 v0.3.1 (2023-06-11)
 --------------------

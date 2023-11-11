@@ -6,6 +6,8 @@ import logging
 import os
 import re
 import stat
+import sys
+from warnings import warn
 from typing import Iterable, List, Mapping, Optional
 
 from sqlalchemy.orm import relationship, validates
@@ -152,6 +154,15 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
                             self._mountpoint
                         )
                         return self._mountpoint
+            
+            if sys.platform != 'linux':
+                warn(
+                    "Mountpoint detection has only been tested on Linux and will "
+                    "probably not work on other operating systems. You can avoid "
+                    "related errors by passing a 'root_override' parameter to "
+                    "Digikam()",
+                    RuntimeWarning
+                )
             
             vid = self.identifier
             path = None
