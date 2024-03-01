@@ -36,7 +36,7 @@ author = ', '.join(authors)
 from digikamdb._version import version as release
 version = '.'.join(release.split('.')[:3])
 
-copyright   = '2022 ' + author
+copyright   = '2022-24 ' + author
 
 # -- General configuration ---------------------------------------------------
 
@@ -246,7 +246,7 @@ os.environ['SPHINX_APIDOC_OPTIONS'] = 'members'
 
 extlinks = {
     'docurl':   (meta['urls']['documentation'] + '/%s', '[doc:%s]'),
-    'source':   (meta['urls']['homepage'] + '/%s', 'Digikam-DB on Girhub: %s'),
+    'source':   (meta['urls']['homepage'] + '/%s', 'Digikam-DB on Github: %s'),
 }
 
 # -- Options for InterSphinx extension ---------------------------------------

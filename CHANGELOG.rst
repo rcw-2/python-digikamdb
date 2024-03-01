@@ -1,4 +1,4 @@
-v0.3.3 (2023-11-??)
+v0.3.3 (2023-11-11)
 --------------------
 *   AlbumRoot.mountpoint emits a warning when trying to determine mount point
     on other systems than Linux.
