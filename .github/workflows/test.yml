@@ -37,9 +37,9 @@ jobs:
         python-version: ["3.10"]
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install flake8
@@ -67,6 +67,7 @@ jobs:
           - "3.9"
           - "3.10"
           - "3.11"
+          - "3.12"
         mysql:
           - "mysql-8.0"
           - "mariadb-10.5"
@@ -88,9 +89,13 @@ jobs:
             mysql:      mariadb-10.5
           - python:     "3.11"
             sqlalchemy: "1.4"
+          - python:     "3.12"
+            mysql:      mariadb-10.5
+          - python:     "3.12"
+            sqlalchemy: "1.4"
     steps:
     - name: Checkout Git repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth:  0
     - name: Set up MySQL ${{ matrix.mysql }}
@@ -103,7 +108,7 @@ jobs:
         my-cnf: |
           disable_log_bin
     - name: Set up Python ${{ matrix.python }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python }}
     - name: Install Python packages
@@ -136,7 +141,7 @@ jobs:
         # Run Python test
         coverage run -m unittest -v
     - name: Save Coverage Data
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage-data
         path: .coverage.*
@@ -170,11 +175,11 @@ jobs:
     
     steps:
     - name: Checkout Git repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth:  0
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -183,7 +188,7 @@ jobs:
         pip install -e .
         pip install coverage[toml]
     - name: Load Coverage Data 
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
     - name: Aggregate Coverage Data
       run: |
         # Run coverage combine
@@ -208,11 +213,11 @@ jobs:
     
     steps:
     - name: Checkout Git repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth:  0
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Generate Packages
