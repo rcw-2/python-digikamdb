@@ -18,6 +18,7 @@ from .sqlite import (                                       # noqa: F401
     SQLite_03_CheckImageData as bSQLite_03_CheckImageData,
     SQLite_04_NewData as bSQLite_04_NewData,
     SQLite_04a_NewData15 as bSQLite_04a_NewData15,
+    SQLite_04b_NewData16 as bSQLite_04b_NewData16,
     SQLite_05_RootOverride_01 as bSQLite_05_RootOverride_01,
     SQLite_05_RootOverride_02 as bSQLite_05_RootOverride_02,
     SQLite_05_RootOverride_03 as bSQLite_05_RootOverride_03,
