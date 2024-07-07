@@ -1,3 +1,7 @@
+v0.3.4 (2024-07-07)
+--------------------
+*   Better parsing of AlbumRoot.identifier
+
 v0.3.3 (2023-11-11)
 --------------------
 *   AlbumRoot.mountpoint emits a warning when trying to determine mount point
