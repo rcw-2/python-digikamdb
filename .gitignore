@@ -2,9 +2,13 @@
 *.pyc
 __pycache__
 
+# Python venv
+/.venv
+
 # Configuration files of development tools
 *.geany
 /.vscode
+*.code-workspace
 
 # Backups and temporary files
 *~
