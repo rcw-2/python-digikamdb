@@ -192,6 +192,8 @@ jobs:
     - name: Aggregate Coverage Data
       run: |
         # Run coverage combine
+        mkdir coverage-data
+        cp coverage-data_*/.coverage.* coverage-data
         cd coverage-data
         coverage combine
         cp .coverage ..
