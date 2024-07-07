@@ -107,6 +107,8 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
             """Deletes cached mountpoint."""
             if hasattr(self, '_mountpoint'):
                 delattr(self, '_mountpoint')
+            if hasattr(self, '_parsed_identifier_data'):
+                delattr(self, '_parsed_identifier_data')
             return value
 
         @property
@@ -122,6 +124,24 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
             self._specificPath = value
         
         # Other properties and methods
+        
+        #: Regex for UUID
+        _re_uuid = re.compile(r'^volumeid:\?uuid=(.*)(&.*)?$')
+        
+        #: Regex for
+        _re_path = re.compile(r'^volumeid:\?path=(.*)(&.*)?$')
+        
+        @property
+        def _parsed_identifier(self) -> dict[str, str]:
+            """Returns a parsed version of the identifier"""
+            if not hasattr(self, '_parsed_identifier_data'):
+                schema, params = self.identifier.split(':?', 1)
+                data = {'schema': schema}
+                for param in params.split('&'):
+                    key, value = param.split('=', 1)
+                    data[key] = value
+                self._parsed_identifier_data = data
+            return self._parsed_identifier_data
         
         @property
         def mountpoint(self) -> str:
@@ -164,11 +184,14 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
                     RuntimeWarning
                 )
             
-            vid = self.identifier
             path = None
-            if vid.startswith('volumeid:?uuid='):
-                uuid = vid[15:]
-                dev = os.path.realpath(os.path.join('/dev/disk/by-uuid', uuid))
+            
+            # Determine path by 
+            if 'uuid' in self._parsed_identifier:
+                dev = os.path.realpath(os.path.join(
+                    '/dev/disk/by-uuid',
+                    self._parsed_identifier['uuid']
+                ))
                 with open('/proc/mounts', 'r') as mt:
                     for line in mt.readlines():
                         mdev, mdir, moptions = line.strip().split(maxsplit=2)
@@ -176,12 +199,15 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
                         if mdev == '/dev/root':
                             mdev = _substitute_device(mdev)
                         
-                        if mdev == 'UUID=' + uuid or mdev == dev:
+                        if mdev == 'UUID=' + self._parsed_identifier['uuid'] or mdev == dev:
                             path = mdir
                             break
             
-            if vid.startswith('volumeid:?path='):
-                path = vid[15:]
+            if path is None:
+                path = self._parsed_identifier.get('path')
+            
+            if path is None:
+                path = self._parsed_identifier.get('mountpath')
             
             if path is not None and os.path.isdir(path):
                 self._mountpoint = path
@@ -193,7 +219,7 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
                 return path
             
             raise DigikamFileError(
-                'No path found for {0}, candidate {1}'.format(vid, path)
+                'No path found for {0}, candidate {1}'.format(self.identifier, path)
             )
                         
         @property
