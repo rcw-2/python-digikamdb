@@ -8,7 +8,7 @@ import re
 import stat
 import sys
 from warnings import warn
-from typing import Iterable, List, Mapping, Optional
+from typing import Dict, Iterable, Mapping, Optional
 
 from sqlalchemy.orm import relationship, validates
 
@@ -132,7 +132,7 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
         _re_path = re.compile(r'^volumeid:\?path=(.*)(&.*)?$')
         
         @property
-        def _parsed_identifier(self) -> dict[str, str]:
+        def _parsed_identifier(self) -> Dict[str, str]:
             """Returns a parsed version of the identifier"""
             if not hasattr(self, '_parsed_identifier_data'):
                 schema, params = self.identifier.split(':?', 1)
