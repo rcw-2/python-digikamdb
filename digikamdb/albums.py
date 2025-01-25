@@ -7,7 +7,7 @@ import os
 from datetime import date, datetime
 from typing import List, Optional, Union
 
-from sqlalchemy import Column
+from sqlalchemy import Column, func
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import MultipleResultsFound
 
@@ -147,12 +147,20 @@ def _album_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         
         @property
         def abspath(self) -> str:
-            """The album folder's absolute path (read-only)"""
+            """
+            The album folder's absolute path (read-only)
+            
+            versionchanged:: 0.3.5
+                Converted to lowercase for case-insensitive roots (except mountpoint).
+            """
             if self.relativePath == '/':
                 return self.root.abspath
-            return os.path.abspath(os.path.join(
-                self.root.abspath,
-                self.relativePath.lstrip('/')))
+            
+            if self.root.caseSensitivity:
+                relpath = self.relativePath.lstrip('/')
+            else:
+                relpath = self.relativePath.lstrip('/').lower()
+            return os.path.join(self.root.abspath, relpath)
         
     return Album
     
@@ -215,13 +223,10 @@ class Albums(DigikamTable):
         roots_over = []
         roots_under = []
         for r in self.digikam.albumRoots:
-            if os.path.commonpath([r.abspath, abspath]) == r.abspath:
+            if abspath in r:
                 log.debug('Root %d (%s) is a parent dir', r.id, r.abspath)
                 roots_over.append(r)
-            if (
-                os.path.commonpath([r.abspath, abspath]) == abspath
-                and r.abspath != abspath
-            ):
+            elif r.issubdir(abspath):
                 log.debug('Root %d (%s) is a subdir', r.id, r.abspath)
                 roots_under.append(r)
         
@@ -243,12 +248,25 @@ class Albums(DigikamTable):
         
         if roots_over:
             root = roots_over[0]
-            rpath = '/' + os.path.relpath(abspath, root.abspath).rstrip('.')
+            if not root.caseSensitivity:
+                abspath = os.path.join(
+                    root.mountpoint,
+                    os.path.relpath(abspath, root.mountpoint).lower()
+                )
+            rpath = '/' + os.path.relpath(abspath, root._cmppath).rstrip('.')
+            
             
             if exact:
                 try:
-                    log.debug('Looging for album %s in root %d', rpath, root.id)
-                    return root.albums.filter_by(_relativePath = rpath).one_or_none()
+                    log.debug('Looking for album %s in root %d', rpath, root.id)
+                    if root.caseSensitivity:
+                        return root.albums.filter_by(
+                            _relativePath = rpath
+                        ).one_or_none()
+                    else:
+                        return root.albums.filter(
+                            func.lower(_relativePath) == rpath
+                        ).one_or_none()
                 # Multiple results should not occur...
                 except MultipleResultsFound:                # pragma: no cover
                     raise DigikamDataIntegrityError(
@@ -257,10 +275,22 @@ class Albums(DigikamTable):
             
             # Look for matching directories:
             log.debug('Searching for %s in root %d', rpath+'%', root.id)
-            for al in self._select(_albumRoot = root.id).where(
-                self.Class._relativePath.like(rpath + '%')
-            ):
-                if os.path.commonpath([al.abspath, abspath]) == abspath:
+            query = self._select(_albumRoot = root.id)
+            if root.caseSensitivity:
+                query = query.where(
+                    self.Class._relativePath.like(rpath + '%')
+                )
+            else:
+                query = query.where(
+                    func.lower(self.Class._relativePath).like(rpath + '%')
+                )
+            for al in query:
+                log.debug('Checking album %d (%s)', al.id, al.relativePath)
+                if os.path.commonpath([
+                    al.relativePath if root.caseSensitivity
+                    else al.relativePath.lower(),
+                    rpath
+                ]) == rpath:
                     res.append(al)
         
         if roots_under:
@@ -268,6 +298,7 @@ class Albums(DigikamTable):
                 log.debug('Adding albums from root %d', r.id)
                 res.extend(r.albums)
         
+        log.debug('Returning %d albums', len(res))
         return res
 
 

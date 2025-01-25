@@ -436,14 +436,22 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
         # Other properties and members
         
         @property
-        def abspath(self) -> str:
+        def abspath(self) -> Optional[str]:
             """
             The absolute path of the image file (read-only)
+            
+            .. versionchanged:: 0.3.5
+                * Converted to lowercase for case-insensitive roots (except mountpoint).
+                * Returns `None` if image has no album (e.g. for deleted images).
             """
-            return os.path.abspath(os.path.join(
-                self.album.abspath,
-                self._name))
-        
+            if self._album is None:
+                return None
+            else:
+                return os.path.join(
+                    self.album.abspath,
+                    self.name if self.album.root.caseSensitivity else self.name.lower()
+                )
+
     return Image
         
 

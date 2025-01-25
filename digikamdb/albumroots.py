@@ -31,6 +31,11 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
         
         The location can be accessed with :attr:`abspath`.
         
+        .. versionchanged:: 0.3.5
+            *   ``path in root`` checks if a path is a subdirectory (and thus a
+                Digikam album) of the album root. The reverse is checked by
+                :meth:`issubdir`.
+        
         See also:
             * Class :class:`~digikamdb.albumroots.AlbumRoots`
         """
@@ -123,13 +128,92 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
         def specificPath(self, value):
             self._specificPath = value
         
+        @property
+        def caseSensitivity(self) -> bool:
+            """
+            Indicates if this album root is case sensitive.
+            
+            Raises:
+                DigikamVersionError:    If DBVersion < 16
+            
+            .. versionadded:: 0.2.2
+            
+            .. todo:: Take ``caseSensitivity`` into account when accessing images.
+            """
+            if sys.platform == 'win32':
+                return False
+            if self.digikam.db_version < 16:
+                return True
+            return self._caseSensitivity != 0
+
         # Other properties and methods
         
-        #: Regex for UUID
-        _re_uuid = re.compile(r'^volumeid:\?uuid=(.*)(&.*)?$')
+        def __contains__(self, path: str) -> bool:
+            path = os.path.abspath(path)
+            abspath = self._cmppath
+            
+            if sys.platform == 'win32':
+                # case-insensitive compare
+                path = path.lower()
+                return os.path.commonpath([abspath, path]) == abspath
+            
+            if self.caseSensitivity:
+                return os.path.commonpath([abspath, path]) == abspath
+            
+            # OS case-sensitive, filesystem case-insensitive:
+            # Mountpoint needs exact match, rest case-insensitive
+            
+            if os.path.commonpath([self.mountpoint, path]) != self.mountpoint:
+                # path not inside mountpoint
+                return False
+            
+            path = os.path.join(
+                self.mountpoint,
+                os.path.relpath([path, self.mountpoint]).lower()
+            )
+            return os.path.commonpath([abspath, path]) == abspath
         
-        #: Regex for
-        _re_path = re.compile(r'^volumeid:\?path=(.*)(&.*)?$')
+        def issubdir(self, path: str) -> bool:
+            """
+            Checks if album root is a subdir of `path`.
+            
+            .. versionadded:: 0.3.5
+            """
+            path = os.path.abspath(path)
+            abspath = self._cmppath
+            
+            if sys.platform == 'win32':
+                path = path.lower()
+                return os.path.commonpath(abspath, path) == path
+            
+            if self.caseSensitivity:
+                return os.path.commonpath([abspath, path]) == path
+            
+            common = os.path.commonpath([path, self.mountpoint])
+            if common == path:
+                return True
+            if common != self.mountpoint:
+                return False
+            
+            path = os.path.join(
+                self.mountpoint,
+                os.path.relpath(path, self.mountpoint).lower()
+            )
+            return os.path.commonpath([abspath, path]) == path
+        
+        @property
+        def _cmppath(self) -> str:
+            """:attr:`abspath` converted to lowercase as needed by system"""
+            if sys.platform == 'win32':
+                return self.abspath.lower()
+            
+            if not self.caseSensitivity:
+                return os.path.join(
+                    self.mountpoint,
+                    self.specificPath.lstrip('/').lower()
+                )
+            
+            return self.abspath
         
         @property
         def _parsed_identifier(self) -> Dict[str, str]:
@@ -150,6 +234,10 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
             
             The result can be modified if ``root_override`` is specified
             in the :class:`Digikam` constructor.
+            
+            .. versionchanged:: 0.3.4
+                * Works if :attr:`identifier` contains multiple parameters.
+                * Process ``mountpath`` parameter.
             """
             
             if hasattr(self, '_mountpoint'):
@@ -229,6 +317,9 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
             
             The result can be modified if ``root_override`` is specified
             in the :class:`Digikam` constructor.
+            
+            versionchanged:: 0.3.5
+                Converted to lowercase for case-insensitive roots (except mountpoint).
             """
             
             override = self.override
@@ -241,29 +332,13 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
                     if path in override['paths']:
                         log.debug('Overriding path')
                         return override['paths'][path]
-                
-            return os.path.abspath(os.path.join(
-                self.mountpoint,
-                self.specificPath.lstrip('/')))
+            
+            if self.caseSensitivity:
+                relpath = self.specificPath.lstrip('/')
+            else:
+                relpath = self.specificPath.lstrip('/').lower()
+            return os.path.abspath(os.path.join(self.mountpoint, relpath))
         
-        @property
-        def caseSensitivity(self) -> bool:
-            """
-            Indicates if this album root is case sensitive.
-            
-            Raises:
-                DigikamVersionError:    If DBVersion < 16
-            
-            .. versionadded:: 0.2.2
-            
-            .. todo:: Take ``caseSensitivity`` into account when accessing images.
-            """
-            if self.digikam.db_version < 16:
-                raise DigikamVersionError(
-                    'caseSensitivity is present in DBVersion >= 16'
-                )
-            return self._caseSensitivity != 0
-    
     return AlbumRoot
 
 
