@@ -82,27 +82,6 @@ jobs:
             # Maintenance release
           - "2.0"
             # Current release
-        # exclude:
-        #   - python:     "3.9"
-        #     mysql:      mysql-8.4
-        #   - python:     "3.9"
-        #     mysql:      mariadb-10.11
-        #   - python:     "3.9"
-        #     mysql:      mariadb-11.5
-        #   - python:     "3.10"
-        #     mysql:      mariadb-10.5
-        #   - python:     "3.11"
-        #     mysql:      mariadb-10.5
-        #   - python:     "3.11"
-        #     sqlalchemy: "1.4"
-        #   - python:     "3.12"
-        #     mysql:      mariadb-10.5
-        #   - python:     "3.12"
-        #     sqlalchemy: "1.4"
-        #   - python:     "3.13"
-        #     mysql:      mariadb-10.5
-        #   - python:     "3.13"
-        #     sqlalchemy: "1.4"
     steps:
     - name: Checkout Git repository
       uses: actions/checkout@v4
@@ -155,6 +134,7 @@ jobs:
       with:
         name: coverage-data_py-${{ matrix.python }}_${{ matrix.mysql }}_sqla-${{ matrix.sqlalchemy }}
         path: .coverage.*
+        if-no-files-found: error
     - name: Test log
       if: ${{ always() }}
       run: |
@@ -163,13 +143,16 @@ jobs:
     - name: System information for debugging
       if: ${{ failure() }}
       run: |
+        # List files
+        echo "Files in `pwd`:"
+        ls -la
         # Show some system information
-        echo "Disk devices"
+        echo "Disk devices:"
         for d in /dev/root /dev/sd* /dev/nvme*; do
             test -e $d && ls -l $d
         done
         ls -l /dev/disk/by-uuid
-        echo "Mounted devices"
+        echo "Mounted devices:"
         cat /proc/mounts | grep ^/dev/
   
   coverage:
