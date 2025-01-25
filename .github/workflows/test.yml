@@ -63,36 +63,46 @@ jobs:
       fail-fast: false
       matrix:
         python:
-          - "3.8"
+          # Test all currently supported versions
           - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         mysql:
+          # Test currently supported LTS versions
           - "mysql-8.0"
+          - "mysql-8.4"
           - "mariadb-10.5"
           - "mariadb-10.6"
           - "mariadb-10.11"
+          - "mariadb-11.4"
         sqlalchemy:
           - "1.4"
+            # Maintenance release
           - "2.0"
-        exclude:
-          - python:     "3.8"
-            mysql:      mariadb-10.11
-          - python:     "3.8"
-            sqlalchemy: "2.0"
-          - python:     "3.9"
-            mysql:      mariadb-10.11
-          - python:     "3.10"
-            mysql:      mariadb-10.5
-          - python:     "3.11"
-            mysql:      mariadb-10.5
-          - python:     "3.11"
-            sqlalchemy: "1.4"
-          - python:     "3.12"
-            mysql:      mariadb-10.5
-          - python:     "3.12"
-            sqlalchemy: "1.4"
+            # Current release
+        # exclude:
+        #   - python:     "3.9"
+        #     mysql:      mysql-8.4
+        #   - python:     "3.9"
+        #     mysql:      mariadb-10.11
+        #   - python:     "3.9"
+        #     mysql:      mariadb-11.5
+        #   - python:     "3.10"
+        #     mysql:      mariadb-10.5
+        #   - python:     "3.11"
+        #     mysql:      mariadb-10.5
+        #   - python:     "3.11"
+        #     sqlalchemy: "1.4"
+        #   - python:     "3.12"
+        #     mysql:      mariadb-10.5
+        #   - python:     "3.12"
+        #     sqlalchemy: "1.4"
+        #   - python:     "3.13"
+        #     mysql:      mariadb-10.5
+        #   - python:     "3.13"
+        #     sqlalchemy: "1.4"
     steps:
     - name: Checkout Git repository
       uses: actions/checkout@v4
