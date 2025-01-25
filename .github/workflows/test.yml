@@ -135,6 +135,7 @@ jobs:
         name: coverage-data_py-${{ matrix.python }}_${{ matrix.mysql }}_sqla-${{ matrix.sqlalchemy }}
         path: .coverage.*
         if-no-files-found: error
+        include-hidden-files: true
     - name: Test log
       if: ${{ always() }}
       run: |
