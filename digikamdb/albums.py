@@ -265,7 +265,7 @@ class Albums(DigikamTable):
                         ).one_or_none()
                     else:
                         return root.albums.filter(
-                            func.lower(_relativePath) == rpath
+                            func.lower(self.Class._relativePath) == rpath
                         ).one_or_none()
                 # Multiple results should not occur...
                 except MultipleResultsFound:                # pragma: no cover
