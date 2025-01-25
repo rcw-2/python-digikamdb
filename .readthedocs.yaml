@@ -14,4 +14,7 @@ python:
       extra_requirements:
         - docs
 
+sphinx:
+  # Required by RTD since 2025-01-20
+  configuration: docs/conf.py
 
