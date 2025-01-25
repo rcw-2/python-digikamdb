@@ -441,6 +441,7 @@ def _image_class(dk: 'Digikam') -> type:                    # noqa: F821, C901
             The absolute path of the image file (read-only)
             
             .. versionchanged:: 0.3.5
+                
                 * Converted to lowercase for case-insensitive roots (except mountpoint).
                 * Returns `None` if image has no album (e.g. for deleted images).
             """

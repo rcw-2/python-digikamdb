@@ -287,7 +287,10 @@ def _albumroot_class(dk: 'Digikam') -> type:                # noqa: F821, C901
                         if mdev == '/dev/root':
                             mdev = _substitute_device(mdev)
                         
-                        if mdev == 'UUID=' + self._parsed_identifier['uuid'] or mdev == dev:
+                        if (
+                            mdev == 'UUID=' + self._parsed_identifier['uuid'] or
+                            mdev == dev
+                        ):
                             path = mdir
                             break
             
