@@ -195,6 +195,13 @@ jobs:
       run: |
         # Run coverage report
         coverage report -m
+        coverage html
+    - name: Save Coverage report
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-data
+        path: htmlcov
+        if-no-files-found: error
   
   packaging_test:
     
