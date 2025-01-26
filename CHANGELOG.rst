@@ -1,3 +1,8 @@
+v0.3.5 (2025-01-26)
+--------------------
+*   ``Image.abspath`` returns ``None`` if there is no album.
+*   Handles case-insensitive AlbumRoots (experimental).
+
 v0.3.4 (2024-07-07)
 --------------------
 *   Better parsing of AlbumRoot.identifier
